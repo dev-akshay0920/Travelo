@@ -55,7 +55,8 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-6xl sm:max-w-6xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div>
@@ -70,8 +71,9 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
             </Badge>
           </div>
         </DialogHeader>
+        </div>
 
-        <div className="grid gap-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {images.length > 0 && (
             <div className="space-y-4">
               <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-muted">
@@ -252,14 +254,15 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="secondary" onClick={onClose}>
-              Close
-            </Button>
-            <Button onClick={() => { onClose(); onEdit(pkg); }}>
-              Edit Package
-            </Button>
-          </div>
+        </div>
+
+        <div className="sticky bottom-0 z-10 bg-background border-t px-6 py-4 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+          <Button onClick={() => { onClose(); onEdit(pkg); }}>
+            Edit Package
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

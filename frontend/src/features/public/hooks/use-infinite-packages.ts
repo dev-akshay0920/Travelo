@@ -16,19 +16,22 @@ export function useInfinitePackages(initialFilters: PackageFilters) {
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const filtersRef = useRef(initialFilters);
-  filtersRef.current = initialFilters;
+  const requestIdRef = useRef(0);
+  const filtersKey = JSON.stringify(initialFilters);
 
   const loadPackages = useCallback(async (pageNum: number, isInitial = false) => {
+    const requestId = ++requestIdRef.current;
     if (isInitial) setIsLoading(true);
     else setIsLoadingMore(true);
     setError(null);
 
     try {
       const response = await fetchPublicPackages({
-        ...filtersRef.current,
+        ...initialFilters,
         page: pageNum,
       });
+
+      if (requestId !== requestIdRef.current) return;
 
       // Cast API response to local types
       const typedItems = response.items as TravelPackage[];
@@ -49,19 +52,24 @@ export function useInfinitePackages(initialFilters: PackageFilters) {
       setHasMore(response.page < response.totalPages);
       setFacets(typedFacets);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load packages");
+      if (requestId === requestIdRef.current) {
+        setError(err instanceof Error ? err.message : "Failed to load packages");
+      }
     } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
-  }, []);
+  }, [initialFilters]);
 
   useEffect(() => {
+    requestIdRef.current += 1;
     setPackages([]);
     setPage(1);
     setHasMore(true);
     loadPackages(1, true);
-  }, [JSON.stringify(initialFilters), loadPackages]);
+  }, [filtersKey, loadPackages]);
 
   useEffect(() => {
     if (observerRef.current) {

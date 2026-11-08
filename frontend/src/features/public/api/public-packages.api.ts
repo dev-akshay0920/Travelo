@@ -1,5 +1,6 @@
 import type { PackageFilters } from "@/features/public/types/public-filters.types";
 import type { TravelPackage as PublicTravelPackage } from "@/features/public/types/public-filters.types";
+import { getApiPath } from "@/lib/api/config";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -102,7 +103,7 @@ export async function fetchPublicPackages(
   const cacheKey = getCacheKey("packages", { ...filters, page: filters.page || 1 });
   
   const response = await fetchWithDeduplication<PublicPackageResponse>(
-    `${API_BASE}/public/packages?${query}`,
+    `${getApiPath("public/packages")}?${query}`,
     { next: { revalidate: 60 }, headers: { "Content-Type": "application/json" } },
     cacheKey,
     60000

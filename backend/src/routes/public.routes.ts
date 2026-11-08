@@ -8,6 +8,23 @@ import type { Types } from "mongoose";
 
 const router = Router();
 
+function getQueryValues(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : [value];
+  return values.flatMap((item) =>
+    typeof item === "string" ? item.split(",").filter(Boolean) : []
+  );
+}
+
+function getQueryValue(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return getQueryValue(value[0]);
+  return undefined;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // Default fallback data
 function getDefaultPackagesResponse() {
   return {
@@ -59,72 +76,107 @@ router.get(
       sortBy = "recommended",
     } = req.query;
 
-    const pageNum = parseInt(page as string, 10) || 1;
-    const limitNum = parseInt(limit as string, 10) || 24;
+    const pageNum = parseInt(getQueryValue(page) ?? "1", 10) || 1;
+    const limitNum = parseInt(getQueryValue(limit) ?? "24", 10) || 24;
     const skip = (pageNum - 1) * limitNum;
+    const destinationValue = getQueryValue(destination)?.trim();
+    const destinationFilters = getQueryValues(destinations);
+    const themeFilters = getQueryValues(theme);
+    const startDateValue = getQueryValue(startDate);
+    const endDateValue = getQueryValue(endDate);
+    const priceMinValue = getQueryValue(priceMin);
+    const priceMaxValue = getQueryValue(priceMax);
+    const flexibleDatesValue = getQueryValue(flexibleDates);
+    const adultsValue = getQueryValue(adults);
+    const childrenValue = getQueryValue(children);
+    const durationMinValue = getQueryValue(durationMin);
+    const durationMaxValue = getQueryValue(durationMax);
+    const geographicScopeValue = getQueryValue(geographicScope);
+    const agencySlugValue = getQueryValue(agencySlug);
+    const sortByValue = getQueryValue(sortBy) ?? "recommended";
 
     const filter: any = {
       status: "active",
       visibility: "public",
     };
 
-    if (destination) {
-      filter.destination = { $regex: destination, $options: "i" };
+    if (destinationValue) {
+      const destinationRegex = new RegExp(escapeRegex(destinationValue), "i");
+      filter.$or = [
+        { destination: destinationRegex },
+        { "destinations.city": destinationRegex },
+      ];
     }
 
-    if (destinations) {
-      const destArray = (destinations as string).split(",");
-      filter["destinations.city"] = { $in: destArray.map(d => new RegExp(d, "i")) };
+    if (destinationFilters.length > 0) {
+      filter["destinations.city"] = {
+        $in: destinationFilters.map((city) => new RegExp(`^${escapeRegex(city)}$`, "i")),
+      };
     }
 
-    if (theme) {
-      const themeArray = (theme as string).split(",");
-      filter.tripTheme = { $in: themeArray };
+    if (themeFilters.length > 0) {
+      filter.tripTheme = { $in: themeFilters };
     }
 
-    if (priceMin || priceMax) {
+    if (priceMinValue !== undefined || priceMaxValue !== undefined) {
       filter.price = {};
-      if (priceMin) filter.price.$gte = parseInt(priceMin as string);
-      if (priceMax) filter.price.$lte = parseInt(priceMax as string);
+      if (priceMinValue !== undefined) filter.price.$gte = parseInt(priceMinValue, 10);
+      if (priceMaxValue !== undefined) filter.price.$lte = parseInt(priceMaxValue, 10);
     }
 
-    if (startDate || endDate) {
+    if (startDateValue || endDateValue) {
+      const dateWindow = flexibleDatesValue === "true" ? 3 : 0;
       filter.startDate = {};
-      if (startDate) filter.startDate.$gte = new Date(startDate as string);
-      if (endDate) filter.startDate.$lte = new Date(endDate as string);
-    }
-
-    if (flexibleDates === "true" && (startDate || endDate)) {
-      const threeDays = 3 * 24 * 60 * 60 * 1000;
-      if (startDate) {
-        const date = new Date(startDate as string);
-        filter.startDate.$gte = new Date(date.getTime() - threeDays);
+      if (startDateValue) {
+        const date = new Date(startDateValue);
+        date.setUTCDate(date.getUTCDate() - dateWindow);
+        filter.startDate.$gte = date;
+        if (flexibleDatesValue === "true" && !endDateValue) {
+          const latestStartDate = new Date(startDateValue);
+          latestStartDate.setUTCDate(latestStartDate.getUTCDate() + dateWindow + 1);
+          filter.startDate.$lt = latestStartDate;
+        }
       }
-      if (endDate) {
-        const date = new Date(endDate as string);
-        filter.startDate.$lte = new Date(date.getTime() + threeDays);
+      if (endDateValue) {
+        const date = new Date(endDateValue);
+        date.setUTCDate(date.getUTCDate() + dateWindow + 1);
+        filter.startDate.$lt = date;
+        if (flexibleDatesValue === "true" && !startDateValue) {
+          const earliestStartDate = new Date(endDateValue);
+          earliestStartDate.setUTCDate(earliestStartDate.getUTCDate() - dateWindow);
+          filter.startDate.$gte = earliestStartDate;
+        }
       }
     }
 
-    if (adults) {
-      filter.minTravelers = { $lte: parseInt(adults as string) };
-    }
-    if (children) {
-      filter.maxTravelers = { $gte: parseInt(children as string) };
+    const adultCount = Math.max(0, Number.parseInt(adultsValue ?? "0", 10) || 0);
+    const childCount = Math.max(0, Number.parseInt(childrenValue ?? "0", 10) || 0);
+    const travelerCount = adultCount + childCount;
+    if (travelerCount > 0) {
+      filter.minTravelers = { $lte: travelerCount };
+      filter.$and = [
+        {
+          $or: [
+            { maxTravelers: { $gte: travelerCount } },
+            { maxTravelers: { $exists: false } },
+          ],
+        },
+        { availableSeats: { $gte: travelerCount } },
+      ];
     }
 
-    if (durationMin || durationMax) {
+    if (durationMinValue !== undefined || durationMaxValue !== undefined) {
       filter.durationDays = {};
-      if (durationMin) filter.durationDays.$gte = parseInt(durationMin as string);
-      if (durationMax) filter.durationDays.$lte = parseInt(durationMax as string);
+      if (durationMinValue !== undefined) filter.durationDays.$gte = parseInt(durationMinValue, 10);
+      if (durationMaxValue !== undefined) filter.durationDays.$lte = parseInt(durationMaxValue, 10);
     }
 
-    if (geographicScope) {
-      filter.geographicScope = geographicScope;
+    if (geographicScopeValue) {
+      filter.geographicScope = geographicScopeValue;
     }
 
-if (agencySlug) {
-      const agency = await (Agency as any).findOne({ slug: agencySlug }).select("_id").lean();
+    if (agencySlugValue) {
+      const agency = await (Agency as any).findOne({ slug: agencySlugValue }).select("_id").lean();
       if (agency) {
         filter.agencyId = agency._id;
       } else {
@@ -133,7 +185,7 @@ if (agencySlug) {
     }
 
     let sort: any = { createdAt: -1 };
-    switch (sortBy) {
+    switch (sortByValue) {
       case "price_asc":
         sort = { price: 1 };
         break;
@@ -160,7 +212,7 @@ if (agencySlug) {
         .populate("agencyId", "name slug logo")
         .sort(sort)
         .skip(skip)
-        .limit(limit)
+        .limit(limitNum)
         .lean(),
       Package.countDocuments(filter),
     ]);
@@ -233,8 +285,8 @@ if (agencySlug) {
     return res.json(success({
       items: publicPackages,
       total,
-      page: parseInt(req.query.page as string, 10) || 1,
-      totalPages: Math.ceil(total / parseInt(limit as string, 10) || 24),
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
       facets,
     }));
   })

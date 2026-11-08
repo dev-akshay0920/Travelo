@@ -4,17 +4,8 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useCallback, useMemo, useEffect, useState } from "react";
 import type { PackageFilters, SortOption, TripTheme, GeographicScope, PackageStatus } from "@/features/public/types/public-filters.types";
 
-const DEFAULT_FILTERS: PackageFilters = {
-  status: ["active", "sold_out"],
-  sortBy: "recommended",
-  page: 1,
-  limit: 24,
-  adults: 1,
-};
-
-function parseArray(param: string | null): string[] {
-  if (!param) return [];
-  return param.split(",").filter(Boolean);
+function parseArray(params: URLSearchParams, key: string): string[] {
+  return params.getAll(key).flatMap((value) => value.split(",")).filter(Boolean);
 }
 
 function parseNumber(param: string | null): number | undefined {
@@ -35,8 +26,8 @@ export function usePackageFilters() {
 
   const filters = useMemo<PackageFilters>(() => ({
     destination: searchParams.get("destination") || undefined,
-    destinations: parseArray(searchParams.get("destinations")),
-    theme: parseArray(searchParams.get("theme")) as TripTheme[],
+    destinations: parseArray(searchParams, "destinations"),
+    theme: parseArray(searchParams, "theme") as TripTheme[],
     priceMin: parseNumber(searchParams.get("priceMin")),
     priceMax: parseNumber(searchParams.get("priceMax")),
     startDate: searchParams.get("startDate") || undefined,
@@ -48,7 +39,7 @@ export function usePackageFilters() {
     durationMin: parseNumber(searchParams.get("durationMin")),
     durationMax: parseNumber(searchParams.get("durationMax")),
     geographicScope: (searchParams.get("geographicScope") as GeographicScope) || undefined,
-    status: parseArray(searchParams.get("status")) as PackageStatus[] || ["active", "sold_out"],
+    status: parseArray(searchParams, "status") as PackageStatus[],
     sortBy: (searchParams.get("sortBy") as SortOption) || "recommended",
     page: parseNumber(searchParams.get("page")) || 1,
     limit: 24,
@@ -56,8 +47,13 @@ export function usePackageFilters() {
 
   const setFilters = useCallback((newFilters: Partial<PackageFilters>, replace = false) => {
     const params = new URLSearchParams(searchParams.toString());
+    const updatedFilters = {
+      ...filters,
+      ...newFilters,
+      page: newFilters.page ?? 1,
+    };
 
-    Object.entries({ ...filters, ...newFilters }).forEach(([key, value]) => {
+    Object.entries(updatedFilters).forEach(([key, value]) => {
       params.delete(key);
       if (value === undefined || value === null || value === "") return;
 
@@ -85,21 +81,29 @@ export function usePackageFilters() {
     params.set("page", "1");
     params.set("limit", "24");
     params.set("adults", "1");
-    params.set("status", "active");
-    params.set("status", "sold_out");
+    params.append("status", "active");
+    params.append("status", "sold_out");
     params.set("sortBy", "recommended");
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [pathname, router]);
 
   const hasActiveFilters = useMemo(() => {
-    const keys = Object.keys(filters).filter(
-      (k) => !["page", "limit", "adults", "status", "sortBy"].includes(k)
+    return Boolean(
+      filters.destination ||
+      filters.destinations?.length ||
+      filters.theme?.length ||
+      filters.priceMin !== undefined ||
+      filters.priceMax !== undefined ||
+      filters.startDate ||
+      filters.endDate ||
+      filters.flexibleDates ||
+      (filters.adults ?? 1) > 1 ||
+      (filters.children ?? 0) > 0 ||
+      (filters.infants ?? 0) > 0 ||
+      filters.durationMin !== undefined ||
+      filters.durationMax !== undefined ||
+      filters.geographicScope
     );
-    return keys.some((k) => {
-      const v = filters[k as keyof PackageFilters];
-      if (Array.isArray(v)) return v.length > 0;
-      return v !== undefined && v !== null && v !== "";
-    });
   }, [filters]);
 
   return { filters, setFilters, clearFilters, hasActiveFilters };

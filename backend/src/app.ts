@@ -28,7 +28,7 @@ export const createApp = (): Application => {
 
   app.use(
     cors({
-      origin: env.CLIENT_URL,
+      origin: true,
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     })

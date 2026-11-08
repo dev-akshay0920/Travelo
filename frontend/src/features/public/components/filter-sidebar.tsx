@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
 import type { TripTheme, GeographicScope, SortOption, PackageFilters } from "@/features/public/types/public-filters.types";
 import { TRIP_THEME_LABELS, SORT_OPTIONS, DURATION_PRESETS, PRICE_PRESETS } from "@/features/public/types/public-filters.types";
+import { format, parseISO, startOfDay } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const THEME_OPTIONS: TripTheme[] = [
   "honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"
@@ -21,42 +24,43 @@ const THEME_OPTIONS: TripTheme[] = [
 
 function FilterSection({ title, icon: Icon, expanded, onToggle, children, count, hasChanges }: { title: string; icon: React.ComponentType<{ className?: string }>; expanded: boolean; onToggle: () => void; children: React.ReactNode; count?: number; hasChanges?: boolean }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-lg overflow-hidden transition-all duration-200">
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-2.5 bg-gray-50/50 hover:bg-gray-50 transition-colors"
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-slate-50"
         aria-expanded={expanded}
       >
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-blue-50 flex items-center justify-center flex-shrink-0">
-            <Icon className="h-4 w-4 text-blue-600" />
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
+            <Icon className="h-4 w-4 text-slate-600" />
           </div>
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            <span className="font-medium text-gray-900 truncate text-sm">{title}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate text-sm font-semibold text-slate-800">{title}</span>
             {count !== undefined && count > 0 && (
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 shrink-0">{count}</Badge>
+              <Badge variant="secondary" className="h-5 shrink-0 rounded-full bg-slate-100 px-2 text-xs text-slate-600">{count}</Badge>
             )}
             {hasChanges && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] text-blue-600 font-medium bg-blue-50 px-1.5 py-0.5 rounded-full">
-                <span className="h-2 w-2 rounded-full bg-blue-600" />
-                Pending
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                Unsaved
               </span>
             )}
           </div>
         </div>
-        <div className={cn("h-4 w-4 text-gray-400 transition-transform duration-200 flex-shrink-0", expanded && "rotate-180")}>
+        <div className={cn("flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200", expanded && "rotate-180")}>
           <ChevronDown className="h-4 w-4" />
         </div>
       </button>
       {expanded && (
-        <div className="p-3 pt-0 animate-slide-down border-t border-gray-100 space-y-2">{children}</div>
+        <div className="space-y-3 border-t border-slate-100 px-3.5 py-4">{children}</div>
       )}
-    </div>
+    </section>
   );
 }
 
 function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, facets, clearFilters, hasActiveFilters, expandedSections, setExpandedSections, isApplying }: { filters: PackageFilters; draftFilters: PackageFilters; setDraftFilters: (f: PackageFilters) => void; setFilters: (f: Partial<PackageFilters>, replace?: boolean) => void; facets?: any; clearFilters: () => void; hasActiveFilters: boolean; expandedSections: Record<string, boolean>; setExpandedSections: (f: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void; isApplying: boolean }) {
+  const [showAllDestinations, setShowAllDestinations] = useState(false);
   const setExpanded = useCallback((key: string) => {
     setExpandedSections((prev: Record<string, boolean>) => ({ ...prev, [key]: !prev[key] }));
   }, [setExpandedSections]);
@@ -103,47 +107,105 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
         icon={MapPin} 
         expanded={expandedSections.destination} 
         onToggle={() => toggleSection("destination")}
-        count={facets?.destinations?.slice(0, 10).length || 0}
+        count={(draftFilters.destinations?.length || 0) + (draftFilters.destination ? 1 : 0)}
         hasChanges={sectionHasChanges('destination')}
       >
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <Input
             placeholder="Search city..."
-            className="pl-8 mb-2 h-9 text-sm"
+            className="mb-1 h-10 rounded-lg border-slate-200 bg-slate-50 pl-9 text-sm placeholder:text-slate-400 focus-visible:bg-white"
             value={draftFilters.destination || ""}
             onChange={(e) => setDraftFilters({ ...draftFilters, destination: e.target.value || undefined })}
           />
         </div>
-        {facets?.destinations?.slice(0, 10).map((d: any) => (
-          <label key={d.city} className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-gray-50 rounded px-1.5 transition-colors">
+        {facets?.destinations?.slice(0, showAllDestinations ? undefined : 10).map((d: any) => (
+          <label key={d.city} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50">
             <Checkbox checked={!!draftFilters.destinations?.includes(d.city)} onCheckedChange={() => {
               const current = draftFilters.destinations || [];
               setDraftFilters({ ...draftFilters, destinations: current.includes(d.city) ? current.filter((c: string) => c !== d.city) : [...current, d.city] });
             }} />
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-medium text-gray-900 truncate block">{d.city}</span>
-              <span className="text-[10px] text-gray-500">{d.count} pkg</span>
+              <span className="block truncate text-sm font-medium text-slate-800">{d.city}</span>
+              <span className="text-xs text-slate-500">{d.count} {d.count === 1 ? "package" : "packages"}</span>
             </div>
           </label>
         ))}
         {facets?.destinations && facets.destinations.length > 10 && (
-          <Button variant="ghost" size="sm" className="w-full mt-1.5 text-xs text-blue-600 hover:bg-blue-50" onClick={() => toggleSection("destination")}>
-            View all {facets.destinations.length} destinations
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1.5 w-full text-xs text-blue-600 hover:bg-blue-50"
+            onClick={() => setShowAllDestinations((showAll) => !showAll)}
+          >
+            {showAllDestinations ? "Show fewer destinations" : `View all ${facets.destinations.length} destinations`}
           </Button>
         )}
       </FilterSection>
 
       {/* Travel Dates */}
       <FilterSection title="Travel Dates" icon={Calendar} expanded={expandedSections.dates} onToggle={() => toggleSection("dates")} hasChanges={sectionHasChanges('dates')}>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-3">
           <div>
-            <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1 block">Check-in</Label>
-            <Input type="date" value={draftFilters.startDate || ""} onChange={(e) => setDraftFilters({ ...draftFilters, startDate: e.target.value || undefined })} className="h-9 text-sm" min={new Date().toISOString().split("T")[0]} />
+            <Label className="mb-1.5 block text-xs font-medium text-slate-500">Start date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "h-10 w-full justify-start rounded-lg border-slate-200 text-left font-normal",
+                    !draftFilters.startDate && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {draftFilters.startDate ? format(parseISO(draftFilters.startDate), "PPP") : "Select a start date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker
+                  mode="single"
+                  selected={draftFilters.startDate ? parseISO(draftFilters.startDate) : undefined}
+                  onSelect={(date) => {
+                    const startDate = date ? format(date, "yyyy-MM-dd") : undefined;
+                    const endDate = startDate && draftFilters.endDate && draftFilters.endDate < startDate
+                      ? undefined
+                      : draftFilters.endDate;
+                    setDraftFilters({ ...draftFilters, startDate, endDate });
+                  }}
+                  disabled={{ before: startOfDay(new Date()) }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
-            <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1 block">Check-out</Label>
-            <Input type="date" value={draftFilters.endDate || ""} onChange={(e) => setDraftFilters({ ...draftFilters, endDate: e.target.value || undefined })} className="h-9 text-sm" min={draftFilters.startDate || new Date().toISOString().split("T")[0]} />
+            <Label className="mb-1.5 block text-xs font-medium text-slate-500">End date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "h-10 w-full justify-start rounded-lg border-slate-200 text-left font-normal",
+                    !draftFilters.endDate && "text-muted-foreground"
+                  )}
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {draftFilters.endDate ? format(parseISO(draftFilters.endDate), "PPP") : "Select an end date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarPicker
+                  mode="single"
+                  selected={draftFilters.endDate ? parseISO(draftFilters.endDate) : undefined}
+                  onSelect={(date) => setDraftFilters({
+                    ...draftFilters,
+                    endDate: date ? format(date, "yyyy-MM-dd") : undefined,
+                  })}
+                  disabled={{ before: startOfDay(draftFilters.startDate ? parseISO(draftFilters.startDate) : new Date()) }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         <label className="flex items-center gap-1.5 mt-2 cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors">
@@ -153,26 +215,22 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
       </FilterSection>
 
       {/* Travelers */}
-      <FilterSection title="Travelers" icon={Users} expanded={expandedSections.travelers} onToggle={() => toggleSection("travelers")} count={(draftFilters.adults ?? 1) + (draftFilters.children ?? 0)} hasChanges={sectionHasChanges('travelers')}>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2 bg-gray-50 rounded">
-            <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">Adults</Label>
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-bold text-gray-900 w-10 text-center" style={{ fontFeatureSettings: '"tnum"' }}>{draftFilters.adults ?? 1}</span>
-              <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded" onClick={() => setDraftFilters({ ...draftFilters, adults: Math.max(1, (draftFilters.adults ?? 1) - 1) })} disabled={(draftFilters.adults ?? 1) <= 1}><Minus className="h-3.5 w-3.5" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded" onClick={() => setDraftFilters({ ...draftFilters, adults: (draftFilters.adults ?? 1) + 1 })}><Plus className="h-3.5 w-3.5" /></Button>
-              </div>
+      <FilterSection title="Travelers" icon={Users} expanded={expandedSections.travelers} onToggle={() => toggleSection("travelers")} count={(draftFilters.adults ?? 1) + (draftFilters.children ?? 0) > 1 ? (draftFilters.adults ?? 1) + (draftFilters.children ?? 0) : 0} hasChanges={sectionHasChanges('travelers')}>
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+            <Label className="text-sm font-medium text-slate-700">Adults</Label>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, adults: Math.max(1, (draftFilters.adults ?? 1) - 1) })} disabled={(draftFilters.adults ?? 1) <= 1} aria-label="Remove one adult"><Minus className="h-3.5 w-3.5" /></Button>
+              <span className="w-5 text-center text-sm font-semibold tabular-nums text-slate-900">{draftFilters.adults ?? 1}</span>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, adults: (draftFilters.adults ?? 1) + 1 })} aria-label="Add one adult"><Plus className="h-3.5 w-3.5" /></Button>
             </div>
           </div>
-          <div className="p-2 bg-gray-50 rounded">
-            <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">Children</Label>
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-bold text-gray-900 w-10 text-center" style={{ fontFeatureSettings: '"tnum"' }}>{draftFilters.children ?? 0}</span>
-              <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded" onClick={() => setDraftFilters({ ...draftFilters, children: Math.max(0, (draftFilters.children ?? 0) - 1) })} disabled={(draftFilters.children ?? 0) <= 0}><Minus className="h-3.5 w-3.5" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded" onClick={() => setDraftFilters({ ...draftFilters, children: (draftFilters.children ?? 0) + 1 })}><Plus className="h-3.5 w-3.5" /></Button>
-              </div>
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
+            <Label className="text-sm font-medium text-slate-700">Children</Label>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, children: Math.max(0, (draftFilters.children ?? 0) - 1) })} disabled={(draftFilters.children ?? 0) <= 0} aria-label="Remove one child"><Minus className="h-3.5 w-3.5" /></Button>
+              <span className="w-5 text-center text-sm font-semibold tabular-nums text-slate-900">{draftFilters.children ?? 0}</span>
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, children: (draftFilters.children ?? 0) + 1 })} aria-label="Add one child"><Plus className="h-3.5 w-3.5" /></Button>
             </div>
           </div>
         </div>
@@ -201,7 +259,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
           </div>
           <div className="flex flex-wrap gap-1.5">
             {PRICE_PRESETS.map((p) => (
-              <Button key={p.label} variant="outline" size="sm" className="px-2.5 py-1.5 rounded text-xs transition-colors hover:bg-blue-50 hover:border-blue-300" onClick={() => handlePricePreset(p.min, p.max)}>
+              <Button key={p.label} variant="outline" size="sm" className="h-auto rounded-lg border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700" onClick={() => handlePricePreset(p.min, p.max)}>
                 {p.label}
               </Button>
             ))}
@@ -216,10 +274,10 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             <label
               key={theme}
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors cursor-pointer",
+                "inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
                 draftFilters.theme?.includes(theme)
-                  ? "bg-blue-50 border-blue-500 text-blue-700 border shadow-[0_0_0_1px_rgb(37,99,235)]"
-                  : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200 border"
+                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
               )}
               onClick={() => {
                 const current = draftFilters.theme || [];
@@ -247,10 +305,10 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             <label
               key={p.label}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors cursor-pointer",
+                "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
                 draftFilters.durationMin === p.min && draftFilters.durationMax === p.max
-                  ? "bg-blue-50 border-blue-500 text-blue-700 border shadow-[0_0_0_1px_rgb(37,99,235)]"
-                  : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200 border"
+                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
               )}
               onClick={() => handleDurationPreset(p.min, p.max)}
             >
@@ -265,12 +323,12 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
           <Separator className="my-1.5" />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1 block">Min Days</Label>
-              <Input type="number" min="1" max="30" value={draftFilters.durationMin || ""} onChange={(e) => setDraftFilters({ ...draftFilters, durationMin: Number(e.target.value) || undefined })} className="h-9 text-sm" />
+              <Label className="mb-1.5 block text-xs font-medium text-slate-500">Minimum days</Label>
+              <Input type="number" min="1" max="30" value={draftFilters.durationMin || ""} onChange={(e) => setDraftFilters({ ...draftFilters, durationMin: Number(e.target.value) || undefined })} className="h-10 rounded-lg border-slate-200 text-sm" />
             </div>
             <div>
-              <Label className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1 block">Max Days</Label>
-              <Input type="number" min="1" max="30" value={draftFilters.durationMax || ""} onChange={(e) => setDraftFilters({ ...draftFilters, durationMax: Number(e.target.value) || undefined })} className="h-9 text-sm" />
+              <Label className="mb-1.5 block text-xs font-medium text-slate-500">Maximum days</Label>
+              <Input type="number" min="1" max="30" value={draftFilters.durationMax || ""} onChange={(e) => setDraftFilters({ ...draftFilters, durationMax: Number(e.target.value) || undefined })} className="h-10 rounded-lg border-slate-200 text-sm" />
             </div>
           </div>
         </div>
@@ -283,10 +341,10 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             <label
               key={scope}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors cursor-pointer border",
+                "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
                 draftFilters.geographicScope === scope
-                  ? "bg-blue-50 border-blue-500 text-blue-700 border shadow-[0_0_0_1px_rgb(37,99,235)]"
-                  : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200 border"
+                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
               )}
               onClick={() => setDraftFilters({ ...draftFilters, geographicScope: scope })}
             >
@@ -302,10 +360,10 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             </label>
           ))}
           <label className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors cursor-pointer border",
+            "flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
             !draftFilters.geographicScope
-              ? "bg-blue-50 border-blue-500 text-blue-700 border shadow-[0_0_0_1px_rgb(37,99,235)]"
-              : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200 border"
+              ? "border-blue-300 bg-blue-50 text-blue-700"
+              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
           )}>
             <input
               type="radio"
@@ -323,7 +381,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
       {/* Sort By */}
       <FilterSection title="Sort By" icon={Filter} expanded={expandedSections.sort} onToggle={() => toggleSection("sort")} hasChanges={sectionHasChanges('sort')}>
         <Select value={draftFilters.sortBy || "recommended"} onValueChange={(value) => setDraftFilters({ ...draftFilters, sortBy: value as SortOption })}>
-          <SelectTrigger className="w-full h-9 text-sm">
+          <SelectTrigger className="h-10 w-full rounded-lg border-slate-200 text-sm">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
           <SelectContent>
@@ -366,27 +424,10 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
     setDraftFilters({ ...draftFilters, priceMin: min, priceMax: max === Infinity ? undefined : max });
   };
 
-  const applyFilters = useCallback(async () => {
+  const applyFilters = useCallback(() => {
     setIsApplying(true);
-    try {
-      Object.entries(draftFilters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== "") {
-          if (Array.isArray(value)) {
-            if (value.length === 0) {
-              setFilters({ [key]: [] });
-            } else {
-              setFilters({ [key]: value });
-            }
-          } else {
-            setFilters({ [key]: value });
-          }
-        } else {
-          setFilters({ [key]: undefined });
-        }
-      });
-    } finally {
-      setIsApplying(false);
-    }
+    setFilters({ ...draftFilters, page: 1 }, true);
+    setIsApplying(false);
   }, [draftFilters, setFilters]);
 
   const resetDraft = useCallback(() => {
@@ -407,24 +448,26 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-50 md:hidden">
+      <div className="fixed inset-0 z-50 lg:hidden">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-xl flex flex-col animate-slide-in-right">
-          <div className="flex items-center justify-between p-3 border-b border-gray-100 sticky top-0 bg-white z-10">
-            <h2 className="text-base font-semibold text-gray-900">Filters</h2>
-            <div className="flex items-center gap-1.5">
+        <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-in-right">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Refine your search</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Choose what matters for your trip</p>
+            </div>
+            <div className="flex items-center gap-2">
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X className="mr-1 h-3 w-3" />
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-600">
                   Clear
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-4 w-4 text-gray-600" />
+              <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close filters">
+                <X className="h-4 w-4 text-slate-600" />
               </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-4">
             <FilterContent
               filters={filters}
               draftFilters={draftFilters}
@@ -438,13 +481,13 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
               isApplying={isApplying}
             />
           </div>
-          <div className="p-3 border-t border-gray-100 bg-white sticky bottom-0">
-            <div className="flex gap-1.5">
-              <Button variant="outline" className="flex-1 text-xs py-2" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
+          <div className="sticky bottom-0 border-t border-slate-200 bg-white p-4">
+            <div className="flex gap-3">
+              <Button variant="outline" className="h-11 flex-1 rounded-lg" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
                 Reset
               </Button>
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium text-sm" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
-                {isApplying ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <>Apply <Check className="ml-1 h-3 w-3" /></>}
+              <Button className="h-11 flex-1 rounded-lg bg-blue-600 font-medium text-white hover:bg-blue-700" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
+                {isApplying ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <>Show packages <Check className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
           </div>
@@ -454,23 +497,23 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
   }
 
   return (
-    <aside className="hidden md:block w-68 flex-shrink-0">
-      <div className="sticky top-20 space-y-4">
-        <div className="flex items-center justify-between mb-1.5">
-          <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-md bg-blue-100 flex items-center justify-center">
-              <svg className="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+    <aside className="hidden w-68 flex-shrink-0 md:block">
+      <div className="sticky top-20 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-2 px-1 py-1">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+              <svg className="h-4 w-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
             </div>
             Filters
           </h2>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-xs text-slate-500 hover:text-blue-700">
               <X className="mr-1 h-3 w-3" />
               Clear
             </Button>
           )}
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <FilterContent
             filters={filters}
             draftFilters={draftFilters}
@@ -485,13 +528,13 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
           />
         </div>
         {hasDraftChanges && (
-          <div className="pt-2.5 border-t border-gray-100">
-            <div className="flex gap-1.5">
-              <Button variant="outline" className="flex-1 text-xs py-2" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
+          <div className="mt-3 border-t border-slate-200 pt-3">
+            <div className="flex gap-2">
+              <Button variant="outline" className="h-10 flex-1 rounded-lg text-sm" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
                 Reset
               </Button>
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium text-sm" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
-                {isApplying ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <>Apply <Check className="ml-1 h-3 w-3" /></>}
+              <Button className="h-10 flex-1 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
+                {isApplying ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <>Apply filters <Check className="ml-1.5 h-4 w-4" /></>}
               </Button>
             </div>
           </div>

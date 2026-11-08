@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInfinitePackages } from "@/features/public/hooks/use-infinite-packages";
+import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
 import type { PackageFilters } from "@/features/public/types/public-filters.types";
 
 interface PackageGridProps {
@@ -18,6 +19,7 @@ interface PackageGridProps {
 
 export function PackageGrid({ filters, onEdit, onDelete, onStatusChange, onViewDetail, viewMode = "grid" }: PackageGridProps) {
   const { packages, isLoading, isLoadingMore, error, hasMore, total, facets, loadMoreRef, refresh } = useInfinitePackages(filters);
+  const { clearFilters } = usePackageFilters();
 
   if (isLoading) {
     return (
@@ -54,7 +56,7 @@ export function PackageGrid({ filters, onEdit, onDelete, onStatusChange, onViewD
         <p className="text-gray-500 mb-6 max-w-md mx-auto">
           Try adjusting your filters or search terms to find what you're looking for.
         </p>
-        <Button variant="outline" onClick={() => window.dispatchEvent(new CustomEvent("clear-filters"))}>
+        <Button variant="outline" onClick={clearFilters}>
           Clear All Filters
         </Button>
       </div>

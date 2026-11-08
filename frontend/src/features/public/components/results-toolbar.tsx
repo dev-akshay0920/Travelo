@@ -21,15 +21,24 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
     filters.startDate && { key: "startDate", label: `From ${filters.startDate}` },
     filters.endDate && { key: "endDate", label: `To ${filters.endDate}` },
     filters.flexibleDates && { key: "flexibleDates", label: "Flexible dates" },
+    ((filters.adults ?? 1) > 1 || (filters.children ?? 0) > 0) && {
+      key: "travelers",
+      label: `${(filters.adults ?? 1) + (filters.children ?? 0)} travelers`,
+    },
     filters.durationMin && { key: "durationMin", label: `Min ${filters.durationMin} days` },
     filters.durationMax && { key: "durationMax", label: `Max ${filters.durationMax} days` },
-    filters.geographicScope && { key: "scope", label: `Scope: ${filters.geographicScope}` },
+    filters.geographicScope && { key: "geographicScope", label: `Scope: ${filters.geographicScope}` },
   ].filter(Boolean) as Array<{ key: string; label: string }>;
 
   const removeFilter = (key: string) => {
     const updates: Record<string, any> = {};
     if (key === "destinations") updates.destinations = [];
     else if (key === "theme") updates.theme = [];
+    else if (key === "travelers") {
+      updates.adults = 1;
+      updates.children = 0;
+      updates.infants = 0;
+    }
     else updates[key] = undefined;
     setFilters(updates, true);
   };
@@ -118,7 +127,7 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
         </div>
 
         {/* Mobile Filter Trigger */}
-        <Button variant="outline" size="sm" className="md:hidden gap-2" onClick={() => document.dispatchEvent(new CustomEvent("open-filters"))}>
+        <Button variant="outline" size="sm" className="md:hidden gap-2" onClick={() => window.dispatchEvent(new CustomEvent("open-filters"))}>
           <SlidersHorizontal className="h-4 w-4" />
           <span>Filters</span>
           {hasFilters && <span className="h-4 w-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center">2</span>}
