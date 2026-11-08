@@ -1,0 +1,182 @@
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Star, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { AgencySummary } from "@/features/public/api/public-packages.api";
+
+interface AgencyCarouselProps {
+  agencies: AgencySummary[];
+  error?: string;
+}
+
+export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [cardsPerView, setCardsPerView] = useState(3); // Default for desktop
+  const [mounted, setMounted] = useState(false);
+
+  const updateCardsPerView = useCallback(() => {
+    const width = window.innerWidth;
+    if (width >= 1024) setCardsPerView(4);
+    else if (width >= 768) setCardsPerView(3);
+    else if (width >= 640) setCardsPerView(2);
+    else setCardsPerView(1);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    updateCardsPerView();
+    window.addEventListener("resize", updateCardsPerView);
+    return () => window.removeEventListener("resize", updateCardsPerView);
+  }, [updateCardsPerView]);
+
+  // Calculate maxIndex based on mounted state
+  const maxIndex = mounted ? Math.max(0, agencies.length - cardsPerView) : Math.max(0, agencies.length - 3);
+
+  const next = () => setCurrentIndex((i) => Math.min(i + 1, maxIndex));
+  const prev = () => setCurrentIndex((i) => Math.max(i - 1, 0));
+
+  return (
+    <section className="py-16 bg-white" aria-labelledby="agencies-heading">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 id="agencies-heading" className="text-xl font-semibold text-gray-900">Approved Travel Agencies</h2>
+          {agencies.length > 0 && (
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/agencies" className="text-blue-600 hover:text-blue-700 font-medium">View All <ChevronRight className="ml-1 h-4 w-4" /></a>
+            </Button>
+          )}
+        </div>
+
+        {agencies.length > 0 ? (
+          <div className="relative">
+            {/* Left Arrow */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:-left-3 hidden sm:flex h-10 w-10 rounded-full shadow-lg bg-white border-gray-200 hover:bg-gray-50"
+              onClick={prev}
+              disabled={currentIndex === 0}
+              aria-label="Previous agencies"
+            >
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
+            </Button>
+
+            {/* Carousel */}
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4" style={{ scrollSnapType: "x mandatory" }}>
+              {agencies.map((agency) => (
+                <article
+                  key={agency.id}
+                  className={cn(
+                    "flex-shrink-0 snap-center transition-transform duration-300",
+                    "w-full sm:max-w-[280px] md:max-w-[300px]"
+                  )}
+                >
+                  <AgencyCard agency={agency} />
+                </article>
+              ))}
+            </div>
+
+            {/* Right Arrow */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 md:-right-3 hidden sm:flex h-10 w-10 rounded-full shadow-lg bg-white border-gray-200 hover:bg-gray-50"
+              onClick={next}
+              disabled={currentIndex >= maxIndex}
+              aria-label="Next agencies"
+            >
+              <ChevronRight className="h-5 w-5 text-gray-600" />
+            </Button>
+          </div>
+        ) : (
+            <p className="text-sm text-gray-600" role={error ? "alert" : undefined}>
+              {error ?? "No approved agencies are available yet."}
+            </p>
+        )}
+
+        {/* Dots Indicator - only render on client to avoid hydration mismatch */}
+        {mounted && maxIndex > 0 && (
+          <div className="flex justify-center gap-2 mt-4" suppressHydrationWarning>
+            {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentIndex(i)}
+                className={cn(
+                  "h-2 w-2 rounded-full transition-all",
+                  i === currentIndex ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"
+                )}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AgencyCard({ agency }: { agency: AgencySummary }) {
+  return (
+    <Card className="h-full overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 hover:border-blue-200">
+      <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100 relative">
+        {agency.logo ? (
+          <Image
+            src={agency.logo}
+            alt={agency.name}
+            fill
+            unoptimized
+            className="object-cover transition-transform duration-300 hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <MapPin className="h-10 w-10 text-gray-300" />
+          </div>
+        )}
+      </div>
+      <div className="p-4 space-y-2">
+        <h3 className="font-semibold text-gray-900 line-clamp-1">{agency.name}</h3>
+        <div className="flex items-center gap-1 text-sm text-gray-500">
+          <MapPin className="h-3.5 w-3.5" />
+          <span className="truncate">{agency.destination}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {agency.rating && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+              <Star className="h-3 w-3 fill-current" />
+              {agency.rating.toFixed(1)}
+            </span>
+          )}
+          {agency.reviewCount && (
+            <span className="text-xs text-gray-500">({agency.reviewCount} reviews)</span>
+          )}
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-sm text-gray-600">{agency.packageCount} packages</span>
+          <Button variant="ghost" size="sm" asChild className="text-blue-600 hover:text-blue-700 font-medium">
+            <a href={`/agencies/${agency.slug}`}>View</a>
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AgencyCardSkeleton() {
+  return (
+    <Card className="h-full overflow-hidden border border-gray-100 w-full sm:max-w-[280px] md:max-w-[300px] animate-pulse">
+      <Skeleton className="aspect-[16/10] w-full" />
+      <div className="p-4 space-y-3">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    </Card>
+  );
+}
