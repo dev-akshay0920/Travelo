@@ -62,7 +62,7 @@ function SidebarItem({ item, isActive, onClick }: { item: { label: string; href:
 
 export function TravellerShell({ children }: TravellerShellProps) {
   const pathname = usePathname();
-  const activeKey = sidebarNavItems.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.key;
+  const activeKey = sidebarNavItems.find((item) => pathname === item.href || (item.href !== "/traveller" && pathname.startsWith(`${item.href}/`)))?.key;
 
   return (
     <div className="flex h-screen overflow-hidden">
