@@ -2,7 +2,9 @@ import { apiClient } from "@/lib/api/client";
 
 export interface WatchlistItem {
   id: string;
-  packageId: string;
+  packageId?: string;
+  agencyId?: string;
+  itemType: "package" | "agency";
   createdAt: string;
   updatedAt: string;
 }
@@ -25,24 +27,52 @@ export interface IsSavedResult {
 }
 
 export const watchlistApi = {
-  async toggle(packageId: string): Promise<ToggleWatchlistResult> {
+  async toggle({
+    packageId,
+    agencyId,
+    itemType,
+  }: {
+    packageId?: string;
+    agencyId?: string;
+    itemType: "package" | "agency";
+  }): Promise<ToggleWatchlistResult> {
     const data = await apiClient.post<{ data: ToggleWatchlistResult }>(
       "/watchlist/toggle",
-      { body: { packageId } }
+      { body: { packageId, agencyId, itemType } }
     );
     return data.data;
   },
 
-  async list(page = 1, limit = 10): Promise<WatchlistResponse> {
+  async list({
+    page = 1,
+    limit = 10,
+    itemType,
+  }: {
+    page?: number;
+    limit?: number;
+    itemType?: "package" | "agency";
+  } = {}): Promise<WatchlistResponse> {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (itemType) params.set("itemType", itemType);
     const data = await apiClient.get<{ data: WatchlistResponse }>(
-      `/watchlist?page=${page}&limit=${limit}`
+      `/watchlist?${params.toString()}`
     );
     return data.data;
   },
 
-  async isSaved(packageId: string): Promise<IsSavedResult> {
+  async isSavedPackage(packageId: string): Promise<IsSavedResult> {
     const data = await apiClient.get<{ data: IsSavedResult }>(
       `/watchlist/${encodeURIComponent(packageId)}/saved`
+    );
+    return data.data;
+  },
+
+  async isSavedAgency(agencyId: string): Promise<IsSavedResult> {
+    const data = await apiClient.get<{ data: IsSavedResult }>(
+      `/watchlist/agency/${encodeURIComponent(agencyId)}/saved`
     );
     return data.data;
   },

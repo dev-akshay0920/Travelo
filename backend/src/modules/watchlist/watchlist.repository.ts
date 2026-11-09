@@ -1,21 +1,31 @@
 import { Types } from "mongoose";
-import type { WatchlistDocument } from "./watchlist.model";
+import type { WatchlistDocument, WatchlistItemType } from "./watchlist.model";
 import { Watchlist } from "./watchlist.model";
 
 export interface WatchlistCreateInput {
   travellerId: Types.ObjectId;
-  packageId: Types.ObjectId;
+  packageId?: Types.ObjectId;
+  agencyId?: Types.ObjectId;
+  itemType: WatchlistItemType;
 }
 
 export interface WatchlistFilters {
   travellerId: string;
+  itemType?: WatchlistItemType;
   status?: "active" | "removed";
   page?: number;
   limit?: number;
 }
 
 export interface WatchlistListResponse {
-  items: Array<{ id: string; packageId: string; createdAt: Date; updatedAt: Date }>;
+  items: Array<{
+    id: string;
+    packageId?: string;
+    agencyId?: string;
+    itemType: WatchlistItemType;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
   total: number;
   page: number;
   limit: number;
@@ -28,7 +38,15 @@ export const WatchlistRepository = {
       return null;
     }
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
-    return await Watchlist.findOne({ travellerId, packageId }).exec();
+    return await Watchlist.findOne({ travellerId, packageId, itemType: "package" }).exec();
+  },
+
+  async findByTravellerAndAgency(travellerId: Types.ObjectId, agencyId: Types.ObjectId): Promise<WatchlistDocument | null> {
+    if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(agencyId)) {
+      return null;
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return await Watchlist.findOne({ travellerId, agencyId, itemType: "agency" }).exec();
   },
 
   async findByTraveller(filters: WatchlistFilters): Promise<WatchlistListResponse> {
@@ -37,6 +55,9 @@ export const WatchlistRepository = {
     }
 
     const query: Record<string, unknown> = { travellerId: filters.travellerId };
+    if (filters.itemType) {
+      query.itemType = filters.itemType;
+    }
     if (filters.status) {
       query.status = filters.status;
     }
@@ -56,7 +77,9 @@ export const WatchlistRepository = {
     return {
       items: items.map((doc: WatchlistDocument) => ({
         id: String(doc._id),
-        packageId: String(doc.packageId),
+        packageId: doc.packageId ? String(doc.packageId) : undefined,
+        agencyId: doc.agencyId ? String(doc.agencyId) : undefined,
+        itemType: doc.itemType,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       })),
@@ -78,7 +101,20 @@ export const WatchlistRepository = {
     }
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     const updated = await Watchlist.findOneAndUpdate(
-      { travellerId, packageId },
+      { travellerId, packageId, itemType: "package" },
+      { $set: { status } },
+      { new: true, upsert: true }
+    ).exec();
+    return updated as Promise<WatchlistDocument | null>;
+  },
+
+  async updateAgencyStatus(travellerId: Types.ObjectId, agencyId: Types.ObjectId, status: "active" | "removed"): Promise<WatchlistDocument | null> {
+    if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(agencyId)) {
+      return null;
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const updated = await Watchlist.findOneAndUpdate(
+      { travellerId, agencyId, itemType: "agency" },
       { $set: { status } },
       { new: true, upsert: true }
     ).exec();
@@ -89,7 +125,15 @@ export const WatchlistRepository = {
     if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(packageId)) {
       return false;
     }
-    const result = await (Watchlist as unknown as { deleteOne: (filter: Record<string, unknown>) => { exec: () => Promise<{ deletedCount: number }> } }).deleteOne({ travellerId, packageId }).exec();
+    const result = await (Watchlist as unknown as { deleteOne: (filter: Record<string, unknown>) => { exec: () => Promise<{ deletedCount: number }> } }).deleteOne({ travellerId, packageId, itemType: "package" }).exec();
+    return result.deletedCount === 1;
+  },
+
+  async removeAgency(travellerId: Types.ObjectId, agencyId: Types.ObjectId): Promise<boolean> {
+    if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(agencyId)) {
+      return false;
+    }
+    const result = await (Watchlist as unknown as { deleteOne: (filter: Record<string, unknown>) => { exec: () => Promise<{ deletedCount: number }> } }).deleteOne({ travellerId, agencyId, itemType: "agency" }).exec();
     return result.deletedCount === 1;
   },
 
@@ -100,11 +144,19 @@ export const WatchlistRepository = {
     return Watchlist.countDocuments({ travellerId, status: "active" }).exec();
   },
 
-  async isSaved(travellerId: Types.ObjectId, packageId: Types.ObjectId): Promise<boolean> {
+  async isPackageSaved(travellerId: Types.ObjectId, packageId: Types.ObjectId): Promise<boolean> {
     if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(packageId)) {
       return false;
     }
-    const count = await Watchlist.countDocuments({ travellerId, packageId, status: "active" }).exec();
+    const count = await Watchlist.countDocuments({ travellerId, packageId, itemType: "package", status: "active" }).exec();
+    return count > 0;
+  },
+
+  async isAgencySaved(travellerId: Types.ObjectId, agencyId: Types.ObjectId): Promise<boolean> {
+    if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(agencyId)) {
+      return false;
+    }
+    const count = await Watchlist.countDocuments({ travellerId, agencyId, itemType: "agency", status: "active" }).exec();
     return count > 0;
   },
 };

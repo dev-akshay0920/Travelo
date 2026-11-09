@@ -45,7 +45,7 @@ export default function TravellerExplorePage() {
   ].filter(Boolean) as Array<{ key: string; label: string }>;
 
   const removeFilter = (key: string) => {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     if (key === "destinations") updates.destinations = [];
     else if (key === "theme") updates.theme = [];
     else updates[key] = undefined;
