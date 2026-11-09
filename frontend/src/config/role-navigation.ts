@@ -5,6 +5,9 @@ export const travellerNavigation: NavigationItem[] = [
   { label: "Home", href: "/traveller", segment: routeSegments.customer },
   { label: "Explore", href: "/traveller/explore", segment: routeSegments.customer },
   { label: "My Leads", href: "/traveller/leads", segment: routeSegments.customer },
+  { label: "Watchlist", href: "/traveller/watchlist", segment: routeSegments.customer },
+  { label: "Messages", href: "/traveller/chat", segment: routeSegments.customer },
+  { label: "Reviews", href: "/traveller/reviews", segment: routeSegments.customer },
   { label: "Profile", href: "/traveller/profile", segment: routeSegments.customer },
 ];
 

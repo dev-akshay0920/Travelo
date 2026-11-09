@@ -6,6 +6,10 @@ import type { GeographicScope, PackageStatus, TripTheme } from "../modules/packa
 import { Role } from "../modules/roles/role.model";
 import { RoleService } from "../modules/roles/role.service";
 import { User } from "../modules/users/user.model";
+import { Watchlist } from "../modules/watchlist/watchlist.model";
+import { Conversation } from "../modules/chat/chat.model";
+import { Message } from "../modules/chat/chat.model";
+import { Review } from "../modules/reviews/reviews.model";
 import { connectDatabase, disconnectDatabase } from "../config/database";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -510,7 +514,227 @@ async function seedTravelData(): Promise<void> {
   }
 
   const publicPackageCount = packages.filter((item) => (item.visibility ?? "public") === "public").length;
+
+  // ---------- Travellers ----------
+  const DEMO_TRAVELLER_PASSWORD = "TravoraDemo!2026";
+  const travellers = [
+    {
+      key: "priya-sharma",
+      name: "Priya Sharma",
+      email: "priya.sharma@example.com",
+      phone: "+91 90000 20001",
+      city: "Bengaluru",
+      state: "Karnataka",
+    },
+    {
+      key: "rohit-verma",
+      name: "Rohit Verma",
+      email: "rohit.verma@example.com",
+      phone: "+91 90000 20002",
+      city: "Delhi",
+      state: "Delhi",
+    },
+    {
+      key: "sneha-reddy",
+      name: "Sneha Reddy",
+      email: "sneha.reddy@example.com",
+      phone: "+91 90000 20003",
+      city: "Hyderabad",
+      state: "Telangana",
+    },
+    {
+      key: "vikram-singh",
+      name: "Vikram Singh",
+      email: "vikram.singh@example.com",
+      phone: "+91 90000 20004",
+      city: "Pune",
+      state: "Maharashtra",
+    },
+  ] as const;
+
+  // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+  const travellerRole = await Role.findOne({ key: "traveller" }).exec();
+  if (!travellerRole) {
+    throw new Error("The traveller role was not available after seeding default roles.");
+  }
+
+  const travellerPasswordHash = await bcrypt.hash(DEMO_TRAVELLER_PASSWORD, BCRYPT_SALT_ROUNDS);
+  const travellerIds = new Map<string, { userId: string }>();
+
+  for (const traveller of travellers) {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const owner = await User.findOneAndUpdate(
+      { email: traveller.email },
+      {
+        $set: {
+          roleId: travellerRole._id,
+          name: traveller.name,
+          email: traveller.email,
+          passwordHash: travellerPasswordHash,
+          status: "active",
+          emailVerified: true,
+          authProvider: "email_password",
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).exec();
+    travellerIds.set(traveller.key, { userId: String(owner._id) });
+  }
+
+  // Helper to resolve a package ObjectId by slug
+  async function packageIdBySlug(slug: string): Promise<string | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const doc = await Package.findOne({ slug }).exec();
+    return doc ? String(doc._id) : null;
+  }
+
+  // Seed watchlist: each traveller saves a few packages
+  const watchlistSeeds: Array<{ travellerKey: (typeof travellers)[number]["key"]; packageSlug: string }> = [
+    { travellerKey: "priya-sharma", packageSlug: "ladakh-grand-traverse" },
+    { travellerKey: "priya-sharma", packageSlug: "goa-coastal-weekender" },
+    { travellerKey: "rohit-verma", packageSlug: "manali-mountain-adventure" },
+    { travellerKey: "rohit-verma", packageSlug: "kerala-backwater-escape" },
+    { travellerKey: "sneha-reddy", packageSlug: "kashmir-valley-honeymoon" },
+    { travellerKey: "sneha-reddy", packageSlug: "goa-sunset-honeymoon" },
+    { travellerKey: "vikram-singh", packageSlug: "rajasthan-heritage-triangle" },
+    { travellerKey: "vikram-singh", packageSlug: "spiti-valley-expedition" },
+  ];
+
+  for (const wl of watchlistSeeds) {
+    const pkgId = await packageIdBySlug(wl.packageSlug);
+    const traveller = travellerIds.get(wl.travellerKey);
+    if (!pkgId || !traveller) continue;
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    await Watchlist.findOneAndUpdate(
+      { travellerId: traveller.userId, packageId: pkgId },
+      { $setOnInsert: { travellerId: traveller.userId, packageId: pkgId, status: "active" } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).exec();
+  }
+
+  // Seed conversations + messages between travellers and agencies
+  const conversationSeeds: Array<{
+    travellerKey: (typeof travellers)[number]["key"];
+    agencyKey: (typeof agencies)[number]["key"];
+    packageSlug: string;
+    messages: Array<{ sender: "traveller" | "agency"; content: string }>;
+  }> = [
+    {
+      travellerKey: "priya-sharma",
+      agencyKey: "wanderlust-goa",
+      packageSlug: "goa-coastal-weekender",
+      messages: [
+        { sender: "traveller", content: "Hi! I'm interested in the Goa Coastal Weekender. Is it available for a family of 4?" },
+        { sender: "agency", content: "Hello Priya! Yes, we have availability. The 3-day weekender is ₹12,999 per person. Shall I block dates for you?" },
+        { sender: "traveller", content: "Please share the detailed itinerary and inclusions. I'll get back to you shortly." },
+      ],
+    },
+    {
+      travellerKey: "rohit-verma",
+      agencyKey: "himalayan-horizon",
+      packageSlug: "manali-mountain-adventure",
+      messages: [
+        { sender: "traveller", content: "Hi Tsering, looking at the Manali Mountain Adventure for December. What's the weather like?" },
+        { sender: "agency", content: "Hi Rohit! December is cold with possible snowfall - perfect for mountain adventures. We provide warm gear recommendations." },
+        { sender: "traveller", content: "Great, I'd like to proceed with booking for 2 adults." },
+      ],
+    },
+    {
+      travellerKey: "sneha-reddy",
+      agencyKey: "kerala-coast",
+      packageSlug: "kerala-backwater-escape",
+      messages: [
+        { sender: "traveller", content: "Namaste! Interested in the Kerala Backwaters package. Do you offer honeymoon customization?" },
+        { sender: "agency", content: "Hello Sneha! Absolutely, we can customize the itinerary with special honeymoon arrangements like houseboat stays and candlelight dinners." },
+      ],
+    },
+  ];
+
+  for (const conv of conversationSeeds) {
+    const pkgId = await packageIdBySlug(conv.packageSlug);
+    const traveller = travellerIds.get(conv.travellerKey);
+    const agencyInfo = agencyIds.get(conv.agencyKey);
+    if (!pkgId || !traveller || !agencyInfo) continue;
+
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const conversation = await Conversation.findOneAndUpdate(
+      { travellerId: traveller.userId, agencyId: agencyInfo.agencyId, status: "active" },
+      { $setOnInsert: { travellerId: traveller.userId, agencyId: agencyInfo.agencyId, status: "active", lastMessageAt: new Date() } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).exec();
+
+    const convId = String(conversation._id);
+    let index = 0;
+    for (const msg of conv.messages) {
+      index++;
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      await Message.create({
+        conversationId: convId,
+        senderId: msg.sender === "traveller" ? traveller.userId : agencyInfo.ownerUserId,
+        senderRole: msg.sender,
+        content: msg.content,
+        readAt: index === conv.messages.length ? undefined : new Date(),
+      });
+    }
+
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    await Conversation.findByIdAndUpdate(convId, { $set: { lastMessageAt: new Date() } }).exec();
+  }
+
+  // Seed reviews for packages
+  const reviewSeeds: Array<{
+    travellerKey: (typeof travellers)[number]["key"];
+    packageSlug: string;
+    agencyKey: (typeof agencies)[number]["key"];
+    rating: number;
+    comment: string;
+  }> = [
+    {
+      travellerKey: "priya-sharma",
+      packageSlug: "goa-coastal-weekender",
+      agencyKey: "wanderlust-goa",
+      rating: 5,
+      comment: "Wonderful weekend in Goa! The beach stay was excellent and the guide was very knowledgeable. Highly recommended.",
+    },
+    {
+      travellerKey: "rohit-verma",
+      packageSlug: "manali-mountain-adventure",
+      agencyKey: "himalayan-horizon",
+      rating: 4,
+      comment: "Great adventure trip. The trekking was well-organized and the accommodation was comfortable.",
+    },
+    {
+      travellerKey: "sneha-reddy",
+      packageSlug: "kerala-backwater-escape",
+      agencyKey: "kerala-coast",
+      rating: 5,
+      comment: "Absolutely loved the backwaters houseboat experience. Peaceful and rejuvenating!",
+    },
+    {
+      travellerKey: "vikram-singh",
+      packageSlug: "rajasthan-heritage-triangle",
+      agencyKey: "royal-rajasthan",
+      rating: 4,
+      comment: "Heritage hotels were beautiful. The Jaipur-Udaipur route was well planned.",
+    },
+  ];
+
+  for (const rv of reviewSeeds) {
+    const pkgId = await packageIdBySlug(rv.packageSlug);
+    const traveller = travellerIds.get(rv.travellerKey);
+    const agencyInfo = agencyIds.get(rv.agencyKey);
+    if (!pkgId || !traveller || !agencyInfo) continue;
+
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    await Review.findOneAndUpdate(
+      { travellerId: traveller.userId, packageId: pkgId },
+      { $setOnInsert: { travellerId: traveller.userId, packageId: pkgId, agencyId: agencyInfo.agencyId, rating: rv.rating, comment: rv.comment, status: "approved" } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).exec();
+  }
+
   process.stdout.write(`Seeded ${agencies.length} demo agencies and ${packages.length} packages (${publicPackageCount} public).\n`);
+  process.stdout.write(`Seeded ${travellers.length} demo travellers with watchlist items, conversations and reviews.\n`);
   process.stdout.write("Run this command again safely to refresh the same demo records; unrelated collections are not removed.\n");
 }
 

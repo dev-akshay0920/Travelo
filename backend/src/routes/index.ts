@@ -6,6 +6,9 @@ import { agencyRouter } from "../modules/agencies/agency.routes";
 import { authRouter } from "../modules/auth/auth.routes";
 import { packageRouter } from "../modules/packages/package.routes";
 import { publicRouter } from "./public.routes";
+import { watchlistRouter } from "../modules/watchlist/watchlist.routes";
+import { chatRouter } from "../modules/chat/chat.routes";
+import { reviewsRouter } from "../modules/reviews/reviews.routes";
 
 const router = Router();
 
@@ -30,5 +33,8 @@ router.use("/auth", authRouter);
 router.use("/agencies", agencyRouter);
 router.use("/packages", packageRouter);
 router.use("/public", publicRouter);
+router.use("/watchlist", watchlistRouter);
+router.use("/chat", chatRouter);
+router.use("/reviews", reviewsRouter);
 
 export const apiV1Router: Router = router;
