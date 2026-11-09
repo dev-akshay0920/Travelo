@@ -53,6 +53,13 @@ export default function TravellerProfilePage() {
 
   return (
     <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <p className="mt-1 text-gray-600">Manage your traveller details and preferences</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Avatar & Quick Actions */}
           <div className="lg:col-span-1">

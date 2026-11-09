@@ -58,6 +58,13 @@ export default function TravellerChatPage() {
 
   return (
     <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
+          <p className="mt-1 text-gray-600">Conversations with travel agencies</p>
+        </div>
+      </div>
+
       {conversations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 mb-4">

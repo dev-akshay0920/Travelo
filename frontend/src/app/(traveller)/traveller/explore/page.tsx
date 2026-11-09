@@ -72,6 +72,20 @@ export default function TravellerExplorePage() {
 
   return (
     <>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Explore Packages</h1>
+          <p className="mt-1 text-gray-600">
+            Discover handpicked travel experiences from verified agencies
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500 hidden sm:block">
+            {total.toLocaleString("en-IN")} packages available
+          </span>
+        </div>
+      </div>
+
       <div className="flex gap-8">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-72 flex-shrink-0">
@@ -81,7 +95,7 @@ export default function TravellerExplorePage() {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Mobile Filter Trigger */}
-            <div className="lg:hidden mb-4">
+            <div className="lg:hidden mb-6">
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(true)}
@@ -105,7 +119,9 @@ export default function TravellerExplorePage() {
             </div>
 
             {/* Results Toolbar */}
-            <ResultsToolbar total={total} hasFilters={hasActiveFilters} />
+            <div className="mb-6">
+              <ResultsToolbar total={total} hasFilters={hasActiveFilters} />
+            </div>
 
             {/* Package Grid */}
             <PackageGrid
