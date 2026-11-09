@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { formatDisplayDate } from "@/lib/date-format";
 
 type PackageCardProps = {
   package: TravelPackage;
@@ -16,12 +17,6 @@ type PackageCardProps = {
   onStatusChange: (pkg: TravelPackage, status: PackageStatus) => void;
   onViewDetail?: (pkg: TravelPackage) => void;
 };
-
-function formatDate(dateString: string): string {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
 
 function formatPrice(price: number, currency: string = "INR"): string {
   if (currency === "INR") {
@@ -44,30 +39,30 @@ function calculateDuration(startDate: string, endDate: string): string {
 }
 
 function getSeatColor(available: number, max?: number): string {
-  if (available <= 0) return "text-gray-400";
-  if (!max) return "text-green-600";
+  if (available <= 0) return "text-muted-foreground";
+  if (!max) return "text-success";
   const pct = (available / max) * 100;
-  if (pct > 50) return "text-green-600";
-  if (pct > 20) return "text-amber-600";
-  return "text-red-600";
+  if (pct > 50) return "text-success";
+  if (pct > 20) return "text-warning";
+  return "text-destructive";
 }
 
 function getSeatBg(available: number, max?: number): string {
-  if (available <= 0) return "bg-gray-100";
-  if (!max) return "bg-green-50";
+  if (available <= 0) return "bg-muted";
+  if (!max) return "bg-success-muted";
   const pct = (available / max) * 100;
-  if (pct > 50) return "bg-green-50";
-  if (pct > 20) return "bg-amber-50";
-  return "bg-red-50";
+  if (pct > 50) return "bg-success-muted";
+  if (pct > 20) return "bg-warning-muted";
+  return "bg-destructive-muted";
 }
 
 function getSeatBorder(available: number, max?: number): string {
-  if (available <= 0) return "border-gray-200";
-  if (!max) return "border-green-200";
+  if (available <= 0) return "border-border";
+  if (!max) return "border-success/30";
   const pct = (available / max) * 100;
-  if (pct > 50) return "border-green-200";
-  if (pct > 20) return "border-amber-200";
-  return "border-red-200";
+  if (pct > 50) return "border-success/30";
+  if (pct > 20) return "border-warning/30";
+  return "border-destructive/30";
 }
 
 export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, onViewDetail }: PackageCardProps) {
@@ -80,11 +75,11 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
   return (
     <Card className={cn(
       "flex flex-col overflow-hidden transition-shadow duration-200 pt-0",
-      "border border-gray-100 shadow-sm hover:shadow-md",
+      "border-border shadow-card hover:shadow-md",
       isSoldOut && "opacity-50"
     )}>
       {/* Image - First child of Card for pt-0 */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         {primaryImage ? (
           <img
             src={primaryImage.url}
@@ -93,13 +88,13 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
             loading="lazy"
           />
         ) : (
-          <MapPinIcon className="absolute inset-0 w-10 h-10 mx-auto my-auto text-gray-300" />
+          <MapPinIcon className="absolute inset-0 w-10 h-10 mx-auto my-auto text-muted-foreground" />
         )}
         
         {/* Status badge - top left */}
         <span className={cn(
-          "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold",
-          "bg-white/95 backdrop-blur-sm shadow-sm",
+          "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-caption font-semibold",
+          "bg-card/95 shadow-sm",
           PACKAGE_STATUS_COLORS[pkg.status]
         )}>
           {pkg.status.replace("_", " ")}
@@ -107,42 +102,42 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
 
         {/* Price - bottom left on image */}
         <div className="absolute bottom-1.5 left-1.5">
-          <div className="bg-white/95 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-lg">
-            <span className="font-bold text-gray-900">{formatPrice(pkg.price, pkg.currency)}</span>
-            <span className="text-xs text-gray-500 ml-1">/{pkg.priceType === "per_person" ? "person" : "pkg"}</span>
+          <div className="bg-card/95 rounded-lg px-3 py-2 shadow-md">
+            <span className="font-bold text-foreground">{formatPrice(pkg.price, pkg.currency)}</span>
+            <span className="text-caption text-muted-foreground ml-1">/{pkg.priceType === "per_person" ? "person" : "pkg"}</span>
           </div>
         </div>
       </div>
 
       {/* Content - Tight */}
-      <CardContent className="p-2.5 pb-2 space-y-2">
+      <CardContent className="p-4 space-y-4">
         {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{pkg.name}</h3>
-            <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+            <h3 className="font-semibold text-card-title text-foreground line-clamp-1">{pkg.name}</h3>
+            <p className="flex items-center gap-1 text-body-sm text-muted-foreground mt-1">
               <MapPin className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{pkg.destination}</span>
-              <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-gray-100 text-[10px] font-medium text-gray-600">{duration}</span>
+              <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-muted text-caption font-medium text-muted-foreground">{duration}</span>
             </p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
+              <Button variant="ghost" size="icon-sm" className="rounded-lg text-muted-foreground">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[130px] rounded-lg border-gray-200 shadow-lg p-1">
+            <DropdownMenuContent align="end" className="min-w-36">
               {onViewDetail && (
-                <DropdownMenuItem onClick={() => onViewDetail(pkg)} className="px-2.5 py-1.5 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                  <Eye className="h-3.5 w-3.5 text-gray-400" />View
+                <DropdownMenuItem onClick={() => onViewDetail(pkg)} className="text-body-sm font-medium">
+                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />View
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => onEdit(pkg)} className="px-2.5 py-1.5 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                <Pencil className="h-3.5 w-3.5 text-gray-400" />Edit
+              <DropdownMenuItem onClick={() => onEdit(pkg)} className="text-body-sm font-medium">
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />Edit
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="my-1 bg-gray-200" />
-              <DropdownMenuItem onClick={() => onDelete(pkg)} className="px-2.5 py-1.5 rounded text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2">
+              <DropdownMenuSeparator className="my-1" />
+              <DropdownMenuItem onClick={() => onDelete(pkg)} variant="destructive" className="text-body-sm font-medium">
                 <Trash2 className="h-3.5 w-3.5" />Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -150,56 +145,56 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
         </div>
 
         {/* 3 Key Info Rows */}
-        <div className="grid grid-cols-3 gap-1.5 text-center">
-          <div className="bg-gray-50 rounded-lg border border-gray-100 p-2 min-w-0">
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Start</p>
-            <p className="font-semibold text-[11px] text-gray-900 truncate flex items-center justify-center gap-0.5">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
+            <p className="text-caption font-semibold text-muted-foreground">Start</p>
+            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
               <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-              {formatDate(pkg.startDate)}
+              {formatDisplayDate(pkg.startDate, "—")}
             </p>
           </div>
-          <div className="bg-gray-50 rounded-lg border border-gray-100 p-2 min-w-0">
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">End</p>
-            <p className="font-semibold text-[11px] text-gray-900 truncate flex items-center justify-center gap-0.5">
+          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
+            <p className="text-caption font-semibold text-muted-foreground">End</p>
+            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
               <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-              {formatDate(pkg.endDate)}
+              {formatDisplayDate(pkg.endDate, "—")}
             </p>
           </div>
           <div className={cn("rounded-lg border-2 p-2 min-w-0", getSeatBg(availableSeats, maxSeats), getSeatBorder(availableSeats, maxSeats))}>
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Seats</p>
-            <p className={cn("font-bold text-lg", getSeatColor(availableSeats, maxSeats))}>{availableSeats > 0 ? availableSeats : "Sold Out"}</p>
-            {maxSeats > 0 && availableSeats > 0 && <p className="text-[9px] text-gray-500">of {maxSeats}</p>}
+            <p className="text-caption font-semibold text-muted-foreground">Seats</p>
+            <p className={cn("font-bold text-card-title", getSeatColor(availableSeats, maxSeats))}>{availableSeats > 0 ? availableSeats : "Sold Out"}</p>
+            {maxSeats > 0 && availableSeats > 0 && <p className="text-caption text-muted-foreground">of {maxSeats}</p>}
           </div>
         </div>
 
         {/* Last Booking + Price Valid / Nights-Days */}
-        <div className="grid grid-cols-2 gap-1.5 text-center">
-          <div className="bg-gray-50 rounded-lg border border-gray-100 p-2 min-w-0">
-            <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Last Booking</p>
-            <p className="font-semibold text-[11px] text-gray-900 truncate flex items-center justify-center gap-0.5">
-              <Clock className="h-3 w-3 text-amber-500 flex-shrink-0" />
-              {formatDate(pkg.bookingDeadline)}
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
+            <p className="text-caption font-semibold text-muted-foreground">Last Booking</p>
+            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
+              <Clock className="h-3 w-3 text-brand-accent flex-shrink-0" />
+              {formatDisplayDate(pkg.bookingDeadline, "—")}
             </p>
           </div>
           {pkg.priceValidUntil ? (
-            <div className="bg-amber-50 rounded-lg border border-amber-100 p-2 min-w-0">
-              <p className="text-[9px] font-semibold text-amber-700 uppercase tracking-wider">Price Valid</p>
-              <p className="font-medium text-[11px] text-amber-800 truncate">{formatDate(pkg.priceValidUntil)}</p>
+            <div className="bg-brand-accent-soft rounded-lg border border-brand-accent/30 p-2.5 min-w-0">
+              <p className="text-caption font-semibold text-brand-accent-foreground">Price Valid</p>
+              <p className="font-medium text-body-sm text-brand-accent-foreground truncate">{formatDisplayDate(pkg.priceValidUntil, "—")}</p>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-lg border border-gray-100 p-2 min-w-0">
-              <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Nights/Days</p>
-              <p className="font-medium text-[11px] text-gray-700 truncate">{pkg.durationNights}N / {pkg.durationDays}D</p>
+            <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
+              <p className="text-caption font-semibold text-muted-foreground">Nights/Days</p>
+              <p className="font-medium text-body-sm text-foreground truncate">{pkg.durationNights}N / {pkg.durationDays}D</p>
             </div>
           )}
         </div>
 
         {/* Bottom Tags */}
-        <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-gray-100">
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent text-accent-foreground border border-border whitespace-nowrap">
             {pkg.geographicScope.charAt(0).toUpperCase() + pkg.geographicScope.slice(1)}
           </span>
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100 whitespace-nowrap">
+          <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent text-accent-foreground border border-border whitespace-nowrap">
             {pkg.tripTheme.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
           </span>
         </div>

@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Loader2, Save, Send } from "lucide-react";
+import { Camera, Save, Send } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { PageStack } from "@/components/shared/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { YearPickerField } from "@/components/ui/year-picker";
 import { Avatar } from "@/components/ui/avatar";
@@ -464,7 +466,7 @@ export default function AgencyPage() {
   const renderProfile = () => {
     if (isLoading) {
       return (
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
+        <PageStack>
           <div className="flex flex-col gap-1">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64" />
@@ -572,13 +574,13 @@ export default function AgencyPage() {
             <Skeleton className="h-10 w-40" />
             <Skeleton className="h-10 w-48" />
           </div>
-        </div>
+        </PageStack>
       );
     }
 
     if (!agency) {
       return (
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
+        <PageStack>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Agency Profile</h1>
             <p className="text-sm text-muted-foreground">Create your agency profile to get started.</p>
@@ -617,12 +619,12 @@ export default function AgencyPage() {
                 </div>
               </div>
               <Button onClick={handleCreateAgency} disabled={isCreating || !agencyName.trim()} className="md:w-48">
-                {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isCreating ? <Spinner label="Creating agency" size="sm" className="mr-2" /> : null}
                 Create Agency Profile
               </Button>
             </CardContent>
           </Card>
-        </div>
+        </PageStack>
       );
     }
 
@@ -698,7 +700,7 @@ export default function AgencyPage() {
                   </p>
                   {isUploadingLogo && (
                     <p className="flex items-center justify-center gap-2 pt-1 text-sm text-muted-foreground sm:justify-start" role="status">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Spinner label="Checking availability" size="sm" />
                       Uploading image to save your profile…
                     </p>
                   )}
@@ -1021,7 +1023,7 @@ export default function AgencyPage() {
               disabled={agency.status !== "draft" || isSaving || isSubmitting || isUploadingLogo}
               className="md:w-40 shadow-sm transition-all duration-200 hover:shadow-md"
             >
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSaving ? <Spinner label="Saving agency" size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
               Save Draft
             </Button>
             <Button
@@ -1030,7 +1032,7 @@ export default function AgencyPage() {
               disabled={agency.status !== "draft" || isSaving || isSubmitting || isUploadingLogo}
               className="md:w-48 shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30"
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              {isSubmitting ? <Spinner label="Submitting agency" size="sm" className="mr-2" /> : <Send className="mr-2 h-4 w-4" />}
               Submit for Approval
             </Button>
           </div>

@@ -6,6 +6,7 @@ import { Menu, X, Search, User, LogIn, LayoutDashboard, Heart, ShoppingBag } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { PageContainer } from "@/components/shared/page-container";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
 import { usePathname } from "next/navigation";
 
@@ -29,7 +30,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Top Bar */}
       <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <PageContainer className="py-0">
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600 hover:opacity-80 transition-opacity">
@@ -96,7 +97,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </form>
             </div>
           )}
-        </div>
+        </PageContainer>
       </header>
 
       {/* Mobile Menu Sheet */}
@@ -136,8 +137,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <PageContainer className="py-8">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             <div>
               <Link href="/" className="text-xl font-bold text-white">Travora</Link>
               <p className="mt-2 text-sm">Discover handpicked travel packages from verified local agencies.</p>
@@ -177,7 +178,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <a href="#" className="hover:text-white transition-colors" aria-label="Instagram"><svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </footer>
 
       <style jsx>{`

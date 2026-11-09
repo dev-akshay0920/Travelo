@@ -9,7 +9,6 @@ import {
   Star,
   Trash2,
   GripVertical,
-  Loader2,
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import {
   uploadPackageImagesApi,
   deletePackageImageApi,
@@ -407,7 +407,7 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
                   <img src={pf.preview} alt="" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-white mx-auto" />
+                      <Spinner label="Uploading image" size="lg" className="mx-auto text-white" />
                       <Progress value={uploadProgress[pf.id] || 0} className="mt-2 w-full max-w-xs" />
                     </div>
                   </div>
@@ -541,7 +541,7 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
                     {isPending && (
                       <div className="absolute bottom-1 left-1">
                         <Badge variant="secondary" className="gap-1 px-2 py-0.5">
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <Spinner label="Updating image" size="sm" />
                           Pending
                         </Badge>
                       </div>

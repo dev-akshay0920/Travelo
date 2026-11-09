@@ -66,7 +66,7 @@ export function TemplateSelect({ type, value: _value, onChange }: TemplateSelect
             <div className="flex flex-col">
               <span className="text-sm font-medium">{template.name}</span>
               {template.isDefault && (
-                <span className="text-[10px] text-muted-foreground">System</span>
+                <span className="text-caption text-muted-foreground">System</span>
               )}
             </div>
           </SelectItem>

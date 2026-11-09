@@ -13,6 +13,7 @@ import { getPackageByIdApi } from "@/features/packages/api/package.api";
 import type { TravelPackage } from "@/features/packages/types/package.types";
 import { PackageDetailModal } from "@/features/packages/components/package-detail-modal";
 import { getPublicAgencyApi } from "@/features/agencies/api/agency.api";
+import { formatDisplayDate } from "@/lib/date-format";
 
 interface WatchlistPackageItem {
   id: string;
@@ -367,9 +368,9 @@ export default function TravellerWatchlistPage() {
                     <Package className="h-12 w-12 text-gray-300" />
                   )}
                   <span className={cn(
-                    "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold",
-                    "bg-white/95 backdrop-blur-sm shadow-sm",
-                    item.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                    "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-caption font-semibold",
+                    "bg-card/95 shadow-sm",
+                    item.status === "active" ? "bg-success-muted text-success-foreground" : "bg-muted text-muted-foreground"
                   )}>
                     {item.status.replace("_", " ")}
                   </span>
@@ -387,9 +388,9 @@ export default function TravellerWatchlistPage() {
                   </p>
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{item.availableSeats} seats left</span>
-                    <span>{new Date(item.createdAt).toLocaleDateString("en-IN")}</span>
+                    <span>{formatDisplayDate(item.createdAt, "—")}</span>
                   </div>
-                  <p className="text-[10px] text-gray-500 text-right">
+                  <p className="text-caption text-muted-foreground text-right">
                     {item.agencyName}
                   </p>
                 </CardContent>
@@ -445,7 +446,7 @@ export default function TravellerWatchlistPage() {
                         ? "Travel agency"
                         : `${item.packageCount} packages`}
                     </span>
-                    <span>{new Date(item.createdAt).toLocaleDateString("en-IN")}</span>
+                    <span>{formatDisplayDate(item.createdAt, "—")}</span>
                   </div>
                 </CardContent>
                 <CardContent className="mt-auto flex gap-2 border-t border-gray-50 pt-3">

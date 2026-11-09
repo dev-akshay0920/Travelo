@@ -83,7 +83,7 @@ src/
 │   └── not-found.tsx
 │
 ├── components/
-│   ├── ui/                  # shadcn/ui primitives (untouched)
+│   ├── ui/                  # Shared shadcn/ui primitives
 │   ├── layout/              # Reusable layout chrome (header, footer)
 │   ├── navigation/          # Shared navigation
 │   └── shared/              # Genuinely cross-feature components
@@ -104,18 +104,26 @@ src/
 
 ### Design system
 
-Colors live as **semantic CSS variables** in `src/app/globals.css` and are
-mapped to Tailwind tokens through `@theme`. Components use tokens such as
-`bg-primary`, `text-foreground`, and `border-border` — never raw hex — so the
-palette is rebranchable from one place.
+Colors and typography live as **semantic CSS variables** in
+`src/app/globals.css` and are mapped to Tailwind tokens through `@theme`.
+Components use tokens such as `bg-primary`, `text-foreground`, and
+`border-border` — never raw hex — so the palette can be adjusted centrally.
 
 ```text
-Primary  #0F4C5C   Secondary #0E7490   Accent #F9735B
-Background #F8FAFC  Surface  #FFFFFF    Foreground #0F172A
+Primary #2563EB   Brand secondary #0F766E   Brand accent #F59E0B
+Background #F8FAFC  Surface #FFFFFF         Foreground #0F172A
+
+Buttons and fields: 40px default / 36px compact
+Cards: 12px radius / 20px spacing
+Dialogs: 24px padding / 32rem maximum width
+Dates: d MMM yyyy
 ```
 
-Dark mode is prepared (toggle the `dark` class on `<html>`) but intentionally
-not fully designed yet.
+Shared controls live in `src/components/ui/`; the system standardizes buttons,
+cards, dialogs, form controls, dropdowns, calendars, and status feedback.
+Workspace UI instructions in `.github/instructions/` keep future frontend
+changes aligned with these conventions. See `TRAVORA_FRONTEND_RULES.md` for
+the full component and accessibility standards.
 
 ### API boundary
 

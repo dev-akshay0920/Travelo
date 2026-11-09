@@ -2,6 +2,7 @@
 
 import { PackageCard } from "@/features/public/components/public-package-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInfinitePackages } from "@/features/public/hooks/use-infinite-packages";
@@ -98,7 +99,7 @@ export function PackageGrid({ filters, onEdit, onDelete, onStatusChange, onViewD
         {isLoadingMore && (
           <div className="flex items-center justify-center py-8">
             <div className="flex items-center gap-3 text-gray-500">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              <Spinner label="Loading more packages" size="md" className="text-primary" />
               <span>Loading more packages...</span>
             </div>
           </div>

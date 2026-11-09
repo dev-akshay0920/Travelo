@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Save, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 import { createPackageApi } from "@/features/packages/api/package.api";
 import type { CreatePackageInput, GeographicScope, TripTheme, PackageVisibility, PackageStatus } from "@/features/packages/types/package.types";
@@ -684,7 +685,7 @@ export default function NewPackagePage() {
             Cancel
           </Button>
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {isSaving ? <Spinner label="Saving package" size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
             Save Package
           </Button>
         </div>

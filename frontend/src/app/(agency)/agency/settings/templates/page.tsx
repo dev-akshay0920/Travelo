@@ -129,7 +129,7 @@ export default function SettingsTemplatesTab() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-xs">{template.name}</span>
                         {template.isDefault && (
-                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">System</span>
+                          <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-caption text-primary">System</span>
                         )}
                       </div>
                     </td>

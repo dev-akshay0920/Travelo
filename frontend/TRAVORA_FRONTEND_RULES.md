@@ -171,39 +171,42 @@ Shared layers must **not** depend on feature-specific code. For example, `compon
 
 The design system is centralized. All colors are authored once as **semantic CSS variables** in `src/app/globals.css` and exposed to Tailwind via `@theme inline`. Components reference tokens — **never raw hex** — so the palette is rebranchable from one place.
 
-Official starting brand palette:
+Official brand palette:
 
 ```text
-Primary        #0F4C5C
-Primary Hover  #0B3D4A
-Secondary      #0E7490
-Accent         #F9735B
+Primary          #2563EB (primary actions and selected states)
+Primary Hover    #1D4ED8
+Brand Secondary  #0F766E (supporting brand accents)
+Brand Accent     #F59E0B (small, high-attention highlights)
 
-Background     #F8FAFC
-Surface        #FFFFFF
+Background       #F8FAFC
+Surface          #FFFFFF
 
-Foreground     #0F172A
-Muted          #64748B
-Border         #E2E8F0
+Foreground       #0F172A
+Muted            #64748B
+Border           #E2E8F0
 ```
+
+The shadcn `secondary` and `accent` tokens are neutral and soft interactive surfaces; use `brand-secondary` and `brand-accent` when the brand colors themselves are needed. Status colors (`success`, `warning`, `info`, `destructive`) also live in the token layer.
 
 Components must use semantic tokens:
 
 ```text
-bg-primary        text-primary         bg-background
-bg-card           text-card-foreground text-foreground
-text-muted-foreground  border-border   bg-surface (card)
+bg-primary              text-primary-foreground
+bg-background           bg-card
+text-foreground          text-muted-foreground
+border-border            text-brand-secondary
 ```
 
-**Do NOT** scatter raw hex repeatedly (`bg-[#0F4C5C]`, `text-[#64748B]`, `border-[#E2E8F0]`). If a color is part of the design system, define and use the semantic token.
+Do not add raw hex values to components or pages. If a color is part of the design system, define and use a semantic token in `src/app/globals.css`.
 
 ---
 
 ## 9. COLOR USAGE
 
-- **Primary (`#0F4C5C`)** — primary CTAs, important actions, brand elements, active states.
-- **Secondary (`#0E7490`)** — secondary interactive elements, supporting brand.
-- **Accent (`#F9735B`)** — use sparingly; draw attention to important travel actions/highlights. Do not make the whole UI accent-colored.
+- **Primary (`#2563EB`)** — primary CTAs, important actions, brand elements, active states.
+- **Brand secondary (`#0F766E`)** — supporting brand elements; use the neutral `secondary` token for standard secondary buttons.
+- **Brand accent (`#F59E0B`)** — use sparingly for important travel highlights. Do not make the whole UI accent-colored.
 - **Neutrals** — backgrounds, surfaces, borders, text, muted info.
 
 The application must feel calm and premium.
@@ -224,13 +227,19 @@ Travora should look: **modern, trustworthy, premium, friendly, clean, spacious, 
 
 Primary font: **Inter** (via `next/font`, `display: swap`). Use Next.js's recommended font-loading approach.
 
-Typography hierarchy (use consistently):
+Use the shared Tailwind typography utilities defined in `src/app/globals.css`:
 
 ```text
-Display  →  H1  →  H2  →  H3  →  Body  →  Small  →  Caption
+Display        text-display        36px–60px, responsive
+Page title     text-page-title     30px / 36px
+Section title  text-section-title  24px / 32px
+Card title     text-card-title     18px / 24px
+Body           text-body           15px / 24px
+Supporting     text-body-sm        14px / 20px
+Caption        text-caption        12px / 16px
 ```
 
-Do not randomly choose font sizes per component — reuse the existing system. `font-sans` and `font-heading` are configured in `globals.css`.
+Use `font-sans` for interface text and the semantic utilities for headings and supporting copy. Keep labels at 14px, use 12px only for metadata, and do not create arbitrary per-component font sizes. `font-sans` and `font-heading` are configured in `globals.css`.
 
 ---
 
@@ -240,8 +249,30 @@ Use `shadcn/ui` as the base component system. Do **not** replace it with another
 
 - When a required component exists in shadcn, **prefer the shadcn implementation.** Do not rebuild an equivalent from scratch without reason.
 - On customization: preserve accessibility, component consistency, and variant patterns. Avoid one-off styling hacks.
-- Do not modify the underlying component system globally to solve a local problem.
+- Modify shared primitives only for an intentional design-system-wide change, not to solve a local page problem.
 - Only install the primitives actually needed; do not install the entire shadcn catalog.
+
+Standard component scale:
+
+| Component | Standard |
+|-----------|----------|
+| Buttons | 40px default, 36px small, 44px large; medium weight; primary uses the primary token |
+| Form controls | 40px default, 36px compact; 14px text on desktop and at least 16px on small screens |
+| Cards | 12px radius, 20px padding, subtle border and shadow; compact cards use 16px padding |
+| Dialogs | 24px padding, 12px radius, 32rem default maximum width, clear title/description/footer |
+| Menus and selects | Popover surface, shared border/radius/shadow, 14px menu items |
+| Dates | Human-readable dates use `d MMM yyyy`; form/API date values remain ISO `yyyy-MM-dd` |
+
+Use the existing Button, Card, Dialog, Select, Calendar, Input, and Label primitives rather than one-off replacements. Preserve keyboard navigation, visible focus, accessible names, disabled/error states, and mobile responsiveness. Do not add glassmorphism or decorative global backgrounds.
+
+### Shared application layout
+
+- Use `PageContainer` for the shared content width and responsive horizontal gutters. Do not add another page-level gutter/max-width wrapper inside a shell that already uses it.
+- Use `PageStack` when a page needs the shared vertical section rhythm; keep denser card-internal spacing local.
+- Reuse `AppShellHeader` and `IconSidebar` for authenticated shells. Role-specific navigation data belongs in feature shells, while shared layout and tooltip behavior stay in `components/shared/`.
+- Use `Tooltip` for icon-only desktop actions and preserve visible labels on touch/mobile navigation.
+- Use `Spinner` for compact async actions, and `LoadingState`, `EmptyState`, and `ErrorState` for page-level feedback. Keep loading layouts stable and do not invent per-page spinner styles.
+- New components must use semantic colors. Existing palette-named Tailwind classes are mapped through compatibility aliases; do not add further legacy palette classes or hard-coded colors.
 
 ---
 
@@ -437,7 +468,7 @@ Reuse the existing patterns: `ErrorState`, `EmptyState`, `LoadingState`/`Skeleto
 
 ## 26. LOADING STATES
 
-Do not leave users with blank screens. For async UI, use loading states / skeletons and preserve layout stability. Use Next.js loading boundaries where appropriate. Avoid gratuitous spinners.
+Do not leave users with blank screens. For async UI, use `LoadingState`/`Skeleton` and preserve layout stability. Use the shared `Spinner` only for compact in-place actions and Next.js loading boundaries where appropriate. Respect reduced-motion preferences and avoid gratuitous spinners.
 
 ---
 

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { watchlistApi } from "@/features/watchlist/api/watchlist.api";
 import { toast } from "sonner";
+import { formatDisplayDate } from "@/lib/date-format";
 
 type ViewType = "packages" | "agencies" | "both";
 
@@ -33,17 +34,6 @@ interface UnifiedItem {
   type: "package" | "agency";
   package?: PublicTravelPackage;
   agency?: AgencyCardItem;
-}
-
-function formatPackageDate(date: string): string {
-  const parsedDate = new Date(date);
-  if (Number.isNaN(parsedDate.getTime())) return "Date not set";
-
-  return parsedDate.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  });
 }
 
 export default function TravellerExplorePage() {
@@ -396,7 +386,7 @@ export default function TravellerExplorePage() {
                             <p className="mt-1 flex items-center gap-1.5 font-semibold text-gray-800">
                               <CalendarDays className="h-3.5 w-3.5 shrink-0 text-gray-400" />
                               <span className="truncate">
-                                {formatPackageDate(pkg.startDate)} – {formatPackageDate(pkg.endDate)}
+                                {formatDisplayDate(pkg.startDate, "Date not set")} – {formatDisplayDate(pkg.endDate, "Date not set")}
                               </span>
                             </p>
                           </div>

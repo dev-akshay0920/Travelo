@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ChevronDown, ChevronUp, X, Calendar, Users, DollarSign, MapPin, Sparkles, Clock, Globe, SlidersHorizontal, Filter, Search, ChevronLeft, ChevronRight, Minus, Plus, Loader2, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, X, Calendar, Users, DollarSign, MapPin, Sparkles, Clock, Globe, SlidersHorizontal, Filter, Search, ChevronLeft, ChevronRight, Minus, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,6 +17,8 @@ import { TRIP_THEME_LABELS, SORT_OPTIONS, DURATION_PRESETS, PRICE_PRESETS } from
 import { format, parseISO, startOfDay } from "date-fns";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatDisplayDate } from "@/lib/date-format";
+import { Spinner } from "@/components/ui/spinner";
 
 const THEME_OPTIONS: TripTheme[] = [
   "honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"
@@ -44,7 +46,7 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
               <Badge variant="secondary" className="h-5 shrink-0 rounded-full bg-slate-100 px-2 text-xs text-slate-600">{count}</Badge>
             )}
             {hasChanges && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-accent-soft px-2 py-0.5 text-caption font-medium text-brand-accent-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 Unsaved
               </span>
@@ -205,7 +207,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
                   )}
                 >
                   <Calendar className="mr-2 h-4 w-4" />
-                  {draftFilters.startDate ? format(parseISO(draftFilters.startDate), "PPP") : "Select a start date"}
+                  {draftFilters.startDate ? formatDisplayDate(draftFilters.startDate, "Select a start date") : "Select a start date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -237,7 +239,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
                   )}
                 >
                   <Calendar className="mr-2 h-4 w-4" />
-                  {draftFilters.endDate ? format(parseISO(draftFilters.endDate), "PPP") : "Select an end date"}
+                  {draftFilters.endDate ? formatDisplayDate(draftFilters.endDate, "Select an end date") : "Select an end date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -280,7 +282,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             </div>
           </div>
         </div>
-        <p className="text-[10px] text-gray-500 mt-1.5 text-center">{(draftFilters.adults ?? 1) + (draftFilters.children ?? 0)} traveler{(draftFilters.adults ?? 1) + (draftFilters.children ?? 0) !== 1 ? 's' : ''}</p>
+        <p className="text-caption text-muted-foreground mt-1.5 text-center">{(draftFilters.adults ?? 1) + (draftFilters.children ?? 0)} traveler{(draftFilters.adults ?? 1) + (draftFilters.children ?? 0) !== 1 ? 's' : ''}</p>
       </FilterSection>
 
 {/* Price Range */}
@@ -298,7 +300,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             step={1000}
             className="h-2"
           />
-            <div className="flex justify-between mt-1.5 text-[10px] text-gray-500">
+            <div className="flex justify-between mt-1.5 text-caption text-muted-foreground">
               <span>₹0</span>
               <span>₹10L+</span>
             </div>
@@ -536,7 +538,7 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
                 Reset
               </Button>
               <Button className="h-11 flex-1 rounded-lg bg-blue-600 font-medium text-white hover:bg-blue-700" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
-                {isApplying ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <>Show packages <Check className="ml-2 h-4 w-4" /></>}
+                {isApplying ? <Spinner label="Loading packages" size="sm" className="mr-1.5" /> : <>Show packages <Check className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
           </div>
@@ -585,7 +587,7 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
                 Reset
               </Button>
               <Button className="h-10 flex-1 rounded-lg bg-blue-600 text-sm font-medium text-white hover:bg-blue-700" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
-                {isApplying ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <>Apply filters <Check className="ml-1.5 h-4 w-4" /></>}
+                {isApplying ? <Spinner label="Applying filters" size="sm" className="mr-1" /> : <>Apply filters <Check className="ml-1.5 h-4 w-4" /></>}
               </Button>
             </div>
           </div>

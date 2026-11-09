@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Save, Plus, Trash2 } from "lucide-react";
+import { Save, Plus, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 import { createPackageApi, updatePackageApi } from "@/features/packages/api/package.api";
 import type { TravelPackage, CreatePackageInput, GeographicScope, TripTheme, PackageVisibility } from "@/features/packages/types/package.types";
@@ -963,7 +964,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
             Cancel
           </Button>
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            {isSaving ? <Spinner label="Saving package" size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
             {mode === "create" ? "Create Package" : "Save Changes"}
           </Button>
         </div>

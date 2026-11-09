@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
 import { cn } from "@/lib/utils";
+import { formatDisplayDate } from "@/lib/date-format";
 
 type PackageDetailModalProps = {
   package: TravelPackage | null;
@@ -15,12 +16,6 @@ type PackageDetailModalProps = {
   onClose: () => void;
   onEdit?: (pkg: TravelPackage) => void;
 };
-
-function formatDate(dateString: string): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-}
 
 function formatPrice(price: number, currency: string = "INR"): string {
   if (currency === "INR") {
@@ -160,7 +155,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="font-medium">{formatDate(pkg.startDate)} - {formatDate(pkg.endDate)}</p>
+                <p className="font-medium">{formatDisplayDate(pkg.startDate, "")} - {formatDisplayDate(pkg.endDate, "")}</p>
                 <p className="text-xs text-muted-foreground">{pkg.durationDays} Days / {pkg.durationNights} Nights</p>
               </div>
             </div>

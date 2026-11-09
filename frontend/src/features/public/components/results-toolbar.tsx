@@ -130,7 +130,7 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
         <Button variant="outline" size="sm" className="md:hidden gap-2" onClick={() => window.dispatchEvent(new CustomEvent("open-filters"))}>
           <SlidersHorizontal className="h-4 w-4" />
           <span>Filters</span>
-          {hasFilters && <span className="h-4 w-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center">2</span>}
+          {hasFilters && <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-caption flex items-center justify-center">2</span>}
         </Button>
       </div>
 

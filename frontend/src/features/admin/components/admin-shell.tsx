@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Plane } from "lucide-react";
 import { UserMenu } from "@/components/shared/user-menu";
+import { PageContainer } from "@/components/shared/page-container";
 import { adminNavigation } from "@/config/role-navigation";
 import { APP_NAME } from "@/lib/constants";
 import type { RoleKey } from "@/config/routes";
@@ -27,7 +28,7 @@ export function AdminShell({ children }: AdminShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-indigo-900/70 transition-colors hover:text-indigo-900"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -37,7 +38,7 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </header>
       <main className="flex-1 overflow-y-auto custom-scrollbar">
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">{children}</div>
+        <PageContainer>{children}</PageContainer>
       </main>
     </div>
   );
