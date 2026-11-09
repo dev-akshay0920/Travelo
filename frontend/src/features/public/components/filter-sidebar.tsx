@@ -22,7 +22,9 @@ const THEME_OPTIONS: TripTheme[] = [
   "honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"
 ];
 
-function FilterSection({ title, icon: Icon, expanded, onToggle, children, count, hasChanges }: { title: string; icon: React.ComponentType<{ className?: string }>; expanded: boolean; onToggle: () => void; children: React.ReactNode; count?: number; hasChanges?: boolean }) {
+type ExploreViewType = "packages" | "agencies" | "both";
+
+function FilterSection({ title, icon: Icon, expanded, onToggle, children, count, hasChanges, summary }: { title: string; icon: React.ComponentType<{ className?: string }>; expanded: boolean; onToggle: () => void; children: React.ReactNode; count?: number; hasChanges?: boolean; summary?: string }) {
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors">
       <button
@@ -37,6 +39,7 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate text-sm font-semibold text-slate-800">{title}</span>
+            {summary && <span className="truncate text-xs font-medium text-slate-500">{summary}</span>}
             {count !== undefined && count > 0 && (
               <Badge variant="secondary" className="h-5 shrink-0 rounded-full bg-slate-100 px-2 text-xs text-slate-600">{count}</Badge>
             )}
@@ -59,7 +62,7 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
   );
 }
 
-function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, facets, clearFilters, hasActiveFilters, expandedSections, setExpandedSections, isApplying }: { filters: PackageFilters; draftFilters: PackageFilters; setDraftFilters: (f: PackageFilters) => void; setFilters: (f: Partial<PackageFilters>, replace?: boolean) => void; facets?: any; clearFilters: () => void; hasActiveFilters: boolean; expandedSections: Record<string, boolean>; setExpandedSections: (f: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void; isApplying: boolean }) {
+function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, facets, clearFilters, hasActiveFilters, expandedSections, setExpandedSections, isApplying, viewType, onViewTypeChange }: { filters: PackageFilters; draftFilters: PackageFilters; setDraftFilters: (f: PackageFilters) => void; setFilters: (f: Partial<PackageFilters>, replace?: boolean) => void; facets?: any; clearFilters: () => void; hasActiveFilters: boolean; expandedSections: Record<string, boolean>; setExpandedSections: (f: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void; isApplying: boolean; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
   const [showAllDestinations, setShowAllDestinations] = useState(false);
   const setExpanded = useCallback((key: string) => {
     setExpandedSections((prev: Record<string, boolean>) => ({ ...prev, [key]: !prev[key] }));
@@ -101,6 +104,49 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
 
   return (
     <>
+      {viewType && onViewTypeChange && (
+        <FilterSection
+          title="Explore"
+          icon={Filter}
+          expanded={expandedSections.contentType}
+          onToggle={() => toggleSection("contentType")}
+          summary={viewType === "packages" ? "Packages" : viewType === "agencies" ? "Agencies" : "Both"}
+        >
+          <div className="grid gap-2" role="radiogroup" aria-label="What to explore">
+            {([
+              ["packages", "Packages", "Browse travel experiences"],
+              ["agencies", "Agencies", "Discover verified agencies"],
+              ["both", "Both", "See packages and agencies"],
+            ] as const).map(([value, label, description]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={viewType === value}
+                onClick={() => onViewTypeChange(value)}
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+                  viewType === value
+                    ? "border-blue-300 bg-blue-50"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                )}
+              >
+                <span className={cn(
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                  viewType === value ? "border-blue-600" : "border-slate-300"
+                )}>
+                  {viewType === value && <span className="h-2 w-2 rounded-full bg-blue-600" />}
+                </span>
+                <span>
+                  <span className={cn("block text-sm font-medium", viewType === value ? "text-blue-800" : "text-slate-800")}>{label}</span>
+                  <span className="mt-0.5 block text-xs text-slate-500">{description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </FilterSection>
+      )}
+
       {/* Destination */}
       <FilterSection 
         title="Destination" 
@@ -393,17 +439,18 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
   );
 }
 
-export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: any; isMobile?: boolean; onClose?: () => void }) {
+export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onViewTypeChange }: { facets?: any; isMobile?: boolean; onClose?: () => void; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
   const { filters, setFilters, clearFilters, hasActiveFilters } = usePackageFilters();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    destination: true,
-    dates: true,
-    travelers: true,
-    price: true,
-    theme: true,
-    duration: true,
-    scope: true,
-    sort: true,
+    contentType: false,
+    destination: false,
+    dates: false,
+    travelers: false,
+    price: false,
+    theme: false,
+    duration: false,
+    scope: false,
+    sort: false,
   });
   const [draftFilters, setDraftFilters] = useState<PackageFilters>(filters);
   const [isApplying, setIsApplying] = useState(false);
@@ -479,6 +526,8 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
               expandedSections={expandedSections}
               setExpandedSections={setExpandedSections}
               isApplying={isApplying}
+              viewType={viewType}
+              onViewTypeChange={onViewTypeChange}
             />
           </div>
           <div className="sticky bottom-0 border-t border-slate-200 bg-white p-4">
@@ -525,6 +574,8 @@ export function FilterSidebar({ facets, isMobile = false, onClose }: { facets?: 
             expandedSections={expandedSections}
             setExpandedSections={setExpandedSections}
             isApplying={isApplying}
+            viewType={viewType}
+            onViewTypeChange={onViewTypeChange}
           />
         </div>
         {hasDraftChanges && (

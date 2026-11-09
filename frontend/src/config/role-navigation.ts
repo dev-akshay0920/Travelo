@@ -2,9 +2,7 @@ import type { NavigationItem } from "@/config/navigation";
 import { routeSegments } from "@/config/navigation";
 
 export const travellerNavigation: NavigationItem[] = [
-  { label: "Home", href: "/traveller", segment: routeSegments.customer },
   { label: "Explore", href: "/traveller/explore", segment: routeSegments.customer },
-  { label: "Agencies", href: "/traveller/agencies", segment: routeSegments.customer },
   { label: "Watchlist", href: "/traveller/watchlist", segment: routeSegments.customer },
   { label: "Profile", href: "/traveller/profile", segment: routeSegments.customer },
 ];

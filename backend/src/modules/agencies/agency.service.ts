@@ -94,7 +94,9 @@ export const AgencyService = {
   },
 
   async getPublicAgency(slug: string): Promise<AgencyDocument | null> {
-    const agency = await AgencyRepository.findBySlug(slug);
+    const agency = Types.ObjectId.isValid(slug)
+      ? await AgencyRepository.findById(slug)
+      : await AgencyRepository.findBySlug(slug);
     if (!agency || agency.status !== "approved") {
       return null;
     }

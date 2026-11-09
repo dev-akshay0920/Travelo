@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import { Plane, LogOut, Home, Compass, Building2, Heart, User } from "lucide-react";
+import { Plane, LogOut, Compass, Heart, User } from "lucide-react";
 import { UserMenu } from "@/components/shared/user-menu";
 import type { RoleKey } from "@/config/routes";
 import { cn } from "@/lib/utils";
@@ -14,9 +14,7 @@ type TravellerShellProps = {
 };
 
 const sidebarNavItems: Array<{ label: string; href: string; key: string; icon: React.ComponentType<{ className?: string }> }> = [
-  { label: "Home", href: "/traveller", key: "home", icon: Home },
   { label: "Explore", href: "/traveller/explore", key: "explore", icon: Compass },
-  { label: "Agencies", href: "/traveller/agencies", key: "agencies", icon: Building2 },
   { label: "Watchlist", href: "/traveller/watchlist", key: "watchlist", icon: Heart },
   { label: "Profile", href: "/traveller/profile", key: "profile", icon: User },
 ];

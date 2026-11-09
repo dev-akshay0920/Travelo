@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { TravelPackage, PackageImage } from "@/features/packages/types/package.types";
 import { X, Calendar, MapPin, Users, IndianRupee, Sparkles, ChevronLeft, ChevronRight, Expand, Image as ImageIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -13,7 +13,7 @@ type PackageDetailModalProps = {
   package: TravelPackage | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (pkg: TravelPackage) => void;
+  onEdit?: (pkg: TravelPackage) => void;
 };
 
 function formatDate(dateString: string): string {
@@ -34,23 +34,26 @@ function getPrimaryImage(pkg: TravelPackage): PackageImage | undefined {
 }
 
 export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: PackageDetailModalProps) {
+  const [selectedImage, setSelectedImage] = useState<{ packageId: string; index: number } | null>(null);
   if (!pkg) return null;
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const images = pkg.images || [];
   const primaryImage = getPrimaryImage(pkg);
   const primaryIndex = primaryImage ? images.findIndex((img) => img.key === primaryImage.key) : 0;
-
-  useEffect(() => {
-    setSelectedImageIndex(primaryIndex);
-  }, [primaryIndex, images.length]);
+  const selectedImageIndex =
+    selectedImage?.packageId === pkg.id
+      ? Math.min(selectedImage.index, Math.max(images.length - 1, 0))
+      : primaryIndex;
 
   const nextImage = () => {
-    setSelectedImageIndex((prev) => (prev + 1) % images.length);
+    setSelectedImage({ packageId: pkg.id, index: (selectedImageIndex + 1) % images.length });
   };
 
   const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setSelectedImage({
+      packageId: pkg.id,
+      index: (selectedImageIndex - 1 + images.length) % images.length,
+    });
   };
 
   return (
@@ -106,7 +109,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
                       {images.map((_, index) => (
                         <button
                           key={index}
-                          onClick={() => setSelectedImageIndex(index)}
+                          onClick={() => setSelectedImage({ packageId: pkg.id, index })}
                           className={cn(
                             "h-2 w-2 rounded-full transition-all",
                             index === selectedImageIndex
@@ -125,7 +128,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
                   {images.map((image, index) => (
                     <button
                       key={image.key}
-                      onClick={() => setSelectedImageIndex(index)}
+                      onClick={() => setSelectedImage({ packageId: pkg.id, index })}
                       className={cn(
                         "relative flex-shrink-0 aspect-square w-20 rounded-lg overflow-hidden border-2 transition-all",
                         index === selectedImageIndex
@@ -260,9 +263,11 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={() => { onClose(); onEdit(pkg); }}>
-            Edit Package
-          </Button>
+          {onEdit && (
+            <Button onClick={() => { onClose(); onEdit(pkg); }}>
+              Edit Package
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

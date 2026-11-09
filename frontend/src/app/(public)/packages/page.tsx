@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { FilterSidebar } from "@/features/public/components/filter-sidebar";
-import { ResultsToolbar } from "@/features/public/components/results-toolbar";
 import { PackageGrid } from "@/features/public/components/package-grid";
 import { PublicLayout } from "@/features/public/components/public-layout";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
@@ -121,9 +120,6 @@ export default function PackagesPage() {
                   </span>
                 </button>
               </div>
-
-              {/* Results Toolbar */}
-              <ResultsToolbar total={total} hasFilters={hasActiveFilters} />
 
               {/* Package Grid */}
               <PackageGrid

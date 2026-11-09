@@ -166,7 +166,7 @@ export async function fetchPublicAgencies(limit = 8): Promise<{ items: AgencySum
 
   try {
     const response = await fetchWithDeduplication<{ items: AgencySummary[] }>(
-      `${API_BASE}/public/agencies?limit=${limit}&sort=popular`,
+      `${getApiPath("public/agencies")}?limit=${limit}&sort=popular`,
       { next: { revalidate: 300 }, headers: { "Content-Type": "application/json" } },
       cacheKey,
       300000

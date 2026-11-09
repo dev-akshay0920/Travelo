@@ -5,6 +5,7 @@ import type {
 import { WatchlistRepository } from "./watchlist.repository";
 import { ValidationError } from "../../shared/errors/app-error";
 import { Types } from "mongoose";
+import type { WatchlistDocument } from "./watchlist.model";
 
 export interface ToggleWatchlistInput {
   travellerId: string;
@@ -20,6 +21,30 @@ export interface WatchlistItem {
   itemType: "package" | "agency";
   createdAt: string;
   updatedAt: string;
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  );
+}
+
+function toWatchlistItem(document: WatchlistDocument, itemType: "package" | "agency"): WatchlistItem {
+  return {
+    id: String(document._id),
+    ...(itemType === "package" && document.packageId
+      ? { packageId: String(document.packageId) }
+      : {}),
+    ...(itemType === "agency" && document.agencyId
+      ? { agencyId: String(document.agencyId) }
+      : {}),
+    itemType,
+    createdAt: document.createdAt.toISOString(),
+    updatedAt: document.updatedAt.toISOString(),
+  };
 }
 
 export const WatchlistService = {
@@ -68,20 +93,28 @@ export const WatchlistService = {
         };
       }
 
-      const created = await WatchlistRepository.create({
-        travellerId: new Types.ObjectId(travellerId),
-        packageId: new Types.ObjectId(packageId),
-        itemType: "package",
-      });
+      let created;
+      try {
+        created = await WatchlistRepository.create({
+          travellerId: new Types.ObjectId(travellerId),
+          packageId: new Types.ObjectId(packageId),
+          itemType: "package",
+        });
+      } catch (error) {
+        if (!isDuplicateKeyError(error)) throw error;
+
+        const concurrentSave = await WatchlistRepository.findByTravellerAndPackage(
+          new Types.ObjectId(travellerId),
+          new Types.ObjectId(packageId)
+        );
+        if (!concurrentSave) throw error;
+
+        return { saved: true, watchlistItem: toWatchlistItem(concurrentSave, "package") };
+      }
+
       return {
         saved: true,
-        watchlistItem: {
-          id: String(created._id),
-          packageId: String(created.packageId),
-          itemType: created.itemType,
-          createdAt: created.createdAt.toISOString(),
-          updatedAt: created.updatedAt.toISOString(),
-        },
+        watchlistItem: toWatchlistItem(created, "package"),
       };
     } else {
       const { agencyId } = input;
@@ -121,20 +154,28 @@ export const WatchlistService = {
         };
       }
 
-      const created = await WatchlistRepository.create({
-        travellerId: new Types.ObjectId(travellerId),
-        agencyId: new Types.ObjectId(agencyId),
-        itemType: "agency",
-      });
+      let created;
+      try {
+        created = await WatchlistRepository.create({
+          travellerId: new Types.ObjectId(travellerId),
+          agencyId: new Types.ObjectId(agencyId),
+          itemType: "agency",
+        });
+      } catch (error) {
+        if (!isDuplicateKeyError(error)) throw error;
+
+        const concurrentSave = await WatchlistRepository.findByTravellerAndAgency(
+          new Types.ObjectId(travellerId),
+          new Types.ObjectId(agencyId)
+        );
+        if (!concurrentSave) throw error;
+
+        return { saved: true, watchlistItem: toWatchlistItem(concurrentSave, "agency") };
+      }
+
       return {
         saved: true,
-        watchlistItem: {
-          id: String(created._id),
-          agencyId: String(created.agencyId),
-          itemType: created.itemType,
-          createdAt: created.createdAt.toISOString(),
-          updatedAt: created.updatedAt.toISOString(),
-        },
+        watchlistItem: toWatchlistItem(created, "agency"),
       };
     }
   },
