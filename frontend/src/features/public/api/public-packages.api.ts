@@ -1,6 +1,7 @@
 import type { PackageFilters } from "@/features/public/types/public-filters.types";
 import type { TravelPackage as PublicTravelPackage } from "@/features/public/types/public-filters.types";
 import { getApiPath } from "@/lib/api/config";
+import { apiClient } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -110,6 +111,14 @@ export async function fetchPublicPackages(
   );
 
   return normalizePublicPackageResponse(response);
+}
+
+export async function fetchPublicPackageDetails(id: string): Promise<PublicTravelPackage> {
+  const response = await apiClient.get<{
+    success: true;
+    data: { package: PublicTravelPackage };
+  }>(`/public/packages/${encodeURIComponent(id)}`);
+  return response.data.package;
 }
 
 function normalizePublicPackageResponse(response: PublicPackageResponse): PublicPackageResponse {

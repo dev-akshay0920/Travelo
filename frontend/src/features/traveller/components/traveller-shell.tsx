@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import { Compass, Heart, LogOut, Plane, User } from "lucide-react";
+import { Compass, Heart, LogOut, MessageSquareText, Plane, User } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
 import { IconSidebar } from "@/components/shared/icon-sidebar";
@@ -16,6 +16,7 @@ type TravellerShellProps = {
 const sidebarNavItems = [
   { label: "Explore", href: "/traveller/explore", icon: Compass },
   { label: "Watchlist", href: "/traveller/watchlist", icon: Heart },
+  { label: "My inquiries", href: "/traveller/inquiries", icon: MessageSquareText },
   { label: "Profile", href: "/traveller/profile", icon: User },
 ];
 

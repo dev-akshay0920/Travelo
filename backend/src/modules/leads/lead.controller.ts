@@ -7,6 +7,7 @@ import { LeadService } from "./lead.service";
 import {
   createLeadSchema,
   listLeadsQuerySchema,
+  listMyLeadsQuerySchema,
   updateLeadSchema,
 } from "./lead.validation";
 
@@ -31,6 +32,17 @@ export const listLeads = asyncHandler(async (req: Request, res: Response) => {
   const filters = listLeadsQuerySchema.parse(req.query);
   const result = await LeadService.list(authenticatedUserId(req), filters);
   res.status(HTTP_STATUS.OK).json(success(result));
+});
+
+export const listMyLeads = asyncHandler(async (req: Request, res: Response) => {
+  const filters = listMyLeadsQuerySchema.parse(req.query);
+  const result = await LeadService.listMine(authenticatedUserId(req), filters);
+  res.status(HTTP_STATUS.OK).json(success(result));
+});
+
+export const getMyLead = asyncHandler(async (req: Request, res: Response) => {
+  const lead = await LeadService.getMine(authenticatedUserId(req), getLeadId(req));
+  res.status(HTTP_STATUS.OK).json(success({ lead }));
 });
 
 export const getLead = asyncHandler(async (req: Request, res: Response) => {

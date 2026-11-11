@@ -4,7 +4,58 @@ import { asyncHandler } from "../shared/utils/async-handler";
 import { success } from "../shared/responses/api-response";
 import { Package } from "../modules/packages/package.model";
 import { Agency } from "../modules/agencies/agency.model";
-import type { Types } from "mongoose";
+import { Types } from "mongoose";
+import type { FilterQuery } from "mongoose";
+import { z } from "zod";
+import type { PackageDocument } from "../modules/packages/package.model";
+
+const queryValueSchema = z.union([z.string().max(1000), z.array(z.string().max(100)).max(20)]).optional();
+const dateQuerySchema = z.string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+  })
+  .optional();
+const publicPackageStatusSchema = z.union([
+  z.enum(["active", "sold_out"]),
+  z.array(z.enum(["active", "sold_out"])).max(2),
+]).default(["active", "sold_out"]);
+const publicPackageThemeSchema = z.union([
+  z.enum(["honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"]),
+  z.array(z.enum(["honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"])).max(8),
+]).optional();
+
+const publicPackagesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10000).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(24),
+  destination: z.string().trim().max(100).optional(),
+  destinations: queryValueSchema,
+  theme: publicPackageThemeSchema,
+  status: publicPackageStatusSchema,
+  priceMin: z.coerce.number().finite().min(0).max(100_000_000).optional(),
+  priceMax: z.coerce.number().finite().min(0).max(100_000_000).optional(),
+  startDate: dateQuerySchema,
+  endDate: dateQuerySchema,
+  flexibleDates: z.enum(["true", "false"]).optional(),
+  adults: z.coerce.number().int().min(0).max(30).optional(),
+  children: z.coerce.number().int().min(0).max(30).optional(),
+  infants: z.coerce.number().int().min(0).max(30).optional(),
+  durationMin: z.coerce.number().int().min(1).max(365).optional(),
+  durationMax: z.coerce.number().int().min(1).max(365).optional(),
+  geographicScope: z.enum(["domestic", "international", "regional"]).optional(),
+  agencySlug: z.string().regex(/^[a-z0-9-]{1,100}$/i).optional(),
+  sortBy: z.enum(["recommended", "price_asc", "price_desc", "newest", "popular", "ending_soon"]).default("recommended"),
+}).strict().refine((query) => query.priceMin === undefined || query.priceMax === undefined || query.priceMin <= query.priceMax, {
+  message: "Minimum price must not exceed maximum price.",
+  path: ["priceMax"],
+}).refine((query) => query.durationMin === undefined || query.durationMax === undefined || query.durationMin <= query.durationMax, {
+  message: "Minimum duration must not exceed maximum duration.",
+  path: ["durationMax"],
+}).refine((query) => !query.startDate || !query.endDate || query.startDate <= query.endDate, {
+  message: "Start date must not be after end date.",
+  path: ["endDate"],
+});
 
 const router = Router();
 
@@ -56,12 +107,25 @@ function getDefaultTrustBadges() {
 router.get(
   "/packages",
   asyncHandler(async (req: Request, res: Response) => {
+    const parsedQuery = publicPackagesQuerySchema.safeParse(req.query);
+    if (!parsedQuery.success) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid package search filters.",
+          details: parsedQuery.error.flatten(),
+        },
+      });
+    }
+
     const {
-      page = "1",
-      limit = "24",
+      page: pageNum,
+      limit: limitNum,
       destination,
       destinations,
       theme,
+      status,
       priceMin,
       priceMax,
       startDate,
@@ -73,31 +137,35 @@ router.get(
       durationMax,
       geographicScope,
       agencySlug,
-      sortBy = "recommended",
-    } = req.query;
-
-    const pageNum = parseInt(getQueryValue(page) ?? "1", 10) || 1;
-    const limitNum = parseInt(getQueryValue(limit) ?? "24", 10) || 24;
+      sortBy,
+    } = parsedQuery.data;
     const skip = (pageNum - 1) * limitNum;
     const destinationValue = getQueryValue(destination)?.trim();
     const destinationFilters = getQueryValues(destinations);
     const themeFilters = getQueryValues(theme);
-    const startDateValue = getQueryValue(startDate);
-    const endDateValue = getQueryValue(endDate);
-    const priceMinValue = getQueryValue(priceMin);
-    const priceMaxValue = getQueryValue(priceMax);
-    const flexibleDatesValue = getQueryValue(flexibleDates);
-    const adultsValue = getQueryValue(adults);
-    const childrenValue = getQueryValue(children);
-    const durationMinValue = getQueryValue(durationMin);
-    const durationMaxValue = getQueryValue(durationMax);
-    const geographicScopeValue = getQueryValue(geographicScope);
-    const agencySlugValue = getQueryValue(agencySlug);
-    const sortByValue = getQueryValue(sortBy) ?? "recommended";
+    const statusFilters = getQueryValues(status);
+    const startDateValue = startDate;
+    const endDateValue = endDate;
+    const priceMinValue = priceMin;
+    const priceMaxValue = priceMax;
+    const flexibleDatesValue = flexibleDates;
+    const adultsValue = adults;
+    const childrenValue = children;
+    const durationMinValue = durationMin;
+    const durationMaxValue = durationMax;
+    const geographicScopeValue = geographicScope;
+    const agencySlugValue = agencySlug;
+    const sortByValue = sortBy;
+    const now = new Date();
+    const approvedAgencyIds = await Agency.distinct("_id", { status: "approved" }).exec();
+    if (approvedAgencyIds.length === 0) {
+      return res.json(success(getDefaultPackagesResponse()));
+    }
 
-    const filter: any = {
-      status: "active",
+    const filter: FilterQuery<PackageDocument> = {
+      status: { $in: statusFilters },
       visibility: "public",
+      agencyId: { $in: approvedAgencyIds },
     };
 
     if (destinationValue) {
@@ -120,41 +188,53 @@ router.get(
 
     if (priceMinValue !== undefined || priceMaxValue !== undefined) {
       filter.price = {};
-      if (priceMinValue !== undefined) filter.price.$gte = parseInt(priceMinValue, 10);
-      if (priceMaxValue !== undefined) filter.price.$lte = parseInt(priceMaxValue, 10);
+      if (priceMinValue !== undefined) filter.price.$gte = priceMinValue;
+      if (priceMaxValue !== undefined) filter.price.$lte = priceMaxValue;
     }
 
+    const dateWindow = flexibleDatesValue === "true" ? 3 : 0;
+    const startDateFilter: Record<string, Date> = { $gt: now };
     if (startDateValue || endDateValue) {
-      const dateWindow = flexibleDatesValue === "true" ? 3 : 0;
-      filter.startDate = {};
       if (startDateValue) {
-        const date = new Date(startDateValue);
+        const date = new Date(`${startDateValue}T00:00:00.000Z`);
         date.setUTCDate(date.getUTCDate() - dateWindow);
-        filter.startDate.$gte = date;
+        if (date > now) startDateFilter.$gte = date;
         if (flexibleDatesValue === "true" && !endDateValue) {
-          const latestStartDate = new Date(startDateValue);
+          const latestStartDate = new Date(`${startDateValue}T00:00:00.000Z`);
           latestStartDate.setUTCDate(latestStartDate.getUTCDate() + dateWindow + 1);
-          filter.startDate.$lt = latestStartDate;
+          startDateFilter.$lt = latestStartDate;
         }
       }
       if (endDateValue) {
-        const date = new Date(endDateValue);
+        const date = new Date(`${endDateValue}T00:00:00.000Z`);
         date.setUTCDate(date.getUTCDate() + dateWindow + 1);
-        filter.startDate.$lt = date;
+        startDateFilter.$lt = date;
         if (flexibleDatesValue === "true" && !startDateValue) {
-          const earliestStartDate = new Date(endDateValue);
+          const earliestStartDate = new Date(`${endDateValue}T00:00:00.000Z`);
           earliestStartDate.setUTCDate(earliestStartDate.getUTCDate() - dateWindow);
-          filter.startDate.$gte = earliestStartDate;
+          if (earliestStartDate > now) startDateFilter.$gte = earliestStartDate;
         }
       }
     }
+    filter.startDate = startDateFilter;
+    filter.$and = [{
+      $or: [
+        { bookingDeadline: { $exists: false } },
+        { bookingDeadline: { $gte: now } },
+      ],
+    }, {
+      $or: [
+        { status: "sold_out" },
+        { availableSeats: { $gt: 0 } },
+      ],
+    }];
 
-    const adultCount = Math.max(0, Number.parseInt(adultsValue ?? "0", 10) || 0);
-    const childCount = Math.max(0, Number.parseInt(childrenValue ?? "0", 10) || 0);
+    const adultCount = adultsValue ?? 0;
+    const childCount = childrenValue ?? 0;
     const travelerCount = adultCount + childCount;
     if (travelerCount > 0) {
       filter.minTravelers = { $lte: travelerCount };
-      filter.$and = [
+      filter.$and.push(
         {
           $or: [
             { maxTravelers: { $gte: travelerCount } },
@@ -162,13 +242,13 @@ router.get(
           ],
         },
         { availableSeats: { $gte: travelerCount } },
-      ];
+      );
     }
 
     if (durationMinValue !== undefined || durationMaxValue !== undefined) {
       filter.durationDays = {};
-      if (durationMinValue !== undefined) filter.durationDays.$gte = parseInt(durationMinValue, 10);
-      if (durationMaxValue !== undefined) filter.durationDays.$lte = parseInt(durationMaxValue, 10);
+      if (durationMinValue !== undefined) filter.durationDays.$gte = durationMinValue;
+      if (durationMaxValue !== undefined) filter.durationDays.$lte = durationMaxValue;
     }
 
     if (geographicScopeValue) {
@@ -176,7 +256,8 @@ router.get(
     }
 
     if (agencySlugValue) {
-      const agency = await (Agency as any).findOne({ slug: agencySlugValue }).select("_id").lean();
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      const agency = await Agency.findOne({ slug: agencySlugValue, status: "approved" }).select("_id").lean();
       if (agency) {
         filter.agencyId = agency._id;
       } else {
@@ -184,22 +265,22 @@ router.get(
       }
     }
 
-    let sort: any = { createdAt: -1 };
+    let sort: Record<string, 1 | -1> = { isFeatured: -1, createdAt: -1, _id: -1 };
     switch (sortByValue) {
       case "price_asc":
-        sort = { price: 1 };
+        sort = { price: 1, _id: 1 };
         break;
       case "price_desc":
-        sort = { price: -1 };
+        sort = { price: -1, _id: -1 };
         break;
       case "newest":
-        sort = { createdAt: -1 };
+        sort = { createdAt: -1, _id: -1 };
         break;
       case "popular":
-        sort = { "meta.inquiries": -1 };
+        sort = { "meta.inquiries": -1, _id: -1 };
         break;
       case "ending_soon":
-        sort = { endDate: 1 };
+        sort = { endDate: 1, _id: 1 };
         break;
       case "recommended":
       default:
@@ -208,13 +289,14 @@ router.get(
     }
 
     const [packages, total] = await Promise.all([
-      (Package as any).find(filter)
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      Package.find(filter)
         .populate("agencyId", "name slug logo")
         .sort(sort)
         .skip(skip)
         .limit(limitNum)
         .lean(),
-      Package.countDocuments(filter),
+      Package.countDocuments(filter).exec(),
     ]);
 
     const publicPackages = (
@@ -250,9 +332,22 @@ router.get(
       };
     });
 
+    const facetBaseFilter = {
+      status: { $in: statusFilters },
+      visibility: "public",
+      agencyId: { $in: approvedAgencyIds },
+      startDate: { $gt: now },
+      availableSeats: { $gt: 0 },
+      $and: [{
+        $or: [
+          { bookingDeadline: { $exists: false } },
+          { bookingDeadline: { $gte: now } },
+        ],
+      }],
+    };
     const [destinationsAgg, themesAgg, priceRangeAgg, durationsAgg] = await Promise.all([
       Package.aggregate([
-        { $match: { status: "active", visibility: "public" } },
+        { $match: facetBaseFilter },
         { $unwind: "$destinations" },
         { $group: { _id: "$destinations.city", count: { $sum: 1 }, state: { $first: "$destinations.state" }, country: { $first: "$destinations.country" } } },
         { $sort: { count: -1 } },
@@ -260,17 +355,17 @@ router.get(
         { $project: { city: "$_id", state: 1, country: 1, count: 1, _id: 0 } },
       ]),
       Package.aggregate([
-        { $match: { status: "active", visibility: "public" } },
+        { $match: facetBaseFilter },
         { $group: { _id: "$tripTheme", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $project: { theme: "$_id", count: 1, _id: 0 } },
       ]),
       Package.aggregate([
-        { $match: { status: "active", visibility: "public" } },
+        { $match: facetBaseFilter },
         { $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } },
       ]),
       Package.aggregate([
-        { $match: { status: "active", visibility: "public" } },
+        { $match: facetBaseFilter },
         { $group: { _id: null, min: { $min: "$durationDays" }, max: { $max: "$durationDays" } } },
       ]),
     ]);
@@ -288,6 +383,96 @@ router.get(
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),
       facets,
+    }));
+  })
+);
+
+router.get(
+  "/packages/:id",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "Package not found." },
+      });
+    }
+
+    const now = new Date();
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const pkg = await Package.findOne({
+      _id: new Types.ObjectId(id),
+      status: { $in: ["active", "sold_out"] },
+      visibility: "public",
+      startDate: { $gt: now },
+      $or: [{ bookingDeadline: { $exists: false } }, { bookingDeadline: { $gte: now } }],
+    })
+      .select("agencyId name slug description destination destinations geographicScope tripTheme durationDays durationNights startDate endDate bookingDeadline price currency priceType minTravelers maxTravelers availableSeats childPolicy infantPolicy taxType taxPercentage priceValidUntil advancePercentage balanceDueDays inclusions exclusions itinerary images highlights termsAndConditions cancellationPolicy status createdAt updatedAt")
+      .exec();
+    if (!pkg) {
+      return res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "Package not found or no longer available." },
+      });
+    }
+
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const agency = await Agency.findOne({
+      _id: pkg.agencyId,
+      status: "approved",
+    })
+      .select("name slug logo")
+      .exec();
+    if (!agency) {
+      return res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "Package not found or no longer available." },
+      });
+    }
+
+    return res.json(success({
+      package: {
+        id: String(pkg._id),
+        agencyId: String(agency._id),
+        agencyName: agency.name,
+        agencySlug: agency.slug,
+        agencyLogo: agency.logo?.url,
+        name: pkg.name,
+        slug: pkg.slug,
+        description: pkg.description,
+        destination: pkg.destination,
+        destinations: pkg.destinations,
+        geographicScope: pkg.geographicScope,
+        tripTheme: pkg.tripTheme,
+        durationDays: pkg.durationDays,
+        durationNights: pkg.durationNights,
+        startDate: pkg.startDate.toISOString(),
+        endDate: pkg.endDate.toISOString(),
+        bookingDeadline: pkg.bookingDeadline?.toISOString(),
+        price: pkg.price,
+        currency: pkg.currency,
+        priceType: pkg.priceType,
+        minTravelers: pkg.minTravelers,
+        maxTravelers: pkg.maxTravelers,
+        availableSeats: pkg.availableSeats,
+        childPolicy: pkg.childPolicy,
+        infantPolicy: pkg.infantPolicy,
+        taxType: pkg.taxType,
+        taxPercentage: pkg.taxPercentage,
+        priceValidUntil: pkg.priceValidUntil?.toISOString(),
+        advancePercentage: pkg.advancePercentage,
+        balanceDueDays: pkg.balanceDueDays,
+        inclusions: pkg.inclusions,
+        exclusions: pkg.exclusions,
+        itinerary: pkg.itinerary,
+        images: pkg.images,
+        highlights: pkg.highlights,
+        termsAndConditions: pkg.termsAndConditions,
+        cancellationPolicy: pkg.cancellationPolicy,
+        status: pkg.status,
+        createdAt: pkg.createdAt.toISOString(),
+        updatedAt: pkg.updatedAt.toISOString(),
+      },
     }));
   })
 );

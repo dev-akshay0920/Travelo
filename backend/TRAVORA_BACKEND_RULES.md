@@ -1375,6 +1375,13 @@ client-supplied role or agency identifiers as proof of authorization. Do not
 connect leads to chat until chat ownership checks have been reviewed and fixed.
 Do not represent agency-reported outcomes as Travora bookings or revenue.
 
+Traveler inquiry reads must be scoped by the authenticated traveler ID and use
+traveler-specific response DTOs that exclude agency-private notes. Self-profile
+routes must allowlist editable fields and must not permit callers to change
+their email, role, status, verification state, or ownership relationships.
+Watchlist operations require an active stored traveler role, bounded validated
+queries, and public/eligible saved-item checks.
+
 ---
 
 ## 106. PERSONAL DATA

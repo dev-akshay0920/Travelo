@@ -4,17 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { watchlistApi } from "@/features/watchlist/api/watchlist.api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Package, Building2, AlertTriangle, RefreshCw, MapPin, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { getPackageByIdApi } from "@/features/packages/api/package.api";
-import type { TravelPackage } from "@/features/packages/types/package.types";
-import { PackageDetailModal } from "@/features/packages/components/package-detail-modal";
-import { getPublicAgencyApi } from "@/features/agencies/api/agency.api";
 import { formatDisplayDate } from "@/lib/date-format";
 import { Pagination } from "@/components/ui/pagination";
+import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
+import { LoadingState } from "@/components/shared/loading-state";
+import { PageHeader } from "@/components/shared/page-header";
+import { PageStack } from "@/components/shared/page-container";
 
 interface WatchlistPackageItem {
   id: string;
@@ -31,7 +31,7 @@ interface WatchlistPackageItem {
   agencySlug: string;
   agencyLogo?: string;
   imageUrl?: string;
-  packageDetails: TravelPackage;
+  available: boolean;
   createdAt: string;
 }
 
@@ -44,6 +44,7 @@ interface WatchlistAgencyItem {
   destination: string;
   packageCount?: number;
   logo?: string;
+  available: boolean;
   createdAt: string;
 }
 
@@ -58,7 +59,6 @@ export default function TravellerWatchlistPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [activeTab, setActiveTab] = useState<WatchlistTab>("all");
-  const [detailPackage, setDetailPackage] = useState<TravelPackage | null>(null);
 
   const loadWatchlist = useCallback(async () => {
     setIsLoading(true);
@@ -70,103 +70,48 @@ export default function TravellerWatchlistPage() {
         limit: 20,
         itemType: activeTab === "all" ? undefined : activeTab,
       });
-      const items: WatchlistItem[] = [];
-      let failedItems = 0;
-
-      const packageItems = data.items.filter((i) => i.itemType === "package" && i.packageId);
-      const agencyItems = data.items.filter((i) => i.itemType === "agency" && i.agencyId);
-      const agencyRequests = new Map<string, ReturnType<typeof getPublicAgencyApi>>();
-      const getAgency = (agencyId: string) => {
-        let request = agencyRequests.get(agencyId);
-        if (!request) {
-          request = getPublicAgencyApi(agencyId);
-          agencyRequests.set(agencyId, request);
+      const failedItems = data.items.filter((item) => !item.available).length;
+      const items: WatchlistItem[] = data.items.map((item) => {
+        if (item.itemType === "package") {
+          const pkg = item.package;
+          return {
+            id: item.id,
+            packageId: item.packageId ?? "",
+            itemType: "package",
+            name: pkg?.name ?? "Package unavailable",
+            destination: pkg?.destination ?? "This package is no longer public.",
+            price: pkg?.price ?? 0,
+            currency: pkg?.currency ?? "INR",
+            priceType: pkg?.priceType ?? "per_person",
+            status: pkg?.status ?? "unavailable",
+            availableSeats: pkg?.availableSeats ?? 0,
+            agencyName: pkg?.agencyName ?? "Agency unavailable",
+            agencySlug: pkg?.agencySlug ?? "",
+            agencyLogo: pkg?.agencyLogo,
+            imageUrl: pkg?.imageUrl,
+            available: item.available ?? false,
+            createdAt: item.createdAt,
+          };
         }
-        return request;
-      };
-
-      if (packageItems.length > 0) {
-        const packageDetails = await Promise.allSettled(
-          packageItems.map(async (item) => {
-            const { package: pkg } = await getPackageByIdApi(item.packageId!);
-            const agencyResult = await Promise.allSettled([getAgency(pkg.agencyId)]);
-            return {
-              item,
-              pkg,
-              agency:
-                agencyResult[0].status === "fulfilled"
-                  ? agencyResult[0].value
-                  : undefined,
-            };
-          })
-        );
-        packageDetails.forEach((result) => {
-          if (result.status === "fulfilled") {
-            const { item, pkg, agency } = result.value;
-            if (!agency) failedItems += 1;
-            items.push({
-              id: item.id,
-              packageId: item.packageId!,
-              itemType: "package",
-              name: pkg.name,
-              destination: pkg.destination,
-              price: pkg.price,
-              currency: pkg.currency,
-              priceType: pkg.priceType,
-              status: pkg.status,
-              availableSeats: pkg.availableSeats,
-              agencyName: agency?.name ?? "Travel agency",
-              agencySlug: agency?.slug ?? "",
-              agencyLogo: agency?.logo?.url ?? undefined,
-              imageUrl: pkg.images?.[0]?.url,
-              packageDetails: pkg,
-              createdAt: item.createdAt,
-            });
-          } else {
-            failedItems += 1;
-          }
-        });
-      }
-
-      if (agencyItems.length > 0) {
-        const agencyDetails = await Promise.allSettled(
-          agencyItems.map(async (item) => ({
-            item,
-            agency: await getAgency(item.agencyId!),
-          }))
-        );
-        agencyDetails.forEach((result) => {
-          if (result.status === "fulfilled") {
-            const { item, agency } = result.value;
-            items.push({
-              id: item.id,
-              agencyId: item.agencyId!,
-              itemType: "agency",
-              name: agency.name,
-              slug: agency.slug,
-              destination: [
-                agency.location.city,
-                agency.location.state,
-                agency.location.country,
-              ]
-                .filter(Boolean)
-                .join(", "),
-              logo: agency.logo?.url ?? undefined,
-              createdAt: item.createdAt,
-            });
-          } else {
-            failedItems += 1;
-          }
-        });
-      }
-
-      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const agency = item.agency;
+        return {
+          id: item.id,
+          agencyId: item.agencyId ?? "",
+          itemType: "agency",
+          name: agency?.name ?? "Agency unavailable",
+          slug: agency?.slug ?? "",
+          destination: agency?.destination ?? "This agency is no longer public.",
+          logo: agency?.logo,
+          available: item.available ?? false,
+          createdAt: item.createdAt,
+        };
+      });
 
       setWatchlist(items);
       setTotalPages(data.totalPages);
       if (failedItems > 0) {
         setWarning(
-          `${failedItems} saved item${failedItems === 1 ? "" : "s"} could not be fully loaded. Try again to refresh.`
+          `${failedItems} saved item${failedItems === 1 ? " is" : "s are"} no longer available. You can remove stale items from your list.`
         );
       }
     } catch (err) {
@@ -209,37 +154,23 @@ export default function TravellerWatchlistPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-72 max-w-full" />
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden">
-              <Skeleton className="aspect-[16/10] w-full rounded-none" />
-              <CardContent className="space-y-3 p-4">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-1/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <PageStack>
+        <PageHeader title="Saved items" description="Saved packages and agencies you want to revisit." />
+        <LoadingState />
+      </PageStack>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-20 text-center">
-        <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-        <h2 className="text-lg font-semibold text-gray-900">Failed to load watchlist</h2>
-        <p className="text-gray-500 mt-2 max-w-md">{error}</p>
-        <Button onClick={loadWatchlist} variant="outline" className="mt-6">
-          <RefreshCw className="h-4 w-4 mr-2" />Retry
-        </Button>
-      </div>
+      <PageStack>
+        <PageHeader title="Saved items" description="Saved packages and agencies you want to revisit." />
+        <ErrorState
+          title="Could not load saved items"
+          description={error}
+          action={<Button onClick={loadWatchlist} variant="outline"><RefreshCw aria-hidden="true" />Try again</Button>}
+        />
+      </PageStack>
     );
   }
 
@@ -247,18 +178,11 @@ export default function TravellerWatchlistPage() {
   const agencies = watchlist.filter((item): item is WatchlistAgencyItem => item.itemType === "agency");
 
   return (
-    <>
-      <div className="mb-5">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-900">My Watchlist</h1>
-          <p className="mt-1 text-sm leading-5 text-gray-600">
-            Saved packages and agencies you want to revisit
-          </p>
-        </div>
-      </div>
+    <PageStack>
+      <PageHeader title="Saved items" description="Saved packages and agencies you want to revisit." />
 
       <div
-        className="mb-6 flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-gray-200 bg-white p-1"
+        className="flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1"
         role="tablist"
         aria-label="Filter watchlist"
       >
@@ -279,10 +203,10 @@ export default function TravellerWatchlistPage() {
               setPage(1);
             }}
             className={cn(
-              "whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              "whitespace-nowrap rounded-md px-4 py-2 text-body-sm font-medium transition-colors",
               activeTab === tab
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
             {label}
@@ -291,17 +215,17 @@ export default function TravellerWatchlistPage() {
       </div>
 
       {warning && (
-        <div className="mb-6 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
+        <div role="status" className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-muted px-4 py-3 text-body-sm text-warning-foreground">
+          <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
           <span>{warning}</span>
           <Button
             variant="outline"
             size="sm"
-            className="ml-auto border-amber-300 bg-white"
+            className="ml-auto"
             onClick={loadWatchlist}
           >
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Retry
+            <RefreshCw aria-hidden="true" />
+            Refresh list
           </Button>
         </div>
       )}
@@ -311,35 +235,23 @@ export default function TravellerWatchlistPage() {
           id="watchlist-content"
           role="tabpanel"
           aria-labelledby={`watchlist-tab-${activeTab}`}
-          className="flex flex-col items-center justify-center py-20 text-center"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 mb-4">
-            <Heart className="h-8 w-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {warning
-              ? "Saved items could not be displayed"
-              : activeTab === "package"
+          <EmptyState
+            title={
+              activeTab === "package"
                 ? "No packages saved yet"
                 : activeTab === "agency"
                   ? "No agencies saved yet"
-                  : "Your watchlist is empty"}
-          </h3>
-          <p className="text-gray-500 max-w-md mt-2">
-            {warning
-              ? "We found saved items, but their details are temporarily unavailable."
-              : "Save packages and agencies you love from the Explore page to find them easily later."}
-          </p>
-          {warning ? (
-            <Button className="mt-6" onClick={loadWatchlist}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Retry
+                  : "Your saved list is empty"
+            }
+            description="Save packages and agencies from Explore to find them here later."
+            icon={<Heart />}
+            action={
+            <Button asChild>
+              <Link href="/traveller/explore">Explore trips</Link>
             </Button>
-          ) : (
-            <Button asChild className="mt-6">
-              <Link href="/traveller/explore">Browse Packages</Link>
-            </Button>
-          )}
+            }
+          />
         </div>
       ) : (
         <div
@@ -351,12 +263,14 @@ export default function TravellerWatchlistPage() {
             {packages.map((item) => (
               <Card
                 key={item.id}
+                size="sm"
+                variant="interactive"
                 className={cn(
-                  "flex flex-col overflow-hidden pt-0 transition-shadow duration-200 border border-gray-100 shadow-sm hover:shadow-md",
-                  item.status !== "active" && "opacity-60 grayscale"
+                  "flex flex-col pt-0",
+                  !item.available && "opacity-80"
                 )}
               >
-                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden bg-gray-100">
+                <div className="relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden bg-muted">
                   {item.imageUrl ? (
                     <Image
                       src={item.imageUrl}
@@ -366,45 +280,48 @@ export default function TravellerWatchlistPage() {
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   ) : (
-                    <Package className="h-12 w-12 text-gray-300" />
+                    <Package aria-hidden="true" className="size-12 text-muted-foreground" />
                   )}
                   <span className={cn(
                     "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-caption font-semibold",
                     "bg-card/95 shadow-sm",
-                    item.status === "active" ? "bg-success-muted text-success-foreground" : "bg-muted text-muted-foreground"
+                    item.available ? "bg-success-muted text-success-foreground" : "bg-muted text-muted-foreground"
                   )}>
                     {item.status.replace("_", " ")}
                   </span>
-                  <div className="absolute bottom-1.5 left-1.5">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-lg px-2.5 py-1.5 shadow-lg">
-                      <span className="font-bold text-gray-900">{formatPrice(item.price, item.currency)}</span>
+                  {item.available && <div className="absolute bottom-1.5 left-1.5">
+                    <div className="rounded-lg bg-card/95 px-2.5 py-1.5 shadow-card">
+                      <span className="font-semibold text-foreground">{formatPrice(item.price, item.currency)}</span>
                     </div>
-                  </div>
+                  </div>}
                 </div>
-                <CardContent className="p-3 space-y-2">
-                  <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{item.name}</h3>
-                  <p className="flex items-center gap-1 text-xs text-gray-500">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                <CardContent className="space-y-2">
+                  <h3 className="text-card-title font-semibold text-foreground line-clamp-1">{item.name}</h3>
+                  <p className="flex items-center gap-1 text-body-sm text-muted-foreground">
+                    <MapPin aria-hidden="true" className="size-3 flex-shrink-0" />
                     <span className="truncate">{item.destination}</span>
                   </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{item.availableSeats} seats left</span>
+                  <div className="flex items-center justify-between text-caption text-muted-foreground">
+                    <span>{item.available ? `${item.availableSeats} seats listed` : "No longer available"}</span>
                     <span>{formatDisplayDate(item.createdAt, "—")}</span>
                   </div>
                   <p className="text-caption text-muted-foreground text-right">
                     {item.agencyName}
                   </p>
                 </CardContent>
-                <CardContent className="mt-auto flex gap-2 border-t border-gray-50 pt-3">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setDetailPackage(item.packageDetails)}
-                    className="flex-1"
-                  >
-                    <Eye className="mr-1.5 h-3.5 w-3.5" />
-                    View Package
-                  </Button>
+                <CardContent className="mt-auto flex gap-2 border-t border-border pt-3">
+                  {item.available ? (
+                    <Button asChild size="sm" className="flex-1">
+                      <Link href={`/packages/${encodeURIComponent(item.packageId)}`}>
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
+                        View Package
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button type="button" size="sm" className="flex-1" disabled>
+                      Currently unavailable
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -417,8 +334,8 @@ export default function TravellerWatchlistPage() {
               </Card>
             ))}
             {agencies.map((item) => (
-              <Card key={item.id} variant="interactive" className="flex flex-col pt-0">
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
+              <Card key={item.id} size="sm" variant="interactive" className="flex flex-col pt-0">
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
                   {item.logo ? (
                     <Image
                       src={item.logo}
@@ -428,20 +345,20 @@ export default function TravellerWatchlistPage() {
                       className="object-cover transition-transform duration-300 hover:scale-[1.015]"
                     />
                   ) : (
-                    <Building2 className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 text-gray-300" />
+                    <Building2 aria-hidden="true" className="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
                   )}
                 </div>
-                <CardContent className="p-3 space-y-2">
+                <CardContent className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">{item.name}</h3>
-                      <p className="flex items-center gap-1 text-xs text-gray-500">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                      <h3 className="text-card-title font-semibold text-foreground line-clamp-1">{item.name}</h3>
+                      <p className="flex items-center gap-1 text-body-sm text-muted-foreground">
+                        <MapPin aria-hidden="true" className="size-3 flex-shrink-0" />
                         <span className="truncate">{item.destination}</span>
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between text-caption text-muted-foreground">
                     <span>
                       {item.packageCount === undefined
                         ? "Travel agency"
@@ -450,13 +367,19 @@ export default function TravellerWatchlistPage() {
                     <span>{formatDisplayDate(item.createdAt, "—")}</span>
                   </div>
                 </CardContent>
-                <CardContent className="mt-auto flex gap-2 border-t border-gray-50 pt-3">
-                  <Button asChild size="sm" className="flex-1">
-                    <Link href={`/agencies/${encodeURIComponent(item.slug)}`}>
-                      <Eye className="mr-1.5 h-3.5 w-3.5" />
-                      View Agency
-                    </Link>
-                  </Button>
+                <CardContent className="mt-auto flex gap-2 border-t border-border pt-3">
+                  {item.available ? (
+                    <Button asChild size="sm" className="flex-1">
+                      <Link href={`/agencies/${encodeURIComponent(item.slug)}`}>
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
+                        View Agency
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button type="button" size="sm" className="flex-1" disabled>
+                      Currently unavailable
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -480,11 +403,6 @@ export default function TravellerWatchlistPage() {
           )}
         </div>
       )}
-      <PackageDetailModal
-        package={detailPackage}
-        isOpen={detailPackage !== null}
-        onClose={() => setDetailPackage(null)}
-      />
-    </>
+    </PageStack>
   );
 }

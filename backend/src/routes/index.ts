@@ -10,6 +10,7 @@ import { watchlistRouter } from "../modules/watchlist/watchlist.routes";
 import { chatRouter } from "../modules/chat/chat.routes";
 import { reviewsRouter } from "../modules/reviews/reviews.routes";
 import { leadRouter } from "../modules/leads/lead.routes";
+import { userRouter } from "../modules/users/user.routes";
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use("/watchlist", watchlistRouter);
 router.use("/chat", chatRouter);
 router.use("/reviews", reviewsRouter);
 router.use("/leads", leadRouter);
+router.use("/users", userRouter);
 
 export const apiV1Router: Router = router;

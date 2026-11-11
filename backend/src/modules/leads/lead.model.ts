@@ -87,5 +87,6 @@ const LeadSchema = new Schema<LeadDocument>(
 LeadSchema.index({ agencyId:  1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, status: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, packageId: 1, createdAt: -1 });
+LeadSchema.index({ travelerId: 1, createdAt: -1 });
 
 export const Lead = models.Lead || model<LeadDocument>("Lead", LeadSchema);

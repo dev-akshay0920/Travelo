@@ -62,3 +62,28 @@ export interface LeadDashboard {
     }>;
   };
 }
+
+export interface TravelerInquiry {
+  id: string;
+  agency: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  packageId?: string;
+  packageName?: string;
+  message?: string;
+  requestedStartDate?: string;
+  travelerCount?: number;
+  status: LeadStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TravelerInquiryListResponse {
+  items: TravelerInquiry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

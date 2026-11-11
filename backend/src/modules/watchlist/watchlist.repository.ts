@@ -25,6 +25,28 @@ export interface WatchlistListResponse {
     itemType: WatchlistItemType;
     createdAt: Date;
     updatedAt: Date;
+    available?: boolean;
+    package?: {
+      id: string;
+      name: string;
+      destination: string;
+      price: number;
+      currency: string;
+      priceType: string;
+      status: string;
+      availableSeats: number;
+      agencyName: string;
+      agencySlug: string;
+      agencyLogo?: string;
+      imageUrl?: string;
+    } | null;
+    agency?: {
+      id: string;
+      name: string;
+      slug: string;
+      destination: string;
+      logo?: string;
+    } | null;
   }>;
   total: number;
   page: number;
@@ -33,6 +55,35 @@ export interface WatchlistListResponse {
 }
 
 export const WatchlistRepository = {
+  async findSavedIds(
+    travellerId: Types.ObjectId,
+    packageIds: string[],
+    agencyIds: string[]
+  ): Promise<Array<{ itemType: WatchlistItemType; packageId?: Types.ObjectId; agencyId?: Types.ObjectId }>> {
+    const clauses: Array<Record<string, unknown>> = [];
+    if (packageIds.length) {
+      clauses.push({
+        itemType: "package",
+        packageId: { $in: packageIds.map((id) => new Types.ObjectId(id)) },
+      });
+    }
+    if (agencyIds.length) {
+      clauses.push({
+        itemType: "agency",
+        agencyId: { $in: agencyIds.map((id) => new Types.ObjectId(id)) },
+      });
+    }
+    if (clauses.length === 0) return [];
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return Watchlist.find({
+      travellerId,
+      status: "active",
+      $or: clauses,
+    })
+      .select("itemType packageId agencyId")
+      .exec();
+  },
+
   async findByTravellerAndPackage(travellerId: Types.ObjectId, packageId: Types.ObjectId): Promise<WatchlistDocument | null> {
     if (!Types.ObjectId.isValid(travellerId) || !Types.ObjectId.isValid(packageId)) {
       return null;

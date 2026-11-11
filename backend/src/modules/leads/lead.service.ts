@@ -12,6 +12,7 @@ import type { AgencyDocument } from "../agencies/agency.model";
 import type { LeadDocument, LeadStatus } from "./lead.model";
 import { LeadRepository } from "./lead.repository";
 import type { CreateLeadInput, ListLeadsQuery, UpdateLeadInput } from "./lead.validation";
+import type { ListMyLeadsQuery } from "./lead.validation";
 import { Package } from "../packages/package.model";
 
 export interface LeadDTO {
@@ -33,6 +34,19 @@ export interface CreatedLeadDTO {
   id: string;
   status: LeadStatus;
   createdAt: string;
+}
+
+export interface TravelerLeadDTO {
+  id: string;
+  agency: { id: string; name: string; slug: string } | null;
+  packageId?: string;
+  packageName?: string;
+  message?: string;
+  requestedStartDate?: string;
+  travelerCount?: number;
+  status: LeadStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 function toLeadDTO(lead: LeadDocument): LeadDTO {
@@ -69,6 +83,33 @@ async function requireAgencyOwner(userId: string): Promise<AgencyDocument> {
   const agency = await AgencyRepository.findByOwnerUserId(userId);
   if (!agency) throw new NotFoundError("Agency profile not found.");
   return agency;
+}
+
+async function requireTraveler(userId: string) {
+  const user = await getActiveUser(userId);
+  if (user.roleId?.key !== "traveller") {
+    throw new ForbiddenError("Traveler access is required.");
+  }
+  return user;
+}
+
+async function toTravelerLeadDTO(lead: LeadDocument, includeMessage: boolean): Promise<TravelerLeadDTO> {
+  const agencies = await AgencyRepository.findApprovedPublicSummariesByIds([String(lead.agencyId)]);
+  const agency = agencies[0] ?? null;
+  return {
+    id: String(lead._id),
+    agency,
+    ...(lead.packageId ? { packageId: String(lead.packageId) } : {}),
+    ...(lead.packageName ? { packageName: lead.packageName } : {}),
+    ...(includeMessage ? { message: lead.message } : {}),
+    ...(lead.requestedStartDate
+      ? { requestedStartDate: lead.requestedStartDate.toISOString().slice(0, 10) }
+      : {}),
+    ...(lead.travelerCount !== undefined ? { travelerCount: lead.travelerCount } : {}),
+    status: lead.status,
+    createdAt: lead.createdAt.toISOString(),
+    updatedAt: lead.updatedAt.toISOString(),
+  };
 }
 
 export const LeadService = {
@@ -137,6 +178,41 @@ export const LeadService = {
       limit: filters.limit,
       totalPages: total ? Math.ceil(total / filters.limit) : 0,
     };
+  },
+
+  async listMine(userId: string, filters: ListMyLeadsQuery) {
+    const user = await requireTraveler(userId);
+    const { items, total } = await LeadRepository.listByTraveler(String(user._id), filters);
+    const agencies = await AgencyRepository.findApprovedPublicSummariesByIds(
+      [...new Set(items.map((lead) => String(lead.agencyId)))]
+    );
+    const agenciesById = new Map(agencies.map((agency) => [agency.id, agency]));
+    return {
+      items: items.map((lead) => ({
+        id: String(lead._id),
+        agency: agenciesById.get(String(lead.agencyId)) ?? null,
+        ...(lead.packageId ? { packageId: String(lead.packageId) } : {}),
+        ...(lead.packageName ? { packageName: lead.packageName } : {}),
+        ...(lead.requestedStartDate
+          ? { requestedStartDate: lead.requestedStartDate.toISOString().slice(0, 10) }
+          : {}),
+        ...(lead.travelerCount !== undefined ? { travelerCount: lead.travelerCount } : {}),
+        status: lead.status,
+        createdAt: lead.createdAt.toISOString(),
+        updatedAt: lead.updatedAt.toISOString(),
+      })),
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
+  },
+
+  async getMine(userId: string, id: string): Promise<TravelerLeadDTO> {
+    const user = await requireTraveler(userId);
+    const lead = await LeadRepository.findByIdAndTraveler(id, String(user._id));
+    if (!lead) throw new NotFoundError("Inquiry not found.");
+    return toTravelerLeadDTO(lead, true);
   },
 
   async getById(userId: string, id: string): Promise<LeadDTO> {

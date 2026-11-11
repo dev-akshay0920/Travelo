@@ -238,6 +238,8 @@ possible contract is:
 | Method and path | Principal | Purpose |
 | --- | --- | --- |
 | `POST /api/v1/leads` | Active authenticated traveller | Create an inquiry for an approved agency/package |
+| `GET /api/v1/leads/mine` | Active authenticated traveller | List only the caller’s own inquiries with bounded pagination |
+| `GET /api/v1/leads/mine/:id` | Active authenticated traveller | Read one inquiry belonging to the caller; never include agency-private notes |
 | `GET /api/v1/leads` | Agency | List only the caller’s agency inquiries; allowlisted filters and pagination |
 | `GET /api/v1/leads/:id` | Agency owner | Read only a lead belonging to the caller’s agency |
 | `PATCH /api/v1/leads/:id` | Agency owner | Change status and/or update the agency-private note |

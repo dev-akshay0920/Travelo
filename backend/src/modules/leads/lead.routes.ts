@@ -4,7 +4,9 @@ import { authMiddleware } from "../../middleware/auth.middleware";
 import {
   createLead,
   getAgencyDashboard,
+  getMyLead,
   getLead,
+  listMyLeads,
   listLeads,
   updateLead,
 } from "./lead.controller";
@@ -43,6 +45,8 @@ const createLeadAccountRateLimit = rateLimit({
 router.use(authMiddleware);
 router.post("/", createLeadIpRateLimit, createLeadAccountRateLimit, createLead);
 router.get("/dashboard", getAgencyDashboard);
+router.get("/mine", listMyLeads);
+router.get("/mine/:id", getMyLead);
 router.get("/", listLeads);
 router.get("/:id", getLead);
 router.patch("/:id", updateLead);

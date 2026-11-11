@@ -56,6 +56,32 @@ export const AgencyRepository = {
     return (await Agency.findOne({ slug: slug.toLowerCase() }).exec()) as Promise<AgencyDocument | null>;
   },
 
+  async findApprovedPublicSummariesByIds(ids: string[]): Promise<Array<{
+    id: string;
+    name: string;
+    slug: string;
+    logo?: string;
+    destination: string;
+  }>> {
+    const objectIds = ids.filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
+    if (objectIds.length === 0) return [];
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const agencies = await Agency.find({ _id: { $in: objectIds }, status: "approved" })
+      .select("name slug logo location")
+      .exec();
+    return agencies.map((agency: AgencyDocument) => ({
+      id: String(agency._id),
+      name: agency.name,
+      slug: agency.slug,
+      logo: agency.logo?.url,
+      destination: [
+        agency.location?.city,
+        agency.location?.state,
+        agency.location?.country,
+      ].filter(Boolean).join(", "),
+    }));
+  },
+
   async findOne(query: Record<string, unknown>): Promise<AgencyDocument | null> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return (await Agency.findOne(query).exec()) as Promise<AgencyDocument | null>;

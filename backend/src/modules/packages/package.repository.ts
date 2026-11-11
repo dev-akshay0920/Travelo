@@ -213,6 +213,15 @@ export const PackageRepository = {
     return await Package.findById(id).exec();
   },
 
+  async findByIds(ids: string[]): Promise<PackageDocument[]> {
+    const objectIds = ids.filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
+    if (objectIds.length === 0) return [];
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return Package.find({ _id: { $in: objectIds } })
+      .select("name destination price currency priceType status visibility availableSeats images agencyId startDate bookingDeadline")
+      .exec();
+  },
+
   async findByAgencyId(agencyId: string): Promise<PackageDocument[]> {
     if (!Types.ObjectId.isValid(agencyId)) {
       return [];

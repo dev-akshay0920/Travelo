@@ -38,6 +38,35 @@ export const LeadRepository = {
     return { items, total };
   },
 
+  async listByTraveler(
+    travelerId: string,
+    filters: Pick<LeadListFilters, "page" | "limit">
+  ): Promise<{ items: LeadDocument[]; total: number }> {
+    const query = { travelerId: new Types.ObjectId(travelerId) };
+    const [items, total] = await Promise.all([
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      Lead.find(query)
+        .select("agencyId packageId packageName message requestedStartDate travelerCount status createdAt updatedAt")
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((filters.page - 1) * filters.limit)
+        .limit(filters.limit)
+        .exec(),
+      Lead.countDocuments(query).exec(),
+    ]);
+    return { items, total };
+  },
+
+  async findByIdAndTraveler(id: string, travelerId: string): Promise<LeadDocument | null> {
+    if (!Types.ObjectId.isValid(id)) return null;
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return Lead.findOne({
+      _id: new Types.ObjectId(id),
+      travelerId: new Types.ObjectId(travelerId),
+    })
+      .select("agencyId packageId packageName message requestedStartDate travelerCount status createdAt updatedAt")
+      .exec();
+  },
+
   async findByIdAndAgency(id: string, agencyId: string): Promise<LeadDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript

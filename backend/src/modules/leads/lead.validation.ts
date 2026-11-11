@@ -29,6 +29,13 @@ export const listLeadsQuerySchema = z
   })
   .strict();
 
+export const listMyLeadsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+  })
+  .strict();
+
 export const updateLeadSchema = z
   .object({
     status: z.enum(LEAD_STATUSES).optional(),
@@ -41,4 +48,5 @@ export const updateLeadSchema = z
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
+export type ListMyLeadsQuery = z.infer<typeof listMyLeadsQuerySchema>;
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;

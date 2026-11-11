@@ -4,6 +4,8 @@ import type {
   LeadDashboard,
   LeadListResponse,
   LeadStatus,
+  TravelerInquiry,
+  TravelerInquiryListResponse,
 } from "@/features/leads/types/lead.types";
 
 export interface CreateLeadInput {
@@ -49,5 +51,24 @@ export async function updateLeadApi(
     `/leads/${encodeURIComponent(id)}`,
     { body: input },
   );
+  return response.data.lead;
+}
+
+export async function getMyInquiriesApi(filters: {
+  page: number;
+  limit: number;
+}): Promise<TravelerInquiryListResponse> {
+  const response = await apiClient.get<{
+    success: true;
+    data: TravelerInquiryListResponse;
+  }>("/leads/mine", { query: filters });
+  return response.data;
+}
+
+export async function getMyInquiryApi(id: string): Promise<TravelerInquiry> {
+  const response = await apiClient.get<{
+    success: true;
+    data: { lead: TravelerInquiry };
+  }>(`/leads/mine/${encodeURIComponent(id)}`);
   return response.data.lead;
 }

@@ -3,6 +3,7 @@
 import type { TravelPackage, PackageStatus, PackageImage } from "@/features/public/types/public-filters.types";
 import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
 import { Calendar, MapPin, Users, IndianRupee, MoreVertical, Pencil, Trash2, Clock, MapPin as MapPinIcon } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -231,13 +232,24 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
             {pkg.tripTheme.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
           </span>
         </div>
-        <InquiryFormDialog
-          agencyId={pkg.agencyId}
-          packageId={pkg.id}
-          packageName={pkg.name}
-          size="sm"
-          className="w-full"
-        />
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button asChild type="button" variant="outline" size="sm">
+            <Link href={`/packages/${encodeURIComponent(pkg.id)}`}>View details</Link>
+          </Button>
+          {pkg.status === "active" && pkg.availableSeats > 0 ? (
+            <InquiryFormDialog
+              agencyId={pkg.agencyId}
+              packageId={pkg.id}
+              packageName={pkg.name}
+              size="sm"
+              className="w-full"
+            />
+          ) : (
+            <Button type="button" size="sm" className="w-full" disabled>
+              Currently unavailable
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

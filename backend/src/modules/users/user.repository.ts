@@ -74,4 +74,18 @@ export const UserRepository = {
     }
     return updated;
   },
+
+  async updateName(id: string, name: string): Promise<UserDocument | null> {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return User.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), status: "active" },
+      { $set: { name } },
+      { new: true, runValidators: true }
+    )
+      .select("name email emailVerified createdAt")
+      .exec();
+  },
 };

@@ -5,6 +5,28 @@ export interface WatchlistItem {
   packageId?: string;
   agencyId?: string;
   itemType: "package" | "agency";
+  available?: boolean;
+  package?: {
+    id: string;
+    name: string;
+    destination: string;
+    price: number;
+    currency: string;
+    priceType: string;
+    status: string;
+    availableSeats: number;
+    agencyName: string;
+    agencySlug: string;
+    agencyLogo?: string;
+    imageUrl?: string;
+  } | null;
+  agency?: {
+    id: string;
+    name: string;
+    slug: string;
+    destination: string;
+    logo?: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,7 +48,23 @@ export interface IsSavedResult {
   saved: boolean;
 }
 
+export interface SavedStatusResponse {
+  packageIds: string[];
+  agencyIds: string[];
+}
+
 export const watchlistApi = {
+  async savedStatus(input: {
+    packageIds: string[];
+    agencyIds: string[];
+  }): Promise<SavedStatusResponse> {
+    const data = await apiClient.post<{ data: SavedStatusResponse }>(
+      "/watchlist/saved-status",
+      { body: input }
+    );
+    return data.data;
+  },
+
   async toggle({
     packageId,
     agencyId,

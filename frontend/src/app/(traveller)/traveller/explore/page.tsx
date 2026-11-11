@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FilterSidebar } from "@/features/public/components/filter-sidebar";
-import { PackageDetailModal } from "@/features/packages/components/package-detail-modal";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
 import { useInfinitePackages } from "@/features/public/hooks/use-infinite-packages";
 import { fetchPublicAgencies } from "@/features/public/api/public-packages.api";
 import type { TravelPackage as PublicTravelPackage } from "@/features/public/types/public-filters.types";
-import type { TravelPackage } from "@/features/packages/types/package.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,8 +49,6 @@ export default function TravellerExplorePage() {
     refresh,
   } = useInfinitePackages(filters);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailPackage, setDetailPackage] = useState<TravelPackage | null>(null);
   const [viewType, setViewType] = useState<ViewType>("both");
   const [agencies, setAgencies] = useState<AgencyCardItem[]>([]);
   const [agenciesLoading, setAgenciesLoading] = useState(false);
@@ -96,26 +92,46 @@ export default function TravellerExplorePage() {
     let cancelled = false;
 
     const loadSavedItems = async () => {
+      const packageIds = packages.map((item) => item.id);
+      const agencyIds = agencies.map((item) => item.id);
+      const packageBatches = Array.from(
+        { length: Math.ceil(packageIds.length / 100) },
+        (_, index) => packageIds.slice(index * 100, (index + 1) * 100),
+      );
+      const agencyBatches = Array.from(
+        { length: Math.ceil(agencyIds.length / 100) },
+        (_, index) => agencyIds.slice(index * 100, (index + 1) * 100),
+      );
+      const batchCount = Math.max(packageBatches.length, agencyBatches.length);
+      if (batchCount === 0) {
+        queueMicrotask(() => {
+          if (!cancelled) setIsSavedItemsLoading(false);
+        });
+        return;
+      }
+
       try {
-        const firstPage = await watchlistApi.list({ page: 1, limit: 100 });
-        const pages = Array.from(
-          { length: Math.max(0, firstPage.totalPages - 1) },
-          (_, index) => index + 2
-        );
-        const remainingPages = await Promise.all(
-          pages.map((pageNumber) => watchlistApi.list({ page: pageNumber, limit: 100 }))
+        const results = await Promise.all(
+          Array.from({ length: batchCount }, (_, index) =>
+            watchlistApi.savedStatus({
+              packageIds: packageBatches[index] ?? [],
+              agencyIds: agencyBatches[index] ?? [],
+            }),
+          ),
         );
 
         if (cancelled) return;
 
-        const entries = [...firstPage.items, ...remainingPages.flatMap((page) => page.items)];
-        setSavedItems(new Set(
-          entries.flatMap((item) => {
-            if (item.itemType === "package" && item.packageId) return [`package:${item.packageId}`];
-            if (item.itemType === "agency" && item.agencyId) return [`agency:${item.agencyId}`];
-            return [];
-          })
-        ));
+        setSavedItems((current) => {
+          const updated = new Set(current);
+          packageIds.forEach((id) => updated.delete(`package:${id}`));
+          agencyIds.forEach((id) => updated.delete(`agency:${id}`));
+          results.forEach((result) => {
+            result.packageIds.forEach((id) => updated.add(`package:${id}`));
+            result.agencyIds.forEach((id) => updated.add(`agency:${id}`));
+          });
+          return updated;
+        });
       } catch (error) {
         if (!cancelled) {
           toast.error(error instanceof Error ? error.message : "Could not load your watchlist status.");
@@ -129,7 +145,7 @@ export default function TravellerExplorePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [agencies, packages]);
 
   const toggleSavedItem = useCallback(async (itemType: "package" | "agency", id: string) => {
     const key = `${itemType}:${id}`;
@@ -407,15 +423,13 @@ export default function TravellerExplorePage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={pkg.status !== "active"}
-                          onClick={() => {
-                            setDetailPackage(pkg as TravelPackage);
-                            setDetailOpen(true);
-                          }}
+                          asChild
                           className="min-w-24"
                         >
-                          <PackageIcon className="h-3.5 w-3.5 mr-1.5" />
-                          {pkg.status !== "active" ? "Outdated" : "View"}
+                          <Link href={`/packages/${encodeURIComponent(pkg.id)}`}>
+                            <PackageIcon className="h-3.5 w-3.5 mr-1.5" />
+                            View details
+                          </Link>
                         </Button>
                       </CardContent>
                     </Card>
@@ -508,11 +522,6 @@ export default function TravellerExplorePage() {
         />
       )}
 
-      <PackageDetailModal
-        package={detailPackage}
-        isOpen={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      />
     </>
   );
 }
