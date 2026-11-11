@@ -57,9 +57,10 @@ type PackageFormProps = {
   onSuccess: (pkg: TravelPackage) => void;
   onCancel: () => void;
   agencyId?: string;
+  modalLayout?: boolean;
 };
 
-export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId }: PackageFormProps) {
+export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId, modalLayout = false }: PackageFormProps) {
   const [form, setForm] = useState<CreatePackageInput>(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -391,9 +392,14 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
   };
 
   return (
-    <div className="flex h-full flex-col gap-6">
-      <form onSubmit={handleSubmit} className="grid gap-6" noValidate>
-        <Card className="glass-card depth-hover">
+    <div className={modalLayout ? "flex min-h-0 flex-1 flex-col" : "flex h-full flex-col gap-6"}>
+      <form
+        onSubmit={handleSubmit}
+        className={modalLayout ? "flex min-h-0 flex-1 flex-col" : "grid gap-6"}
+        noValidate
+      >
+        <div className={modalLayout ? "min-h-0 flex-1 space-y-6 overflow-y-auto p-6" : "contents"}>
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
             <CardDescription>Core details about your travel package.</CardDescription>
@@ -590,7 +596,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Dates & Pricing</CardTitle>
             <CardDescription>Set the schedule, duration, and pricing for your package.</CardDescription>
@@ -731,7 +737,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
            </CardContent>
          </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Details</CardTitle>
             <CardDescription>Add inclusions, exclusions, and highlights.</CardDescription>
@@ -777,7 +783,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
           disabled={!pkg?.id && mode === "create"}
         />
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Policies</CardTitle>
             <CardDescription>Set terms and cancellation policy.</CardDescription>
@@ -819,7 +825,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Itinerary</CardTitle>
             <CardDescription>Day-wise schedule for the package.</CardDescription>
@@ -920,7 +926,7 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Settings</CardTitle>
             <CardDescription>Visibility and featured status for this package.</CardDescription>
@@ -959,7 +965,11 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId 
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3 mb-2">
+        </div>
+        <div className={modalLayout
+          ? "flex shrink-0 justify-end gap-3 border-t border-border bg-muted/50 px-6 py-4"
+          : "mb-2 flex justify-end gap-3"}
+        >
           <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
             Cancel
           </Button>

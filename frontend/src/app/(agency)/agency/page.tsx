@@ -15,9 +15,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { YearPickerField } from "@/components/ui/year-picker";
 import { Avatar } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { ApiError } from "@/lib/api/errors";
 
 import { AgencyShell } from "@/features/agency/components/agency-shell";
 import { PackagesTab } from "@/features/agency/components/packages-tab";
+import { AgencyOverview } from "@/features/leads/components/agency-overview";
+import { InquiryInbox } from "@/features/leads/components/inquiry-inbox";
 import SettingsTemplatesTab from "./settings/templates/page";
 import {
   getMyAgencyApi,
@@ -34,48 +37,28 @@ import type {
 } from "@/features/agencies/types/agency.types";
 import { AGENCY_SERVICE_OPTIONS } from "@/features/agencies/types/agency.types";
 
-type Tab = "dashboard" | "packages" | "settings";
+type Tab = "dashboard" | "inquiries" | "packages" | "settings";
 type SettingsSubTab = "templates" | "profile";
 
 export default function AgencyPage() {
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState<Tab>(() => {
-    if (pathname === "/agency/packages") return "packages";
-    if (pathname === "/agency/settings/templates") return "settings";
-    if (pathname === "/agency/settings") return "settings";
-    if (pathname === "/agency/settings/profile") return "settings";
-    return "dashboard";
-  });
-  const [activeSettingsSubTab, setActiveSettingsSubTab] = useState<SettingsSubTab>(() => {
-    if (pathname === "/agency/settings/templates") return "templates";
-    if (pathname === "/agency/settings/profile") return "profile";
-    return "profile";
-  });
-  const [agency, setAgency] = useState<AgencyProfile | null>(() => ({
-    id: "",
-    ownerUserId: "",
-    name: "",
-    slug: "",
-    logo: null,
-    about: "",
-    yearEstablished: undefined,
-    location: {
-      country: "",
-      state: "",
-      city: "",
-      address: "",
-      pincode: "",
-    },
-    contact: {
-      phone: "",
-      email: "",
-      website: "",
-    },
-    services: [],
-    status: "draft",
-    createdAt: "",
-    updatedAt: "",
-  }));
+  const activeTab: Tab = pathname === "/agency/inquiries"
+    ? "inquiries"
+    : pathname === "/agency/packages"
+      ? "packages"
+      : pathname.startsWith("/agency/settings")
+        ? "settings"
+        : "dashboard";
+  const [settingsSelection, setSettingsSelection] = useState<{
+    pathname: string;
+    tab: SettingsSubTab;
+  }>({ pathname: "", tab: "profile" });
+  const activeSettingsSubTab =
+    settingsSelection.pathname === pathname ? settingsSelection.tab : "profile";
+  const setActiveSettingsSubTab = useCallback((tab: SettingsSubTab) => {
+    setSettingsSelection({ pathname, tab });
+  }, [pathname]);
+  const [agency, setAgency] = useState<AgencyProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,7 +143,12 @@ export default function AgencyPage() {
       };
       setAgency(normalized);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load agency profile.");
+      if (err instanceof ApiError && err.isNotFoundError) {
+        setAgency(null);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to load agency profile.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -170,23 +158,6 @@ export default function AgencyPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAgency();
   }, [loadAgency]);
-
-  useEffect(() => {
-    if (pathname === "/agency/packages") {
-      setActiveTab("packages");
-    } else if (pathname === "/agency/settings/templates") {
-      setActiveTab("settings");
-      setActiveSettingsSubTab("templates");
-    } else if (pathname === "/agency/settings") {
-      setActiveTab("settings");
-      setActiveSettingsSubTab("profile");
-    } else if (pathname === "/agency/settings/profile") {
-      setActiveTab("settings");
-      setActiveSettingsSubTab("profile");
-    } else if (pathname === "/agency" || pathname === "/agency/") {
-      setActiveTab("dashboard");
-    }
-  }, [pathname]);
 
   const slugTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousSlugRef = useRef<string | undefined>(undefined);
@@ -439,30 +410,6 @@ export default function AgencyPage() {
     }
   };
 
-  const renderDashboard = () => (
-    <div className="flex flex-col gap-6">
-      <Card className="glass-card depth-hover">
-        <CardHeader>
-          <CardTitle>Agency Profile</CardTitle>
-          <CardDescription>Basic information about your agency.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading agency details...</p>
-          ) : agency ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Agency Name: {agency.name}</p>
-              <p className="text-xs text-muted-foreground">Status: {agency.status}</p>
-              <p className="text-xs text-muted-foreground">Slug: {agency.slug}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No agency profile yet.</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
   const renderProfile = () => {
     if (isLoading) {
       return (
@@ -581,6 +528,7 @@ export default function AgencyPage() {
     if (!agency) {
       return (
         <PageStack>
+          {error && <p role="alert" className="text-body-sm text-destructive">{error}</p>}
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Agency Profile</h1>
             <p className="text-sm text-muted-foreground">Create your agency profile to get started.</p>
@@ -630,6 +578,7 @@ export default function AgencyPage() {
 
     return (
       <div className="grid gap-6 pb-8">
+        {error && <p role="alert" className="text-body-sm text-destructive">{error}</p>}
         {agency.status === "pending" && (
           <div
             role="status"
@@ -641,7 +590,7 @@ export default function AgencyPage() {
             </p>
           </div>
         )}
-          <Card className="glass-card depth-hover">
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>Basic details travellers will see on your public profile.</CardDescription>
@@ -784,7 +733,7 @@ export default function AgencyPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card depth-hover">
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Location</CardTitle>
               <CardDescription>Where your agency is based and where you operate from.</CardDescription>
@@ -900,7 +849,7 @@ export default function AgencyPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card depth-hover">
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Contact Details</CardTitle>
               <CardDescription>Public contact information shown on your agency profile.</CardDescription>
@@ -984,7 +933,7 @@ export default function AgencyPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-card depth-hover">
+          <Card size="sm">
             <CardHeader>
               <CardTitle>Services</CardTitle>
               <CardDescription>What your agency offers.</CardDescription>
@@ -1041,16 +990,18 @@ export default function AgencyPage() {
   };
 
   return (
-    <AgencyShell activeTab={activeTab} onTabChange={setActiveTab} activeSettingsSubTab={activeSettingsSubTab} onSettingsSubTabChange={setActiveSettingsSubTab}>
+    <AgencyShell activeTab={activeTab} activeSettingsSubTab={activeSettingsSubTab} onSettingsSubTabChange={setActiveSettingsSubTab}>
       {activeTab === "dashboard"
-        ? renderDashboard()
+        ? <AgencyOverview agency={agency} isAgencyLoading={isLoading} />
+        : activeTab === "inquiries"
+          ? <InquiryInbox agencyId={agency?.id} isAgencyLoading={isLoading} />
         : activeTab === "packages"
           ? <PackagesTab agencyId={agency?.id} />
           : activeTab === "settings"
             ? activeSettingsSubTab === "templates"
               ? <SettingsTemplatesTab />
               : renderProfile()
-            : renderDashboard()}
+            : <AgencyOverview agency={agency} isAgencyLoading={isLoading} />}
     </AgencyShell>
   );
 }

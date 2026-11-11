@@ -73,11 +73,10 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
   const isSoldOut = availableSeats <= 0;
 
   return (
-    <Card className={cn(
-      "flex flex-col overflow-hidden transition-shadow duration-200 pt-0",
-      "border-border shadow-card hover:shadow-md",
-      isSoldOut && "opacity-50"
-    )}>
+    <Card
+      variant="interactive"
+      className={cn("flex flex-col pt-0", isSoldOut && "opacity-50")}
+    >
       {/* Image - First child of Card for pt-0 */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         {primaryImage ? (

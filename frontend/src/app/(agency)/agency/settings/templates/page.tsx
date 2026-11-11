@@ -6,6 +6,14 @@ import { Edit, Copy, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   getPolicyTemplatesApi,
   createPolicyTemplateApi,
   updatePolicyTemplateApi,
@@ -106,35 +114,35 @@ export default function SettingsTemplatesTab() {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-background shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
-                <th className="px-3 py-2 font-medium" scope="col">Name</th>
-                <th className="px-3 py-2 font-medium" scope="col">Type</th>
-                <th className="px-3 py-2 font-medium text-right" scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead scope="col">Name</TableHead>
+                <TableHead scope="col">Type</TableHead>
+                <TableHead scope="col" className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {templates.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-3 py-8 text-center text-xs text-muted-foreground">
+                <TableRow>
+                  <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
                     No templates yet. Create your first template to reuse policies across packages.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 templates.map((template) => (
-                  <tr key={template.id} className="border-b border-border/60 last:border-b-0 hover:bg-muted/50">
-                    <td className="px-3 py-2">
+                  <TableRow key={template.id}>
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-xs">{template.name}</span>
+                        <span className="font-medium">{template.name}</span>
                         {template.isDefault && (
                           <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-caption text-primary">System</span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2 text-xs capitalize text-muted-foreground">{template.type}</td>
-                    <td className="px-3 py-2 text-right">
+                    </TableCell>
+                    <TableCell className="capitalize text-muted-foreground">{template.type}</TableCell>
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           type="button"
@@ -167,12 +175,12 @@ export default function SettingsTemplatesTab() {
                           </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

@@ -14,6 +14,7 @@ import type { TravelPackage } from "@/features/packages/types/package.types";
 import { PackageDetailModal } from "@/features/packages/components/package-detail-modal";
 import { getPublicAgencyApi } from "@/features/agencies/api/agency.api";
 import { formatDisplayDate } from "@/lib/date-format";
+import { Pagination } from "@/components/ui/pagination";
 
 interface WatchlistPackageItem {
   id: string;
@@ -416,7 +417,7 @@ export default function TravellerWatchlistPage() {
               </Card>
             ))}
             {agencies.map((item) => (
-              <Card key={item.id} className="flex flex-col overflow-hidden pt-0 transition-shadow duration-200 border border-gray-100 shadow-sm hover:shadow-md">
+              <Card key={item.id} variant="interactive" className="flex flex-col pt-0">
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
                   {item.logo ? (
                     <Image
@@ -470,25 +471,12 @@ export default function TravellerWatchlistPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-between">
-              <Button
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-                variant="outline"
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              className="mt-8"
+            />
           )}
         </div>
       )}

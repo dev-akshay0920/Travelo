@@ -65,7 +65,14 @@ export function SignUpForm({
       if (formRole === "agency") {
         router.push("/agency");
       } else {
-        router.push("/traveller");
+        const returnPath = new URLSearchParams(window.location.search).get("redirectTo");
+        const safeReturnPath =
+          returnPath?.startsWith("/") && !returnPath.startsWith("//") ? returnPath : null;
+        router.push(
+          safeReturnPath
+            ? `/signin?redirectTo=${encodeURIComponent(safeReturnPath)}`
+            : "/traveller",
+        );
       }
     } catch (error: unknown) {
       const message =

@@ -19,6 +19,17 @@ import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDisplayDate } from "@/lib/date-format";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Sheet,
+  SheetBody,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Card } from "@/components/ui/card";
 
 const THEME_OPTIONS: TripTheme[] = [
   "honeymoon", "family", "adventure", "pilgrimage", "corporate", "leisure", "weekend", "custom"
@@ -28,22 +39,22 @@ type ExploreViewType = "packages" | "agencies" | "both";
 
 function FilterSection({ title, icon: Icon, expanded, onToggle, children, count, hasChanges, summary }: { title: string; icon: React.ComponentType<{ className?: string }>; expanded: boolean; onToggle: () => void; children: React.ReactNode; count?: number; hasChanges?: boolean; summary?: string }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors">
+    <section className="overflow-hidden rounded-lg border border-border bg-card transition-colors">
       <button
         type="button"
         onClick={onToggle}
-        className="flex min-h-14 w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-slate-50"
+        className="flex min-h-12 w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/50"
         aria-expanded={expanded}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
-            <Icon className="h-4 w-4 text-slate-600" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted">
+            <Icon className="size-4 text-muted-foreground" />
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate text-sm font-semibold text-slate-800">{title}</span>
-            {summary && <span className="truncate text-xs font-medium text-slate-500">{summary}</span>}
+            <span className="truncate text-sm font-semibold text-foreground">{title}</span>
+            {summary && <span className="truncate text-xs font-medium text-muted-foreground">{summary}</span>}
             {count !== undefined && count > 0 && (
-              <Badge variant="secondary" className="h-5 shrink-0 rounded-full bg-slate-100 px-2 text-xs text-slate-600">{count}</Badge>
+              <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-xs">{count}</Badge>
             )}
             {hasChanges && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-accent-soft px-2 py-0.5 text-caption font-medium text-brand-accent-foreground">
@@ -53,12 +64,12 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
             )}
           </div>
         </div>
-        <div className={cn("flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-slate-400 transition-transform duration-200", expanded && "rotate-180")}>
+        <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-transform duration-200", expanded && "rotate-180")}>
           <ChevronDown className="h-4 w-4" />
         </div>
       </button>
       {expanded && (
-        <div className="space-y-3 border-t border-slate-100 px-3.5 py-4">{children}</div>
+        <div className="space-y-3 border-t border-border px-3.5 py-4">{children}</div>
       )}
     </section>
   );
@@ -497,26 +508,27 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-50 lg:hidden">
-        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-        <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-in-right">
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
+      <Sheet open onOpenChange={(open) => !open && onClose?.()}>
+        <SheetContent>
+          <SheetHeader>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Refine your search</h2>
-              <p className="mt-0.5 text-sm text-slate-500">Choose what matters for your trip</p>
+              <SheetTitle>Refine your search</SheetTitle>
+              <SheetDescription className="mt-0.5">Choose what matters for your trip</SheetDescription>
             </div>
             <div className="flex items-center gap-2">
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-600">
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
                   Clear
                 </Button>
               )}
-              <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close filters">
-                <X className="h-4 w-4 text-slate-600" />
-              </Button>
+              <SheetClose asChild>
+                <Button variant="ghost" size="icon" aria-label="Close filters">
+                  <X className="size-4" />
+                </Button>
+              </SheetClose>
             </div>
-          </div>
-          <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-4">
+          </SheetHeader>
+          <SheetBody className="space-y-3 bg-muted/50 p-4">
             <FilterContent
               filters={filters}
               draftFilters={draftFilters}
@@ -531,34 +543,34 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
               viewType={viewType}
               onViewTypeChange={onViewTypeChange}
             />
-          </div>
-          <div className="sticky bottom-0 border-t border-slate-200 bg-white p-4">
+          </SheetBody>
+          <SheetFooter>
             <div className="flex gap-3">
-              <Button variant="outline" className="h-11 flex-1 rounded-lg" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
+              <Button variant="outline" className="flex-1" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
                 Reset
               </Button>
-              <Button className="h-11 flex-1 rounded-lg bg-blue-600 font-medium text-white hover:bg-blue-700" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
+              <Button className="flex-1" onClick={applyFilters} disabled={!hasDraftChanges || isApplying}>
                 {isApplying ? <Spinner label="Loading packages" size="sm" className="mr-1.5" /> : <>Show packages <Check className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     );
   }
 
   return (
     <aside className="hidden w-68 flex-shrink-0 md:block">
-      <div className="sticky top-20 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+      <Card className="sticky top-20 gap-0 p-3">
         <div className="mb-3 flex items-center justify-between gap-2 px-1 py-1">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-              <svg className="h-4 w-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+            <div className="flex size-8 items-center justify-center rounded-md bg-accent text-primary">
+              <Filter className="size-4" aria-hidden="true" />
             </div>
             Filters
           </h2>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-xs text-slate-500 hover:text-blue-700">
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="px-2 text-caption text-muted-foreground">
               <X className="mr-1 h-3 w-3" />
               Clear
             </Button>
@@ -581,7 +593,7 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
           />
         </div>
         {hasDraftChanges && (
-          <div className="mt-3 border-t border-slate-200 pt-3">
+          <div className="mt-3 border-t border-border pt-3">
             <div className="flex gap-2">
               <Button variant="outline" className="h-10 flex-1 rounded-lg text-sm" onClick={() => setDraftFilters(filters)} disabled={isApplying}>
                 Reset
@@ -592,7 +604,7 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </aside>
   );
 }

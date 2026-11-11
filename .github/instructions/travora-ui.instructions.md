@@ -12,6 +12,9 @@ Follow `frontend/TRAVORA_FRONTEND_RULES.md`. The shared primitives and tokens ar
 - Reuse `components/ui` primitives. Change a shared primitive only when standardizing the system, not to patch one page.
 - Use `PageContainer` for consistent page width/gutters and `PageStack` for vertical section rhythm; avoid nesting page gutters inside a shell that already provides them.
 - Use `AppShellHeader` and `IconSidebar` for authenticated app-shell chrome. Keep role-specific links/configuration in the feature shell, not duplicated navigation markup.
+- Reuse the shared `Card` primitive and its `size`/`variant` props. Avoid glass or custom hover treatments that override the shared card surface.
+- Structure long dialogs with a fixed `DialogHeader`, a `DialogBody` that owns vertical scrolling, and a fixed `DialogFooter`. Use the shared `Sheet` primitives for mobile filter/search panels instead of hand-built overlays.
+- Use the shared `Table` primitives and `Pagination` control for tabular data and paginated lists; keep empty/loading rows and responsive overflow within the table container.
 - Reuse `LoadingState`, `EmptyState`, and `ErrorState` for page-level states, and `Spinner` for compact async actions. Avoid custom spinner markup.
 - Use `text-display`, `text-page-title`, `text-section-title`, `text-card-title`, `text-body`, `text-body-sm`, and `text-caption` for the established type scale. Labels are 14px; reserve 12px for metadata.
 - Default buttons and form controls are 40px high; small controls are 36px and large buttons are 44px. Keep mobile form text at least 16px.

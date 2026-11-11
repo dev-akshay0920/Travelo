@@ -258,7 +258,7 @@ export default function EditPackagePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-6">
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
             <CardDescription>Core details about your travel package.</CardDescription>
@@ -441,7 +441,7 @@ export default function EditPackagePage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Dates & Pricing</CardTitle>
             <CardDescription>Set the schedule, duration, and pricing for your package.</CardDescription>
@@ -566,7 +566,7 @@ export default function EditPackagePage() {
            </CardContent>
          </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Settings</CardTitle>
             <CardDescription>Visibility and status for this package.</CardDescription>
@@ -610,7 +610,7 @@ export default function EditPackagePage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Details</CardTitle>
             <CardDescription>Add inclusions, exclusions, and highlights.</CardDescription>
@@ -648,7 +648,7 @@ export default function EditPackagePage() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Policies</CardTitle>
             <CardDescription>Set terms and cancellation policy.</CardDescription>
@@ -716,7 +716,7 @@ export default function EditPackagePage() {
           content={form.cancellationPolicy ?? ""}
         />
 
-        <Card className="glass-card depth-hover">
+        <Card size="sm">
           <CardHeader>
             <CardTitle>Itinerary</CardTitle>
             <CardDescription>Day-wise schedule for the package.</CardDescription>

@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import type { TravelPackage, PackageImage } from "@/features/packages/types/package.types";
-import { X, Calendar, MapPin, Users, IndianRupee, Sparkles, ChevronLeft, ChevronRight, Expand, Image as ImageIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Calendar, MapPin, Users, IndianRupee, Sparkles, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
@@ -52,14 +60,13 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-6xl sm:max-w-6xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="flex h-[90dvh] max-h-[56rem] w-[95vw] max-w-6xl flex-col gap-0 overflow-hidden p-0 sm:max-w-6xl">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
+            <div className="min-w-0">
               <DialogTitle className="text-xl">{pkg.name}</DialogTitle>
-              <DialogDescription className="flex items-center gap-1 mt-1">
+              <DialogDescription className="mt-1 flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
                 {pkg.destination}
               </DialogDescription>
@@ -69,9 +76,8 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
             </Badge>
           </div>
         </DialogHeader>
-        </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <DialogBody className="space-y-6 px-6 py-5">
           {images.length > 0 && (
             <div className="space-y-4">
               <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-muted">
@@ -251,10 +257,9 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{pkg.cancellationPolicy}</p>
             </div>
           )}
+        </DialogBody>
 
-        </div>
-
-        <div className="sticky bottom-0 z-10 bg-background border-t px-6 py-4 flex justify-end gap-3">
+        <DialogFooter className="mx-0 mb-0 rounded-none bg-background px-6 py-4">
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
@@ -263,7 +268,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
               Edit Package
             </Button>
           )}
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

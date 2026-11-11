@@ -1358,15 +1358,22 @@ Future admin functionality requires stronger authorization. `role === "admin"` f
 
 ## 105. LEAD SECURITY
 
-Leads may contain sensitive customer information. Future lead endpoints must implement:
+Lead generation has been approved for the agency-owner MVP. Leads may contain
+sensitive customer information, so all lead endpoints must implement:
 
 - authentication
 - authorization
 - ownership checks
 - minimal response fields
-- audit considerations
+- strict input validation and bounded queries
+- rate limits on inquiry creation
+- privacy-safe logging and response minimization
+- a documented retention/deletion policy before production launch
 
-Do **not** implement leads now.
+Resolve traveler and agency roles from stored user records; do not rely on
+client-supplied role or agency identifiers as proof of authorization. Do not
+connect leads to chat until chat ownership checks have been reviewed and fixed.
+Do not represent agency-reported outcomes as Travora bookings or revenue.
 
 ---
 

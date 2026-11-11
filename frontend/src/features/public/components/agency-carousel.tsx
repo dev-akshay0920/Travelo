@@ -122,7 +122,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
 
 function AgencyCard({ agency }: { agency: AgencySummary }) {
   return (
-    <Card className="h-full overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-gray-100 hover:border-blue-200">
+    <Card variant="interactive" className="h-full">
       <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100 relative">
         {agency.logo ? (
           <Image

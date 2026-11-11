@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { watchlistApi } from "@/features/watchlist/api/watchlist.api";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/date-format";
+import { Pagination } from "@/components/ui/pagination";
 
 type ViewType = "packages" | "agencies" | "both";
 
@@ -487,25 +488,12 @@ export default function TravellerExplorePage() {
           </div>
 
           {totalPages > 1 && viewType !== "agencies" && (
-            <div className="mt-6 flex items-center justify-between">
-              <Button
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-                variant="outline"
-              >
-                Previous
-              </Button>
-              <span className="text-sm tabular-nums text-gray-600">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              className="mt-6"
+            />
           )}
         </div>
       </div>

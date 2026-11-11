@@ -5,9 +5,10 @@ import type { ReactNode } from "react";
 import {
   LayoutDashboard,
   LogOut,
+  MessageSquareText,
   Package,
   Plane,
-  Settings,
+  UserRound,
 } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
@@ -15,27 +16,26 @@ import { IconSidebar } from "@/components/shared/icon-sidebar";
 import { PageContainer } from "@/components/shared/page-container";
 import { Button } from "@/components/ui/button";
 
-type AgencyTab = "dashboard" | "packages" | "settings";
+type AgencyTab = "dashboard" | "inquiries" | "packages" | "settings";
 type SettingsSubTab = "templates" | "profile";
 
 type AgencyShellProps = {
   children: ReactNode;
   activeTab: AgencyTab;
-  onTabChange: (tab: AgencyTab) => void;
   activeSettingsSubTab?: SettingsSubTab;
   onSettingsSubTabChange?: (subTab: SettingsSubTab) => void;
 };
 
 const tabItems = [
-  { label: "Dashboard", key: "dashboard" as const, icon: LayoutDashboard },
-  { label: "Packages", key: "packages" as const, icon: Package },
-  { label: "Settings", key: "settings" as const, icon: Settings },
+  { label: "Overview", key: "dashboard" as const, icon: LayoutDashboard, href: "/agency" },
+  { label: "Inquiries", key: "inquiries" as const, icon: MessageSquareText, href: "/agency/inquiries" },
+  { label: "Packages", key: "packages" as const, icon: Package, href: "/agency/packages" },
+  { label: "Profile", key: "settings" as const, icon: UserRound, href: "/agency/settings/profile" },
 ];
 
 export function AgencyShell({
   children,
   activeTab,
-  onTabChange,
   activeSettingsSubTab,
   onSettingsSubTabChange,
 }: AgencyShellProps) {
@@ -48,7 +48,7 @@ export function AgencyShell({
           label: item.label,
           icon: item.icon,
           isActive: activeTab === item.key,
-          onSelect: () => onTabChange(item.key),
+          href: item.href,
         }))}
         footerItems={[{ label: "Sign out", href: "/signin", icon: LogOut }]}
         brandHref="/agency"
@@ -64,7 +64,7 @@ export function AgencyShell({
           <PageContainer className="min-h-full pb-24 md:pb-5">
             {showSettingsSubNav && (
               <div
-                aria-label="Settings sections"
+                aria-label="Profile and settings sections"
                 className="mb-5 inline-flex items-center gap-1 rounded-md bg-muted p-1"
               >
                 <Button
@@ -83,7 +83,7 @@ export function AgencyShell({
                   aria-pressed={activeSettingsSubTab === "templates"}
                   onClick={() => onSettingsSubTabChange?.("templates")}
                 >
-                  Templates
+                  Policy templates
                 </Button>
               </div>
             )}

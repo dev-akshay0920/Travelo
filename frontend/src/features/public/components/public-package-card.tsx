@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDisplayDate } from "@/lib/date-format";
+import { InquiryFormDialog } from "@/features/leads/components/inquiry-form-dialog";
 
 type PackageCardProps = {
   package: TravelPackage;
@@ -73,11 +74,10 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
   const isSoldOut = availableSeats <= 0;
 
   return (
-    <Card className={cn(
-      "flex flex-col overflow-hidden transition-shadow duration-200 pt-0",
-      "border-border shadow-card hover:shadow-md",
-      isSoldOut && "opacity-50"
-    )}>
+    <Card
+      variant="interactive"
+      className={cn("flex flex-col pt-0", isSoldOut && "opacity-50")}
+    >
       {/* Image - Compact 16:10 */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         {primaryImage ? (
@@ -231,6 +231,13 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
             {pkg.tripTheme.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
           </span>
         </div>
+        <InquiryFormDialog
+          agencyId={pkg.agencyId}
+          packageId={pkg.id}
+          packageName={pkg.name}
+          size="sm"
+          className="w-full"
+        />
       </CardContent>
     </Card>
   );

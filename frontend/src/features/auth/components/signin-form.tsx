@@ -40,7 +40,13 @@ export function SignInForm({ email = "", password = "" }: SignInFormProps) {
 
       toast.success("Signed in successfully!");
 
-      if (user.role.key === "agency") {
+      const returnPath = new URLSearchParams(window.location.search).get("redirectTo");
+      const safeReturnPath =
+        returnPath?.startsWith("/") && !returnPath.startsWith("//") ? returnPath : null;
+
+      if (user.role.key === "traveller" && safeReturnPath) {
+        router.push(safeReturnPath);
+      } else if (user.role.key === "agency") {
         router.push("/agency");
       } else if (user.role.key === "admin") {
         router.push("/admin");

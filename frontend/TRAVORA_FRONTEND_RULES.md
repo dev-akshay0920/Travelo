@@ -265,6 +265,14 @@ Standard component scale:
 
 Use the existing Button, Card, Dialog, Select, Calendar, Input, and Label primitives rather than one-off replacements. Preserve keyboard navigation, visible focus, accessible names, disabled/error states, and mobile responsiveness. Do not add glassmorphism or decorative global backgrounds.
 
+### Cards, dialogs, search panels, and data lists
+
+- Use the shared `Card` surface, spacing, and `size`/`variant` props. Do not add glass-card treatments or page-specific hover shadows; use `variant="interactive"` only when the card itself is actionable.
+- Long dialogs have a fixed header and footer with only the `DialogBody` scrolling. Keep the dialog content within the viewport and preserve keyboard close/focus behavior.
+- Build mobile filter/search panels with `Sheet`, `SheetHeader`, `SheetBody`, and `SheetFooter`. The header and actions stay fixed while panel content scrolls; do not hand-build modal overlays.
+- Use `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, and `TableCell` for data tables. Keep horizontal overflow in the table container.
+- Use the shared `Pagination` for paginated data. Keep previous/next controls, disabled states, and the current page announcement consistent.
+
 ### Shared application layout
 
 - Use `PageContainer` for the shared content width and responsive horizontal gutters. Do not add another page-level gutter/max-width wrapper inside a shell that already uses it.

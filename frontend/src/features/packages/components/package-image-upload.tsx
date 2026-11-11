@@ -348,7 +348,7 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
   })();
 
   return (
-    <Card className="glass-card depth-hover">
+    <Card size="sm">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Package Images</CardTitle>
