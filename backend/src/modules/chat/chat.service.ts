@@ -3,8 +3,10 @@ import type {
   MessageFilters,
 } from "./chat.repository";
 import { ChatRepository } from "./chat.repository";
-import { NotFoundError, ValidationError, ConflictError } from "../../shared/errors/app-error";
+import { ForbiddenError, NotFoundError, ValidationError } from "../../shared/errors/app-error";
 import { Types } from "mongoose";
+import { AgencyRepository } from "../agencies/agency.repository";
+import { LeadRepository } from "../leads/lead.repository";
 
 export interface StartConversationInput {
   travellerId: string;
@@ -51,6 +53,20 @@ export const ChatService = {
     if (!Types.ObjectId.isValid(agencyId)) {
       throw new ValidationError("Invalid agency ID.");
     }
+    if (leadId && !Types.ObjectId.isValid(leadId)) {
+      throw new ValidationError("Invalid lead ID.");
+    }
+
+    const agency = await AgencyRepository.findById(agencyId);
+    if (!agency || agency.status !== "approved") {
+      throw new NotFoundError("Agency not found.");
+    }
+    if (leadId) {
+      const lead = await LeadRepository.findByIdAndTraveler(leadId, travellerId);
+      if (!lead || String(lead.agencyId) !== agencyId) {
+        throw new NotFoundError("Lead not found.");
+      }
+    }
 
     const existing = await ChatRepository.findConversation(
       new Types.ObjectId(travellerId),
@@ -96,7 +112,6 @@ export const ChatService = {
     if (!conv) {
       return null;
     }
-    // Only allow participants
     if (String(conv.travellerId) !== userId && String(conv.agencyId) !== userId) {
       return null;
     }
@@ -160,9 +175,13 @@ export const ChatService = {
       throw new NotFoundError("Conversation not found.");
     }
 
-    // Verify sender is a participant
-    if (String(conversation.travellerId) !== senderId && String(conversation.agencyId) !== senderId) {
-      throw new ConflictError("Sender is not a participant of this conversation.");
+    const isTraveller = String(conversation.travellerId) === senderId;
+    const isAgency = String(conversation.agencyId) === senderId;
+    if (!isTraveller && !isAgency) {
+      throw new NotFoundError("Conversation not found.");
+    }
+    if ((senderRole === "traveller") !== isTraveller) {
+      throw new ForbiddenError("Sender role does not match the conversation participant.");
     }
 
     const created = await ChatRepository.createMessage({
@@ -189,14 +208,14 @@ export const ChatService = {
   async listMessages(filters: MessageFilters, userId: string): Promise<{ items: MessageDTO[]; total: number; page: number; limit: number; totalPages: number }> {
     // Verify user is a participant of the conversation
     if (!Types.ObjectId.isValid(filters.conversationId)) {
-      return { items: [], total: 0, page: 1, limit: filters.limit || 50, totalPages: 0 };
+      throw new ValidationError("Invalid conversation ID.");
     }
     const conversation = await ChatRepository.findById(filters.conversationId);
     if (!conversation) {
-      return { items: [], total: 0, page: 1, limit: filters.limit || 50, totalPages: 0 };
+      throw new NotFoundError("Conversation not found.");
     }
     if (String(conversation.travellerId) !== userId && String(conversation.agencyId) !== userId) {
-      return { items: [], total: 0, page: 1, limit: filters.limit || 50, totalPages: 0 };
+      throw new NotFoundError("Conversation not found.");
     }
 
     const result = await ChatRepository.listMessages(filters);
@@ -219,15 +238,23 @@ export const ChatService = {
   },
 
   async markAsRead(conversationId: string, userId: string): Promise<void> {
-    if (!Types.ObjectId.isValid(conversationId) || !Types.ObjectId.isValid(userId)) {
-      return;
+    if (!Types.ObjectId.isValid(conversationId)) {
+      throw new ValidationError("Invalid conversation ID.");
+    }
+    const conversation = await ChatRepository.findById(conversationId);
+    if (!conversation || (String(conversation.travellerId) !== userId && String(conversation.agencyId) !== userId)) {
+      throw new NotFoundError("Conversation not found.");
     }
     await ChatRepository.markAsRead(new Types.ObjectId(conversationId), new Types.ObjectId(userId));
   },
 
   async getUnreadCount(conversationId: string, userId: string): Promise<number> {
-    if (!Types.ObjectId.isValid(conversationId) || !Types.ObjectId.isValid(userId)) {
-      return 0;
+    if (!Types.ObjectId.isValid(conversationId)) {
+      throw new ValidationError("Invalid conversation ID.");
+    }
+    const conversation = await ChatRepository.findById(conversationId);
+    if (!conversation || (String(conversation.travellerId) !== userId && String(conversation.agencyId) !== userId)) {
+      throw new NotFoundError("Conversation not found.");
     }
     return ChatRepository.getUnreadCount(new Types.ObjectId(conversationId), new Types.ObjectId(userId));
   },

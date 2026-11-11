@@ -145,10 +145,11 @@ export const ReviewsRepository = {
     };
   },
 
-  async delete(id: Types.ObjectId): Promise<boolean> {
-    if (!Types.ObjectId.isValid(id)) {
+  async delete(id: Types.ObjectId, travellerId: Types.ObjectId): Promise<boolean> {
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(travellerId)) {
       return false;
     }
-    const result = await (Review as unknown as { deleteOne: (filter: Record<string, unknown>) => { exec: () => Promise<{ deletedCount: number }> } }).deleteOne({ _id: id }).exec();
-    return result.deletedCount === 1;  },
+    const result = await (Review as unknown as { deleteOne: (filter: Record<string, unknown>) => { exec: () => Promise<{ deletedCount: number }> } }).deleteOne({ _id: id, travellerId }).exec();
+    return result.deletedCount === 1;
+  },
 };

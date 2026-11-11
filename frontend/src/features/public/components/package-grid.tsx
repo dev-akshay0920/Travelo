@@ -7,14 +7,18 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInfinitePackages } from "@/features/public/hooks/use-infinite-packages";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
-import type { PackageFilters } from "@/features/public/types/public-filters.types";
+import type {
+  PackageFilters,
+  PackageStatus,
+  TravelPackage,
+} from "@/features/public/types/public-filters.types";
 
 interface PackageGridProps {
   filters: PackageFilters;
-  onEdit?: (pkg: any) => void;
-  onDelete?: (pkg: any) => void;
-  onStatusChange?: (pkg: any, status: any) => void;
-  onViewDetail?: (pkg: any) => void;
+  onEdit?: (pkg: TravelPackage) => void;
+  onDelete?: (pkg: TravelPackage) => void;
+  onStatusChange?: (pkg: TravelPackage, status: PackageStatus) => void;
+  onViewDetail?: (pkg: TravelPackage) => void;
   viewMode?: "grid" | "list";
 }
 
@@ -55,7 +59,7 @@ export function PackageGrid({ filters, onEdit, onDelete, onStatusChange, onViewD
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-1">No packages found</h3>
         <p className="text-gray-500 mb-6 max-w-md mx-auto">
-          Try adjusting your filters or search terms to find what you're looking for.
+          Try adjusting your filters or search terms to find what you&apos;re looking for.
         </p>
         <Button variant="outline" onClick={clearFilters}>
           Clear All Filters

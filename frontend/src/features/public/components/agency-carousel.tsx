@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Star, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AgencySummary } from "@/features/public/api/public-packages.api";
@@ -16,29 +17,54 @@ interface AgencyCarouselProps {
 
 export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [cardsPerView, setCardsPerView] = useState(3); // Default for desktop
-  const [mounted, setMounted] = useState(false);
+  const [maxIndex, setMaxIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
-  const updateCardsPerView = useCallback(() => {
-    const width = window.innerWidth;
-    if (width >= 1024) setCardsPerView(4);
-    else if (width >= 768) setCardsPerView(3);
-    else if (width >= 640) setCardsPerView(2);
-    else setCardsPerView(1);
+  const updateScrollState = useCallback(() => {
+    const carousel = carouselRef.current;
+    if (!carousel) return;
+
+    const firstCard = carousel.firstElementChild;
+    if (!(firstCard instanceof HTMLElement)) return;
+
+    const gap = Number.parseFloat(getComputedStyle(carousel).columnGap) || 0;
+    const step = firstCard.getBoundingClientRect().width + gap;
+    const max = step > 0
+      ? Math.max(0, Math.ceil((carousel.scrollWidth - carousel.clientWidth) / step))
+      : 0;
+
+    setCurrentIndex(Math.min(Math.round(carousel.scrollLeft / step), max));
+    setMaxIndex(max);
   }, []);
 
   useEffect(() => {
-    setMounted(true);
-    updateCardsPerView();
-    window.addEventListener("resize", updateCardsPerView);
-    return () => window.removeEventListener("resize", updateCardsPerView);
-  }, [updateCardsPerView]);
+    const carousel = carouselRef.current;
+    if (!carousel) return;
 
-  // Calculate maxIndex based on mounted state
-  const maxIndex = mounted ? Math.max(0, agencies.length - cardsPerView) : Math.max(0, agencies.length - 3);
+    const frame = requestAnimationFrame(updateScrollState);
+    carousel.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+    return () => {
+      cancelAnimationFrame(frame);
+      carousel.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [agencies.length, updateScrollState]);
 
-  const next = () => setCurrentIndex((i) => Math.min(i + 1, maxIndex));
-  const prev = () => setCurrentIndex((i) => Math.max(i - 1, 0));
+  const scrollToIndex = (index: number) => {
+    const carousel = carouselRef.current;
+    const firstCard = carousel?.firstElementChild;
+    if (!carousel || !(firstCard instanceof HTMLElement)) return;
+
+    const gap = Number.parseFloat(getComputedStyle(carousel).columnGap) || 0;
+    carousel.scrollTo({
+      left: index * (firstCard.getBoundingClientRect().width + gap),
+      behavior: "smooth",
+    });
+  };
+
+  const next = () => scrollToIndex(Math.min(currentIndex + 1, maxIndex));
+  const prev = () => scrollToIndex(Math.max(currentIndex - 1, 0));
 
   return (
     <section className="py-16 bg-white" aria-labelledby="agencies-heading">
@@ -47,7 +73,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
           <h2 id="agencies-heading" className="text-xl font-semibold text-gray-900">Approved Travel Agencies</h2>
           {agencies.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
-              <a href="/agencies" className="text-blue-600 hover:text-blue-700 font-medium">View All <ChevronRight className="ml-1 h-4 w-4" /></a>
+              <Link href="/agencies" className="text-blue-600 hover:text-blue-700 font-medium">View All <ChevronRight className="ml-1 h-4 w-4" /></Link>
             </Button>
           )}
         </div>
@@ -60,14 +86,14 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
               size="icon"
               className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:-left-3 hidden sm:flex h-10 w-10 rounded-full shadow-lg bg-white border-gray-200 hover:bg-gray-50"
               onClick={prev}
-              disabled={currentIndex === 0}
+              disabled={currentIndex <= 0}
               aria-label="Previous agencies"
             >
               <ChevronLeft className="h-5 w-5 text-gray-600" />
             </Button>
 
             {/* Carousel */}
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4" style={{ scrollSnapType: "x mandatory" }}>
+            <div ref={carouselRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4" style={{ scrollSnapType: "x mandatory" }}>
               {agencies.map((agency) => (
                 <article
                   key={agency.id}
@@ -99,13 +125,12 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
             </p>
         )}
 
-        {/* Dots Indicator - only render on client to avoid hydration mismatch */}
-        {mounted && maxIndex > 0 && (
-          <div className="flex justify-center gap-2 mt-4" suppressHydrationWarning>
+        {maxIndex > 0 && (
+          <div className="flex justify-center gap-2 mt-4">
             {Array.from({ length: maxIndex + 1 }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => setCurrentIndex(i)}
+                onClick={() => scrollToIndex(i)}
                 className={cn(
                   "h-2 w-2 rounded-full transition-all",
                   i === currentIndex ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"
@@ -159,7 +184,7 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <span className="text-sm text-gray-600">{agency.packageCount} packages</span>
           <Button variant="ghost" size="sm" asChild className="text-blue-600 hover:text-blue-700 font-medium">
-            <a href={`/agencies/${agency.slug}`}>View</a>
+            <Link href={`/agencies/${agency.slug}`}>View</Link>
           </Button>
         </div>
       </div>

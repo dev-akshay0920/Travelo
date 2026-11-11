@@ -3,6 +3,7 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { ReviewsService } from "./reviews.service";
+import { submitReviewSchema, updateReviewSchema } from "./reviews.validation";
 
 export const submitReview = asyncHandler(async (req: Request, res: Response) => {
   if (!req.user) {
@@ -13,28 +14,7 @@ export const submitReview = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const { packageId, agencyId, rating, comment } = req.body;
-  if (!packageId || typeof packageId !== "string") {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Package ID is required." },
-    });
-    return;
-  }
-  if (!agencyId || typeof agencyId !== "string") {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Agency ID is required." },
-    });
-    return;
-  }
-  if (!rating || typeof rating !== "number" || rating < 1 || rating > 5) {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Rating must be between 1 and 5." },
-    });
-    return;
-  }
+  const { packageId, agencyId, rating, comment } = submitReviewSchema.parse(req.body);
 
   const review = await ReviewsService.submitReview({
     travellerId: req.user.sub,
@@ -92,7 +72,7 @@ export const updateReview = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const { rating, comment } = req.body;
+  const { rating, comment } = updateReviewSchema.parse(req.body);
   const review = await ReviewsService.updateReview(id, req.user.sub, {
     ...(rating !== undefined && { rating }),
     ...(comment !== undefined && { comment }),
@@ -127,7 +107,7 @@ export const deleteReview = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const deleted = await ReviewsService.deleteReview(id);
+  const deleted = await ReviewsService.deleteReview(id, req.user.sub);
   if (!deleted) {
     res.status(HTTP_STATUS.NOT_FOUND).json({
       success: false,

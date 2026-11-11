@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -57,62 +57,67 @@ export default function EditPackagePage() {
   const router = useRouter();
   const packageId = params.id;
   const [form, setForm] = useState<UpdatePackageInput>(emptyForm);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedPackageId, setLoadedPackageId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [slugError, setSlugError] = useState("");
   const [isTermsTemplateOpen, setIsTermsTemplateOpen] = useState(false);
   const [isCancellationTemplateOpen, setIsCancellationTemplateOpen] = useState(false);
   const slugRegex = /^[a-z0-9-]+$/;
-
-  const loadPackage = useCallback(async () => {
-    if (!packageId) return;
-    setIsLoading(true);
-    try {
-      const response = await getPackageByIdApi(packageId);
-      const pkg = response.package;
-      setForm({
-        name: pkg.name,
-        slug: pkg.slug,
-        description: pkg.description,
-        destination: pkg.destination,
-        destinations: pkg.destinations,
-        geographicScope: pkg.geographicScope,
-        tripTheme: pkg.tripTheme,
-        durationDays: pkg.durationDays,
-        durationNights: pkg.durationNights,
-        startDate: pkg.startDate,
-        endDate: pkg.endDate,
-        bookingDeadline: pkg.bookingDeadline,
-        price: pkg.price,
-        currency: pkg.currency,
-        priceType: pkg.priceType,
-        minTravelers: pkg.minTravelers,
-        maxTravelers: pkg.maxTravelers,
-        availableSeats: pkg.availableSeats,
-        inclusions: pkg.inclusions,
-        exclusions: pkg.exclusions,
-        itinerary: pkg.itinerary,
-        images: pkg.images,
-        highlights: pkg.highlights,
-        termsAndConditions: pkg.termsAndConditions ?? "",
-        cancellationPolicy: pkg.cancellationPolicy ?? "",
-        visibility: pkg.visibility,
-        isFeatured: pkg.isFeatured,
-        status: pkg.status,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load package.";
-      toast.error(message);
-      router.push("/agency");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [packageId, router]);
+  const isLoading = loadedPackageId !== packageId;
 
   useEffect(() => {
+    let cancelled = false;
+    const loadPackage = async () => {
+      try {
+        const response = await getPackageByIdApi(packageId);
+        if (cancelled) return;
+
+        const pkg = response.package;
+        setForm({
+          name: pkg.name,
+          slug: pkg.slug,
+          description: pkg.description,
+          destination: pkg.destination,
+          destinations: pkg.destinations,
+          geographicScope: pkg.geographicScope,
+          tripTheme: pkg.tripTheme,
+          durationDays: pkg.durationDays,
+          durationNights: pkg.durationNights,
+          startDate: pkg.startDate,
+          endDate: pkg.endDate,
+          bookingDeadline: pkg.bookingDeadline,
+          price: pkg.price,
+          currency: pkg.currency,
+          priceType: pkg.priceType,
+          minTravelers: pkg.minTravelers,
+          maxTravelers: pkg.maxTravelers,
+          availableSeats: pkg.availableSeats,
+          inclusions: pkg.inclusions,
+          exclusions: pkg.exclusions,
+          itinerary: pkg.itinerary,
+          images: pkg.images,
+          highlights: pkg.highlights,
+          termsAndConditions: pkg.termsAndConditions ?? "",
+          cancellationPolicy: pkg.cancellationPolicy ?? "",
+          visibility: pkg.visibility,
+          isFeatured: pkg.isFeatured,
+          status: pkg.status,
+        });
+        setLoadedPackageId(packageId);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to load package.";
+        toast.error(message);
+        router.push("/agency");
+      }
+    };
+
     void loadPackage();
-  }, [loadPackage]);
+    return () => {
+      cancelled = true;
+    };
+  }, [packageId, router]);
 
   const updateField = <K extends keyof UpdatePackageInput>(field: K, value: UpdatePackageInput[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));

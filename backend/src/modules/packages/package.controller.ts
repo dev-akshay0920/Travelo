@@ -12,50 +12,60 @@ import {
   setPrimaryImageSchema,
   reorderImagesSchema,
 } from "./package.validation";
+import { AgencyRepository } from "../agencies/agency.repository";
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "../../shared/errors/app-error";
 
-const getAgencyIdFromReq = (req: Request): string => {
-  const agencyId = req.query.agencyId;
-  if (!agencyId || typeof agencyId !== "string") {
-    throw new Error("Agency ID is required.");
+const getAgencyIdFromReq = async (req: Request): Promise<string> => {
+  if (!req.user) {
+    throw new UnauthorizedError("Authentication required.");
   }
-  return agencyId;
+  if (req.user.roleKey !== "agency") {
+    throw new ForbiddenError("Agency owner access is required.");
+  }
+
+  const agency = await AgencyRepository.findByOwnerUserId(req.user.sub);
+  if (!agency) {
+    throw new NotFoundError("Agency profile not found.");
+  }
+
+  const agencyId = req.query.agencyId;
+  if (agencyId !== undefined && typeof agencyId !== "string") {
+    throw new ValidationError("Agency ID must be a single value.");
+  }
+  if (agencyId && agencyId !== String(agency._id)) {
+    throw new NotFoundError("Agency not found.");
+  }
+
+  return String(agency._id);
 };
 
 export const listPackages = asyncHandler(async (req: Request, res: Response) => {
-  console.log("[listPackages] Request received, query:", req.query);
-  const agencyId = getAgencyIdFromReq(req);
-  console.log("[listPackages] agencyId:", agencyId);
+  const agencyId = await getAgencyIdFromReq(req);
   const query = listPackagesQuerySchema.parse(req.query);
-  console.log("[listPackages] parsed query:", query);
   const result = await PackageService.getPackagesByAgency(agencyId, query);
-  console.log("[listPackages] result:", { total: result.total, itemsCount: result.items.length });
   res.status(HTTP_STATUS.OK).json(success(result));
 });
 
 export const listUpcomingPackages = asyncHandler(async (req: Request, res: Response) => {
-  console.log("[listUpcomingPackages] Request received");
-  const agencyId = getAgencyIdFromReq(req);
-  console.log("[listUpcomingPackages] agencyId:", agencyId);
+  const agencyId = await getAgencyIdFromReq(req);
   const items = await PackageService.getUpcomingPackages(agencyId);
-  console.log("[listUpcomingPackages] items:", items.length);
   res.status(HTTP_STATUS.OK).json(success({ items }));
 });
 
 export const listCurrentPackages = asyncHandler(async (req: Request, res: Response) => {
-  console.log("[listCurrentPackages] Request received");
-  const agencyId = getAgencyIdFromReq(req);
-  console.log("[listCurrentPackages] agencyId:", agencyId);
+  const agencyId = await getAgencyIdFromReq(req);
   const items = await PackageService.getCurrentPackages(agencyId);
-  console.log("[listCurrentPackages] items:", items.length);
   res.status(HTTP_STATUS.OK).json(success({ items }));
 });
 
 export const listHistoryPackages = asyncHandler(async (req: Request, res: Response) => {
-  console.log("[listHistoryPackages] Request received");
-  const agencyId = getAgencyIdFromReq(req);
-  console.log("[listHistoryPackages] agencyId:", agencyId);
+  const agencyId = await getAgencyIdFromReq(req);
   const items = await PackageService.getHistoryPackages(agencyId);
-  console.log("[listHistoryPackages] items:", items.length);
   res.status(HTTP_STATUS.OK).json(success({ items }));
 });
 
@@ -69,7 +79,8 @@ export const getPackage = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  const pkg = await PackageService.getPackageById(id);
+  const agencyId = await getAgencyIdFromReq(req);
+  const pkg = await PackageService.getPackageById(id, agencyId);
   res.status(HTTP_STATUS.OK).json(success({ package: pkg }));
 });
 
@@ -83,12 +94,12 @@ export const createPackage = asyncHandler(async (req: Request, res: Response) =>
   }
 
   const body = createPackageSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.createPackage({
     ...body,
     agencyId,
     ownerUserId: req.user.sub,
-  } as Parameters<typeof PackageService.createPackage>[0]);
+  });
 
   res.status(HTTP_STATUS.CREATED).json(success({ package: pkg }));
 });
@@ -112,8 +123,8 @@ export const updatePackage = asyncHandler(async (req: Request, res: Response) =>
   }
 
   const body = updatePackageSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
-  const pkg = await PackageService.updatePackage({ id, agencyId, ...body } as Parameters<typeof PackageService.updatePackage>[0]);
+  const agencyId = await getAgencyIdFromReq(req);
+  const pkg = await PackageService.updatePackage({ id, agencyId, ...body });
 
   res.status(HTTP_STATUS.OK).json(success({ package: pkg }));
 });
@@ -137,7 +148,7 @@ export const updatePackageStatus = asyncHandler(async (req: Request, res: Respon
   }
 
   const body = updatePackageStatusSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.updatePackageStatus(id, agencyId, body.status);
 
   res.status(HTTP_STATUS.OK).json(success({ package: pkg }));
@@ -161,7 +172,7 @@ export const deletePackage = asyncHandler(async (req: Request, res: Response) =>
     return;
   }
 
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   await PackageService.deletePackage(id, agencyId);
 
   res.status(HTTP_STATUS.NO_CONTENT).json(null);
@@ -186,7 +197,7 @@ export const uploadPackageImages = asyncHandler(async (req: Request, res: Respon
   }
 
   const body = uploadPackageImagesSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.uploadPackageImages({
     packageId: id,
     agencyId,
@@ -214,7 +225,7 @@ export const deletePackageImage = asyncHandler(async (req: Request, res: Respons
     return;
   }
 
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.deletePackageImage({
     packageId: id,
     agencyId,
@@ -243,7 +254,7 @@ export const setPrimaryImage = asyncHandler(async (req: Request, res: Response) 
   }
 
   const body = setPrimaryImageSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.setPrimaryImage({
     packageId: id,
     agencyId,
@@ -272,7 +283,7 @@ export const reorderImages = asyncHandler(async (req: Request, res: Response) =>
   }
 
   const body = reorderImagesSchema.parse(req.body);
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const pkg = await PackageService.reorderImages({
     packageId: id,
     agencyId,
@@ -309,7 +320,7 @@ export const getPresignedUploadUrl = asyncHandler(async (req: Request, res: Resp
     return;
   }
 
-  const agencyId = (req.query.agencyId as string | undefined) || req.user.sub;
+  const agencyId = await getAgencyIdFromReq(req);
   const result = await PackageService.getPresignedUploadUrl(id, agencyId, mimeType, fileName);
 
   res.status(HTTP_STATUS.OK).json(success(result));

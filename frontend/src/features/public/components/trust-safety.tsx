@@ -43,7 +43,7 @@ export function TrustSafety({ badges }: TrustSafetyProps) {
             Trust & Safety
           </span>
           <h2 id="trust-heading" className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900">Travel with Complete Peace of Mind</h2>
-          <p className="mt-2 text-lg text-gray-600 max-w-2xl mx-auto">We've built multiple layers of protection so you can book confidently</p>
+          <p className="mt-2 text-lg text-gray-600 max-w-2xl mx-auto">We&apos;ve built multiple layers of protection so you can book confidently</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list">

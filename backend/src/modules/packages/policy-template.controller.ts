@@ -3,50 +3,44 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { PolicyTemplateService } from "./policy-template.service";
-import { createPolicyTemplateSchema, updatePolicyTemplateSchema } from "./policy-template.validation";
+import {
+  createPolicyTemplateSchema,
+  listPolicyTemplatesQuerySchema,
+  updatePolicyTemplateSchema,
+} from "./policy-template.validation";
+import { AgencyRepository } from "../agencies/agency.repository";
+import { ForbiddenError, NotFoundError, UnauthorizedError } from "../../shared/errors/app-error";
+
+async function getAgencyId(req: Request): Promise<string> {
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+  if (req.user.roleKey !== "agency") {
+    throw new ForbiddenError("Agency owner access is required.");
+  }
+  const agency = await AgencyRepository.findByOwnerUserId(req.user.sub);
+  if (!agency) {
+    throw new NotFoundError("Agency profile not found.");
+  }
+  return String(agency._id);
+}
 
 export const listPolicyTemplates = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
-  const type = req.query.type as "terms" | "cancellation" | undefined;
-  const search = (req.query.search as string | undefined) || undefined;
-
-  const templates = await PolicyTemplateService.listTemplates(agencyId, { type, search });
+  const agencyId = await getAgencyId(req);
+  const filters = listPolicyTemplatesQuerySchema.parse(req.query);
+  const templates = await PolicyTemplateService.listTemplates(agencyId, filters);
   res.status(HTTP_STATUS.OK).json(success({ templates }));
 });
 
 export const createPolicyTemplate = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
+  const agencyId = await getAgencyId(req);
   const parsed = createPolicyTemplateSchema.parse(req.body);
   const template = await PolicyTemplateService.createTemplate(agencyId, { ...parsed, agencyId });
   res.status(HTTP_STATUS.CREATED).json(success({ template }));
 });
 
 export const getPolicyTemplate = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
+  const agencyId = await getAgencyId(req);
   const id = req.params.id;
   if (!id) {
     res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -60,15 +54,7 @@ export const getPolicyTemplate = asyncHandler(async (req: Request, res: Response
 });
 
 export const updatePolicyTemplate = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
+  const agencyId = await getAgencyId(req);
   const id = req.params.id;
   if (!id) {
     res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -83,15 +69,7 @@ export const updatePolicyTemplate = asyncHandler(async (req: Request, res: Respo
 });
 
 export const deletePolicyTemplate = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
+  const agencyId = await getAgencyId(req);
   const id = req.params.id;
   if (!id) {
     res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -105,15 +83,7 @@ export const deletePolicyTemplate = asyncHandler(async (req: Request, res: Respo
 });
 
 export const duplicatePolicyTemplate = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: { code: "UNAUTHORIZED", message: "Unauthorized." },
-    });
-    return;
-  }
-
-  const agencyId = req.user.sub;
+  const agencyId = await getAgencyId(req);
   const id = req.params.id;
   if (!id) {
     res.status(HTTP_STATUS.BAD_REQUEST).json({

@@ -32,6 +32,7 @@ export function PackageFormModal({ mode, package: pkg, isOpen, onClose, onSucces
           </DialogDescription>
         </DialogHeader>
         <PackageForm
+          key={`${mode}:${pkg?.id ?? "new"}`}
           mode={mode}
           package={pkg}
           onSuccess={onSuccess}

@@ -3,15 +3,13 @@ import type { TravelPackage as PublicTravelPackage } from "@/features/public/typ
 import { getApiPath } from "@/lib/api/config";
 import { apiClient } from "@/lib/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
-
 // In-memory cache with TTL
-const cache = new Map<string, { data: any; expires: number }>();
-const pendingRequests = new Map<string, Promise<any>>();
+const cache = new Map<string, { data: unknown; expires: number }>();
+const pendingRequests = new Map<string, Promise<unknown>>();
 
 const DEFAULT_TTL = 60000; // 60 seconds
 
-function getCacheKey(prefix: string, params: Record<string, any>): string {
+function getCacheKey(prefix: string, params: Record<string, unknown>): string {
   const sortedParams = Object.keys(params)
     .sort()
     .map((k) => `${k}=${params[k]}`)
@@ -29,7 +27,7 @@ function getCached<T>(key: string): T | null {
   return entry.data as T;
 }
 
-function setCache(key: string, data: any, ttl = DEFAULT_TTL): void {
+function setCache(key: string, data: unknown, ttl = DEFAULT_TTL): void {
   cache.set(key, { data, expires: Date.now() + ttl });
 }
 
@@ -63,6 +61,20 @@ function buildQueryString(filters: PackageFilters): string {
   return params.toString();
 }
 
+function resolveFetchUrl(url: string): string {
+  if (/^https?:\/\//i.test(url) || typeof window !== "undefined") {
+    return url;
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    return new URL(url, "http://localhost:5000").toString();
+  }
+
+  throw new Error(
+    "NEXT_PUBLIC_API_URL must be configured for server-side public API requests.",
+  );
+}
+
 async function fetchWithDeduplication<T>(
   url: string,
   options: RequestInit,
@@ -80,7 +92,7 @@ async function fetchWithDeduplication<T>(
   // Create new request
   const promise = (async () => {
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(resolveFetchUrl(url), options);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
@@ -201,7 +213,7 @@ export async function fetchDestinations(query: string): Promise<Array<{ city: st
   const cacheKey = getCacheKey("destinations", { q: query });
   
   return fetchWithDeduplication<Array<{ city: string; state?: string; country?: string; count: number }>>(
-    `${API_BASE}/public/destinations?q=${encodeURIComponent(query)}`,
+    `${getApiPath("public/destinations")}?q=${encodeURIComponent(query)}`,
     { next: { revalidate: 3600 }, headers: { "Content-Type": "application/json" } },
     cacheKey,
     3600000
@@ -212,7 +224,7 @@ export async function fetchPlatformStats(): Promise<PlatformStats> {
   const cacheKey = "platform-stats";
   
   return fetchWithDeduplication<PlatformStats>(
-    `${API_BASE}/public/stats`,
+    getApiPath("public/stats"),
     { next: { revalidate: 300 }, headers: { "Content-Type": "application/json" } },
     cacheKey,
     300000
@@ -223,7 +235,7 @@ export async function fetchTrustBadges(): Promise<TrustBadge[]> {
   const cacheKey = "trust-badges";
   
   return fetchWithDeduplication<TrustBadge[]>(
-    `${API_BASE}/public/trust-badges`,
+    getApiPath("public/trust-badges"),
     { next: { revalidate: 3600 }, headers: { "Content-Type": "application/json" } },
     cacheKey,
     3600000
@@ -234,7 +246,7 @@ export async function fetchFeatures(): Promise<FeatureItem[]> {
   const cacheKey = "features";
   
   return fetchWithDeduplication<FeatureItem[]>(
-    `${API_BASE}/public/features`,
+    getApiPath("public/features"),
     { next: { revalidate: 3600 }, headers: { "Content-Type": "application/json" } },
     cacheKey,
     3600000

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,38 @@ const emptyForm: CreatePackageInput = {
   slug: "",
 };
 
+function getFormFromPackage(pkg: TravelPackage): CreatePackageInput {
+  return {
+    name: pkg.name,
+    description: pkg.description ?? "",
+    destination: pkg.destination,
+    destinations: pkg.destinations,
+    geographicScope: pkg.geographicScope,
+    tripTheme: pkg.tripTheme,
+    durationDays: pkg.durationDays,
+    durationNights: pkg.durationNights,
+    startDate: pkg.startDate,
+    endDate: pkg.endDate,
+    bookingDeadline: pkg.bookingDeadline,
+    price: pkg.price,
+    currency: pkg.currency,
+    priceType: pkg.priceType,
+    minTravelers: pkg.minTravelers,
+    maxTravelers: pkg.maxTravelers,
+    availableSeats: pkg.availableSeats,
+    inclusions: pkg.inclusions,
+    exclusions: pkg.exclusions,
+    itinerary: pkg.itinerary,
+    images: pkg.images,
+    highlights: pkg.highlights,
+    termsAndConditions: pkg.termsAndConditions ?? "",
+    cancellationPolicy: pkg.cancellationPolicy ?? "",
+    visibility: pkg.visibility,
+    isFeatured: pkg.isFeatured,
+    slug: pkg.slug,
+  };
+}
+
 type PackageFormProps = {
   mode: PackageFormMode;
   package?: TravelPackage | null;
@@ -61,49 +93,14 @@ type PackageFormProps = {
 };
 
 export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId, modalLayout = false }: PackageFormProps) {
-  const [form, setForm] = useState<CreatePackageInput>(emptyForm);
+  const [form, setForm] = useState<CreatePackageInput>(() =>
+    mode === "edit" && pkg ? getFormFromPackage(pkg) : emptyForm
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [slugError, setSlugError] = useState("");
   const slugRegex = /^[a-z0-9-]+$/;
   const imageUploadRef = useRef<{ uploadAllPending: () => Promise<void> }>(null);
-
-  useEffect(() => {
-    if (mode === "edit" && pkg) {
-      setForm({
-        name: pkg.name,
-        description: pkg.description,
-        destination: pkg.destination,
-        destinations: pkg.destinations,
-        geographicScope: pkg.geographicScope,
-        tripTheme: pkg.tripTheme,
-        durationDays: pkg.durationDays,
-        durationNights: pkg.durationNights,
-        startDate: pkg.startDate,
-        endDate: pkg.endDate,
-        bookingDeadline: pkg.bookingDeadline,
-        price: pkg.price,
-        currency: pkg.currency,
-        priceType: pkg.priceType,
-        minTravelers: pkg.minTravelers,
-        maxTravelers: pkg.maxTravelers,
-        availableSeats: pkg.availableSeats,
-        inclusions: pkg.inclusions,
-        exclusions: pkg.exclusions,
-        itinerary: pkg.itinerary,
-        images: pkg.images,
-        highlights: pkg.highlights,
-        termsAndConditions: pkg.termsAndConditions,
-        cancellationPolicy: pkg.cancellationPolicy,
-        visibility: pkg.visibility,
-        isFeatured: pkg.isFeatured,
-        slug: pkg.slug,
-      });
-    } else {
-      setForm(emptyForm);
-    }
-    setErrors({});
-  }, [mode, pkg]);
 
   const updateField = <K extends keyof CreatePackageInput>(field: K, value: CreatePackageInput[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));

@@ -75,7 +75,8 @@ export class PolicyTemplateRepository {
     }
 
     if (filters.search) {
-      query.name = { $regex: filters.search, $options: "i" };
+      const escapedSearch = filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.name = { $regex: escapedSearch, $options: "i" };
     }
 
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript

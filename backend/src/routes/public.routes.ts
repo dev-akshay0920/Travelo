@@ -4,6 +4,7 @@ import { asyncHandler } from "../shared/utils/async-handler";
 import { success } from "../shared/responses/api-response";
 import { Package } from "../modules/packages/package.model";
 import { Agency } from "../modules/agencies/agency.model";
+import { Review } from "../modules/reviews/reviews.model";
 import { Types } from "mongoose";
 import type { FilterQuery } from "mongoose";
 import { z } from "zod";
@@ -548,18 +549,22 @@ router.get(
 router.get(
   "/stats",
   asyncHandler(async (_req: Request, res: Response) => {
-    const [agencyCount, packageCount] = await Promise.all([
-      Agency.estimatedDocumentCount({ status: "approved" }),
-      Package.estimatedDocumentCount({ status: "active", visibility: "public" }),
+    const approvedAgencyIds = await Agency.distinct("_id", { status: "approved" }).exec();
+    const [agencyCount, packageCount, ratingAgg] = await Promise.all([
+      Agency.countDocuments({ status: "approved" }).exec(),
+      Package.countDocuments({
+        status: "active",
+        visibility: "public",
+        agencyId: { $in: approvedAgencyIds },
+      }).exec(),
+      Review.aggregate([
+        { $match: { status: "approved", agencyId: { $in: approvedAgencyIds } } },
+        { $group: { _id: null, avgRating: { $avg: "$rating" }, totalReviews: { $sum: 1 } } },
+      ]),
     ]);
 
-    const ratingAgg = await Package.aggregate([
-      { $match: { status: "active", visibility: "public", "meta.rating": { $exists: true } } },
-      { $group: { _id: null, avgRating: { $avg: "$meta.rating" }, totalReviews: { $sum: "$meta.reviewCount" } } },
-    ]);
-
-    const avgRating = ratingAgg[0]?.avgRating || 4.8;
-    const totalReviews = ratingAgg[0]?.totalReviews || 0;
+    const avgRating = ratingAgg[0]?.avgRating ?? 0;
+    const totalReviews = ratingAgg[0]?.totalReviews ?? 0;
 
     return res.json(success({
       verifiedAgencies: agencyCount,
@@ -576,15 +581,26 @@ router.get(
 router.get(
   "/destinations",
   asyncHandler(async (req: Request, res: Response) => {
-    const { q } = req.query;
-    if (!q || (q as string).length < 2) {
+    const q = getQueryValue(req.query.q)?.trim();
+    if (!q || q.length < 2) {
+      return res.json(success([]));
+    }
+    if (q.length > 100) {
+      return res.status(400).json({
+        success: false,
+        error: { code: "VALIDATION_ERROR", message: "Destination search is too long." },
+      });
+    }
+
+    const approvedAgencyIds = await Agency.distinct("_id", { status: "approved" }).exec();
+    if (approvedAgencyIds.length === 0) {
       return res.json(success([]));
     }
 
     const destinations = await Package.aggregate([
-      { $match: { status: "active", visibility: "public" } },
+      { $match: { status: "active", visibility: "public", agencyId: { $in: approvedAgencyIds } } },
       { $unwind: "$destinations" },
-      { $match: { "destinations.city": { $regex: q, $options: "i" } } },
+      { $match: { "destinations.city": { $regex: escapeRegex(q), $options: "i" } } },
       { $group: { _id: "$destinations.city", state: { $first: "$destinations.state" }, country: { $first: "$destinations.country" }, count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 10 },

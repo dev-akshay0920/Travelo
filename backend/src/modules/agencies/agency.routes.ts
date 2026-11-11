@@ -35,20 +35,18 @@ const agencyLogoRateLimiter = rateLimit({
   },
 });
 
-router.use(authMiddleware);
-router.get("/me", getMyAgency);
-router.post("/me", validate(createAgencySchema), createMyAgency);
+router.get("/me", authMiddleware, getMyAgency);
+router.get("/slug/check", authMiddleware, checkSlugAvailability);
+router.get("/:slug", getPublicAgency);
+router.post("/me", authMiddleware, validate(createAgencySchema), createMyAgency);
 router.post(
   "/me/logo",
+  authMiddleware,
   agencyLogoRateLimiter,
   singleFileUpload("file", MAX_AGENCY_LOGO_SIZE),
   uploadMyAgencyLogo
 );
-router.patch("/me", validate(updateAgencySchema), updateMyAgency);
-router.post("/me/submit", validate(submitAgencySchema), submitMyAgency);
-
-router.get("/slug/check", checkSlugAvailability);
-
-router.get("/:slug", getPublicAgency);
+router.patch("/me", authMiddleware, validate(updateAgencySchema), updateMyAgency);
+router.post("/me/submit", authMiddleware, validate(submitAgencySchema), submitMyAgency);
 
 export const agencyRouter = router;

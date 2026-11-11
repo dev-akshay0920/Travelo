@@ -29,14 +29,25 @@ function validateDates(startDate: Date, endDate: Date, bookingDeadline?: Date) {
   }
 }
 
-export interface CreatePackageServiceInput extends Omit<CreatePackageInput, "agencyId" | "ownerUserId"> {
+type PackageServiceImageInput = {
+  url: string;
+  key?: string;
+  altText?: string;
+  isPrimary?: boolean;
+  order?: number;
+  createdAt?: Date;
+};
+
+export interface CreatePackageServiceInput extends Omit<CreatePackageInput, "agencyId" | "ownerUserId" | "images"> {
   agencyId: string;
   ownerUserId: string;
+  images?: PackageServiceImageInput[];
 }
 
-export interface UpdatePackageServiceInput extends Omit<UpdatePackageInput, "id" | "agencyId"> {
+export interface UpdatePackageServiceInput extends Omit<UpdatePackageInput, "id" | "agencyId" | "images"> {
   id: string;
   agencyId: string;
+  images?: PackageServiceImageInput[];
 }
 
 export interface UploadPackageImagesInput {
@@ -222,9 +233,13 @@ export const PackageService = {
     return toTravelPackage(doc);
   },
 
-  async getPackageById(id: string): Promise<TravelPackage> {
+  async getPackageById(id: string, agencyId: string): Promise<TravelPackage> {
+    if (!Types.ObjectId.isValid(agencyId)) {
+      throw new ValidationError("Invalid agency ID.");
+    }
+
     const doc = await PackageRepository.findById(id);
-    if (!doc) {
+    if (!doc || String(doc.agencyId) !== agencyId) {
       throw new NotFoundError("Package not found.");
     }
 
@@ -263,7 +278,7 @@ export const PackageService = {
   },
 
   async updatePackage(input: UpdatePackageServiceInput): Promise<TravelPackage> {
-    const { id, agencyId, ...updates } = input;
+    const { id, agencyId, images, ...updates } = input;
 
     if (!Types.ObjectId.isValid(agencyId)) {
       throw new ValidationError("Invalid agency ID.");
@@ -307,6 +322,18 @@ export const PackageService = {
 
     const normalizedPayload: PackageUpdateInput = {
       ...payload,
+      ...(images !== undefined
+        ? {
+            images: images.map((image) => ({
+              url: image.url.trim(),
+              key: image.key?.trim() || "",
+              altText: image.altText?.trim(),
+              isPrimary: image.isPrimary ?? false,
+              order: image.order ?? 0,
+              createdAt: image.createdAt ?? new Date(),
+            })),
+          }
+        : {}),
       ...(payload.startDate !== undefined && payload.startDate !== null
         ? { startDate: payload.startDate instanceof Date ? payload.startDate : new Date(payload.startDate) }
         : {}),

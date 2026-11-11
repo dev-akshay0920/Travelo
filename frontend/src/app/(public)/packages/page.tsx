@@ -10,8 +10,8 @@ import type { PackageFilters } from "@/features/public/types/public-filters.type
 
 export default function PackagesPage() {
   const { filters, setFilters, hasActiveFilters } = usePackageFilters();
-  const { packages, isLoading, isLoadingMore, error, hasMore, total, facets, loadMoreRef, refresh } = useInfinitePackages(filters);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { total, facets } = useInfinitePackages(filters);
+  const viewMode = "grid";
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Handle mobile filter events
@@ -45,10 +45,23 @@ export default function PackagesPage() {
   ].filter(Boolean) as Array<{ key: string; label: string }>;
 
   const removeFilter = (key: string) => {
-    const updates: Record<string, any> = {};
+    const updates: Partial<PackageFilters> = {};
     if (key === "destinations") updates.destinations = [];
     else if (key === "theme") updates.theme = [];
-    else updates[key] = undefined;
+    else if (key === "destination") updates.destination = undefined;
+    else if (key === "priceMin") updates.priceMin = undefined;
+    else if (key === "priceMax") updates.priceMax = undefined;
+    else if (key === "startDate") updates.startDate = undefined;
+    else if (key === "endDate") updates.endDate = undefined;
+    else if (key === "flexibleDates") updates.flexibleDates = undefined;
+    else if (key === "durationMin") updates.durationMin = undefined;
+    else if (key === "durationMax") updates.durationMax = undefined;
+    else if (key === "scope") updates.geographicScope = undefined;
+    else if (key === "travelers") {
+      updates.adults = 1;
+      updates.children = 0;
+      updates.infants = 0;
+    }
     setFilters(updates, true);
   };
 

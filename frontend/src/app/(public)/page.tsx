@@ -4,6 +4,7 @@ import { AgencyCarousel } from "@/features/public/components/agency-carousel";
 import { TrustSafety } from "@/features/public/components/trust-safety";
 import { FeaturesSection } from "@/features/public/components/features-section";
 import { fetchPlatformStats, fetchTrustBadges, fetchFeatures, fetchPublicAgencies } from "@/features/public/api/public-packages.api";
+import Link from "next/link";
 import type { PlatformStats, TrustBadge, FeatureItem, AgencySummary } from "@/features/public/api/public-packages.api";
 
 export default async function LandingPage() {
@@ -58,7 +59,7 @@ function PopularDestinations() {
               className="group relative rounded-2xl overflow-hidden bg-gray-100 animate-slide-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <a href={`/packages?destination=${dest.slug}`} className="block relative aspect-[4/3] overflow-hidden">
+              <Link href={`/packages?destination=${encodeURIComponent(dest.slug)}`} className="block relative aspect-[4/3] overflow-hidden">
                 <Image
                   src={dest.image}
                   alt={dest.name}
@@ -79,16 +80,16 @@ function PopularDestinations() {
                   <h3 className="text-xl font-bold text-white">{dest.name}</h3>
                   <p className="text-white/80 text-sm mt-1">{dest.packages} packages available</p>
                 </div>
-              </a>
+              </Link>
             </article>
           ))}
         </div>
 
         <div className="text-center mt-10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <a href="/destinations" className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+          <Link href="/packages" className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
             View All Destinations
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>
@@ -156,18 +157,14 @@ function CTASection() {
             Join thousands of travelers who discover amazing experiences through our verified agency partners.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/packages">
-              <button className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-blue-600 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-xl group">
+            <Link href="/packages" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-blue-600 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-xl group">
                 Browse Packages
                 <ArrowRight className="ml-2 h-5 w-5 inline transition-transform group-hover:translate-x-1" />
-              </button>
-            </a>
-            <a href="/agencies">
-              <button className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white bg-transparent border-2 border-white/30 rounded-xl hover:bg-white/10 transition-colors group">
+            </Link>
+            <Link href="/agencies" className="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white bg-transparent border-2 border-white/30 rounded-xl hover:bg-white/10 transition-colors group">
                 Find an Agency
                 <ArrowRight className="ml-2 h-5 w-5 inline transition-transform group-hover:translate-x-1" />
-              </button>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

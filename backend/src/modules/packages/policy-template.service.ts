@@ -2,6 +2,19 @@ import { PolicyTemplateRepository } from "./policy-template.repository";
 import { ValidationError, NotFoundError, ConflictError } from "../../shared/errors/app-error";
 import type { PolicyTemplateType } from "./policy-template.model";
 
+function assertCanView(template: Awaited<ReturnType<typeof PolicyTemplateRepository.findById>>, agencyId: string): asserts template {
+  if (!template || (!template.isDefault && String(template.agencyId ?? "") !== agencyId)) {
+    throw new NotFoundError("Template not found.");
+  }
+}
+
+function assertCanManage(template: Awaited<ReturnType<typeof PolicyTemplateRepository.findById>>, agencyId: string): asserts template {
+  assertCanView(template, agencyId);
+  if (template.isDefault) {
+    throw new ValidationError("System templates cannot be changed.");
+  }
+}
+
 export interface PolicyTemplateServiceCreateInput {
   name: string;
   type: PolicyTemplateType;
@@ -30,13 +43,7 @@ export const PolicyTemplateService = {
 
   async getTemplate(id: string, agencyId: string) {
     const template = await PolicyTemplateRepository.findById(id);
-    if (!template) {
-      throw new NotFoundError("Template not found.");
-    }
-
-    if (template.agencyId && template.agencyId.toString() !== agencyId) {
-      throw new NotFoundError("Template not found.");
-    }
+    assertCanView(template, agencyId);
 
     return template;
   },
@@ -58,17 +65,7 @@ export const PolicyTemplateService = {
 
   async updateTemplate(id: string, agencyId: string, input: PolicyTemplateServiceUpdateInput) {
     const existing = await PolicyTemplateRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundError("Template not found.");
-    }
-
-    if (existing.agencyId && existing.agencyId.toString() !== agencyId) {
-      throw new NotFoundError("Template not found.");
-    }
-
-    if (existing.isDefault) {
-      throw new ValidationError("System templates cannot be edited.");
-    }
+    assertCanManage(existing, agencyId);
 
     if (input.name && input.name !== existing.name) {
       const duplicate = await PolicyTemplateRepository.findMany({ agencyId, search: input.name });
@@ -82,26 +79,14 @@ export const PolicyTemplateService = {
 
   async deleteTemplate(id: string, agencyId: string) {
     const existing = await PolicyTemplateRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundError("Template not found.");
-    }
-
-    if (existing.agencyId && existing.agencyId.toString() !== agencyId) {
-      throw new NotFoundError("Template not found.");
-    }
-
-    if (existing.isDefault) {
-      throw new ValidationError("System templates cannot be deleted.");
-    }
+    assertCanManage(existing, agencyId);
 
     return PolicyTemplateRepository.delete(id);
   },
 
   async duplicateTemplate(id: string, agencyId: string) {
     const existing = await PolicyTemplateRepository.findById(id);
-    if (!existing) {
-      throw new NotFoundError("Template not found.");
-    }
+    assertCanView(existing, agencyId);
 
     const duplicateName = `${existing.name} (Copy)`;
     const duplicate = await PolicyTemplateRepository.create({

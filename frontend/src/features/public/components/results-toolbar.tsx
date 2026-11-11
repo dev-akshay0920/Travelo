@@ -5,7 +5,7 @@ import { Grid, List, ChevronDown, X, SlidersHorizontal, Filter } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
-import type { SortOption } from "@/features/public/types/public-filters.types";
+import type { PackageFilters, SortOption } from "@/features/public/types/public-filters.types";
 import { SORT_OPTIONS } from "@/features/public/types/public-filters.types";
 
 export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilters: boolean }) {
@@ -31,15 +31,23 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
   ].filter(Boolean) as Array<{ key: string; label: string }>;
 
   const removeFilter = (key: string) => {
-    const updates: Record<string, any> = {};
+    const updates: Partial<PackageFilters> = {};
     if (key === "destinations") updates.destinations = [];
     else if (key === "theme") updates.theme = [];
     else if (key === "travelers") {
       updates.adults = 1;
       updates.children = 0;
       updates.infants = 0;
-    }
-    else updates[key] = undefined;
+    } else if (key === "geographicScope") updates.geographicScope = undefined;
+    else if (key === "scope") updates.geographicScope = undefined;
+    else if (key === "destination") updates.destination = undefined;
+    else if (key === "priceMin") updates.priceMin = undefined;
+    else if (key === "priceMax") updates.priceMax = undefined;
+    else if (key === "startDate") updates.startDate = undefined;
+    else if (key === "endDate") updates.endDate = undefined;
+    else if (key === "flexibleDates") updates.flexibleDates = undefined;
+    else if (key === "durationMin") updates.durationMin = undefined;
+    else if (key === "durationMax") updates.durationMax = undefined;
     setFilters(updates, true);
   };
 

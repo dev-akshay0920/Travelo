@@ -4,12 +4,10 @@ import { submitReview, getReviews, getReviewStats, updateReview, deleteReview } 
 
 const router = Router();
 
-router.use(authMiddleware);
-
-router.post("/", submitReview);
+router.post("/", authMiddleware, submitReview);
 router.get("/", getReviews);
 router.get("/stats", getReviewStats);
-router.patch("/:id", updateReview);
-router.delete("/:id", deleteReview);
+router.patch("/:id", authMiddleware, updateReview);
+router.delete("/:id", authMiddleware, deleteReview);
 
 export const reviewsRouter = router;

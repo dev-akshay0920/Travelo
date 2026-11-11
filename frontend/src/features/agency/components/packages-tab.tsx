@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 import { ArrowLeft } from "lucide-react";
@@ -32,7 +32,6 @@ const tabs: { value: TabValue; label: string }[] = [
 export function PackagesTab({ agencyId }: { agencyId?: string }) {
   const [activeTab, setActiveTab] = useState<TabValue>("all");
   const [packages, setPackages] = useState<TravelPackage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<TravelPackage | null>(null);
@@ -44,54 +43,49 @@ export function PackagesTab({ agencyId }: { agencyId?: string }) {
   const [viewMode, setViewMode] = useState<"list" | "form">("list");
   const [formMode, setFormMode] = useState<PackageFormMode>("create");
   const [selectedPackageForForm, setSelectedPackageForForm] = useState<TravelPackage | null>(null);
-
-  const loadPackages = useCallback(async (tab: TabValue) => {
-    if (!agencyId) {
-      console.log("[loadPackages] No agencyId, skipping fetch");
-      setPackages([]);
-      setIsLoading(false);
-      return;
-    }
-    console.log("[loadPackages] Starting fetch for tab:", tab, "agencyId:", agencyId);
-    setIsLoading(true);
-    try {
-      let data: TravelPackage[] = [];
-      if (tab === "all") {
-        const response = await getPackagesApi({ limit: 100, agencyId });
-        console.log("[loadPackages] getPackagesApi response:", response);
-        data = response.items;
-      } else if (tab === "upcoming") {
-        const response = await getUpcomingPackagesApi(agencyId);
-        console.log("[loadPackages] getUpcomingPackagesApi response:", response);
-        data = response.items;
-      } else if (tab === "current") {
-        const response = await getCurrentPackagesApi(agencyId);
-        console.log("[loadPackages] getCurrentPackagesApi response:", response);
-        data = response.items;
-      } else if (tab === "history") {
-        const response = await getHistoryPackagesApi(agencyId);
-        console.log("[loadPackages] getHistoryPackagesApi response:", response);
-        data = response.items;
-      }
-      console.log("[loadPackages] Setting packages:", data.length, "items");
-      setPackages(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load packages.";
-      console.error("[loadPackages] Error:", err);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [agencyId]);
+  const requestKey = `${agencyId ?? ""}:${activeTab}`;
+  const [loadedRequestKey, setLoadedRequestKey] = useState("");
+  const isLoading = Boolean(agencyId) && loadedRequestKey !== requestKey;
 
   useEffect(() => {
     let cancelled = false;
-    loadPackages(activeTab);
+    if (!agencyId) return () => { cancelled = true; };
+
+    const loadPackages = async () => {
+      try {
+        let data: TravelPackage[];
+        if (activeTab === "all") {
+          const response = await getPackagesApi({ limit: 100, agencyId });
+          data = response.items;
+        } else if (activeTab === "upcoming") {
+          const response = await getUpcomingPackagesApi(agencyId);
+          data = response.items;
+        } else if (activeTab === "current") {
+          const response = await getCurrentPackagesApi(agencyId);
+          data = response.items;
+        } else {
+          const response = await getHistoryPackagesApi(agencyId);
+          data = response.items;
+        }
+
+        if (!cancelled) setPackages(data);
+      } catch (err) {
+        if (!cancelled) {
+          setPackages([]);
+          const message = err instanceof Error ? err.message : "Failed to load packages.";
+          toast.error(message);
+        }
+      } finally {
+        if (!cancelled) setLoadedRequestKey(requestKey);
+      }
+    };
+
+    void loadPackages();
 
     return () => {
       cancelled = true;
     };
-  }, [activeTab, agencyId, loadPackages]);
+  }, [activeTab, agencyId, requestKey]);
 
   const handleCreateNew = () => {
     setFormMode("create");
@@ -223,6 +217,7 @@ export function PackagesTab({ agencyId }: { agencyId?: string }) {
 
       {viewMode === "form" ? (
         <PackageForm
+          key={`${formMode}:${selectedPackageForForm?.id ?? "new"}`}
           mode={formMode}
           package={selectedPackageForForm}
           onSuccess={handleFormSuccess}
@@ -231,7 +226,7 @@ export function PackagesTab({ agencyId }: { agencyId?: string }) {
         />
       ) : (
         <PackageList
-          packages={packages}
+          packages={agencyId ? packages : []}
           isLoading={isLoading}
           onCreateNew={handleCreateNew}
           onEdit={handleEdit}

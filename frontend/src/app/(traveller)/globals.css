@@ -1,0 +1,4 @@
+@import "../globals.css";
+
+@tailwind components;
+@tailwind utilities;

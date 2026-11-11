@@ -13,3 +13,8 @@ export const updatePolicyTemplateSchema = z.object({
   type: policyTemplateTypeSchema.optional(),
   content: z.string().trim().min(1, "Template content is required.").max(5000).optional(),
 });
+
+export const listPolicyTemplatesQuerySchema = z.object({
+  type: policyTemplateTypeSchema.optional(),
+  search: z.string().trim().max(120).optional(),
+});

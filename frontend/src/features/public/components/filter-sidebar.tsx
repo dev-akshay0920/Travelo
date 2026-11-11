@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ChevronDown, ChevronUp, X, Calendar, Users, DollarSign, MapPin, Sparkles, Clock, Globe, SlidersHorizontal, Filter, Search, ChevronLeft, ChevronRight, Minus, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
-import type { TripTheme, GeographicScope, SortOption, PackageFilters } from "@/features/public/types/public-filters.types";
+import type {
+  TripTheme,
+  GeographicScope,
+  SortOption,
+  PackageFacetCounts,
+  PackageFilters,
+} from "@/features/public/types/public-filters.types";
 import { TRIP_THEME_LABELS, SORT_OPTIONS, DURATION_PRESETS, PRICE_PRESETS } from "@/features/public/types/public-filters.types";
 import { format, parseISO, startOfDay } from "date-fns";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
@@ -75,7 +81,7 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
   );
 }
 
-function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, facets, clearFilters, hasActiveFilters, expandedSections, setExpandedSections, isApplying, viewType, onViewTypeChange }: { filters: PackageFilters; draftFilters: PackageFilters; setDraftFilters: (f: PackageFilters) => void; setFilters: (f: Partial<PackageFilters>, replace?: boolean) => void; facets?: any; clearFilters: () => void; hasActiveFilters: boolean; expandedSections: Record<string, boolean>; setExpandedSections: (f: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void; isApplying: boolean; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
+function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, facets, clearFilters, hasActiveFilters, expandedSections, setExpandedSections, isApplying, viewType, onViewTypeChange }: { filters: PackageFilters; draftFilters: PackageFilters; setDraftFilters: (f: PackageFilters) => void; setFilters: (f: Partial<PackageFilters>, replace?: boolean) => void; facets?: PackageFacetCounts; clearFilters: () => void; hasActiveFilters: boolean; expandedSections: Record<string, boolean>; setExpandedSections: (f: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void; isApplying: boolean; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
   const [showAllDestinations, setShowAllDestinations] = useState(false);
   const setExpanded = useCallback((key: string) => {
     setExpandedSections((prev: Record<string, boolean>) => ({ ...prev, [key]: !prev[key] }));
@@ -178,7 +184,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
             onChange={(e) => setDraftFilters({ ...draftFilters, destination: e.target.value || undefined })}
           />
         </div>
-        {facets?.destinations?.slice(0, showAllDestinations ? undefined : 10).map((d: any) => (
+        {facets?.destinations?.slice(0, showAllDestinations ? undefined : 10).map((d) => (
           <label key={d.city} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50">
             <Checkbox checked={!!draftFilters.destinations?.includes(d.city)} onCheckedChange={() => {
               const current = draftFilters.destinations || [];
@@ -452,7 +458,7 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
   );
 }
 
-export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onViewTypeChange }: { facets?: any; isMobile?: boolean; onClose?: () => void; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
+export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onViewTypeChange }: { facets?: PackageFacetCounts; isMobile?: boolean; onClose?: () => void; viewType?: ExploreViewType; onViewTypeChange?: (viewType: ExploreViewType) => void }) {
   const { filters, setFilters, clearFilters, hasActiveFilters } = usePackageFilters();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     contentType: false,
@@ -466,11 +472,13 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
     sort: false,
   });
   const [draftFilters, setDraftFilters] = useState<PackageFilters>(filters);
+  const [previousFilters, setPreviousFilters] = useState(filters);
   const [isApplying, setIsApplying] = useState(false);
 
-  useEffect(() => {
+  if (filters !== previousFilters) {
+    setPreviousFilters(filters);
     setDraftFilters(filters);
-  }, [filters]);
+  }
 
   const handlePriceChange = ([min, max]: number[]) => {
     setDraftFilters({ ...draftFilters, priceMin: min > 0 ? min : undefined, priceMax: max < 1000000 ? max : undefined });
