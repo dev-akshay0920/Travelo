@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { PageHeader } from "@/components/shared/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -251,18 +252,18 @@ export default function EditPackagePage() {
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Edit Package</h1>
-          <p className="text-sm text-muted-foreground">Update your travel package details.</p>
-        </div>
-      </div>
+    <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6">
+      <PageHeader
+        title="Edit Package"
+        description="Update your travel package details."
+        actions={
+          <IconButton variant="ghost" onClick={() => router.back()} label="Go back">
+            <ArrowLeft />
+          </IconButton>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="grid gap-6">
+      <form onSubmit={handleSubmit} className="grid gap-4">
         <Card size="sm">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -372,17 +373,17 @@ export default function EditPackagePage() {
                       />
                     </div>
                     <div className="col-span-6 sm:col-span-1 flex items-end">
-                      <Button
+                      <IconButton
                         type="button"
                         variant="ghost"
-                        size="icon"
                         onClick={() => {
                           const next = (form.destinations || []).filter((_, i) => i !== index);
                           updateField("destinations", next);
                         }}
+                        label={`Remove destination ${index + 1}`}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      </IconButton>
                     </div>
                   </div>
                 ))}

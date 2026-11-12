@@ -281,6 +281,7 @@ Use the existing Button, Card, Dialog, Select, Calendar, Input, and Label primit
 - Use `Tooltip` for icon-only actions, not controls that already display their label.
 - Use `Spinner` for compact async actions, and `LoadingState`, `EmptyState`, and `ErrorState` for page-level feedback. Keep loading layouts stable and do not invent per-page spinner styles.
 - Use Lucide icons at the shared 16px control scale (20px only for prominent empty states or brand marks). Icon-only actions need an accessible name and a tooltip where the purpose is not otherwise visible.
+- Use the shared `IconButton` for compact icon-only toolbar and card actions. Keep visible labels on primary, destructive, and unfamiliar actions; use icons to reduce chrome only when the action remains clear.
 - Keep interaction motion short and subtle. Honor `prefers-reduced-motion`; avoid translating cards or animating decorative content in workspace surfaces.
 - New components must use semantic colors. Existing palette-named Tailwind classes are mapped through compatibility aliases; do not add further legacy palette classes or hard-coded colors.
 

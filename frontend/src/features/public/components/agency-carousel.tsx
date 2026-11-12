@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Star, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button, IconButton } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -67,7 +67,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
   const prev = () => scrollToIndex(Math.max(currentIndex - 1, 0));
 
   return (
-    <section className="py-16 bg-white" aria-labelledby="agencies-heading">
+    <section className="bg-background py-12" aria-labelledby="agencies-heading">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <h2 id="agencies-heading" className="text-xl font-semibold text-gray-900">Approved Travel Agencies</h2>
@@ -81,16 +81,16 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
         {agencies.length > 0 ? (
           <div className="relative">
             {/* Left Arrow */}
-            <Button
+            <IconButton
               variant="outline"
-              size="icon"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:-left-3 hidden sm:flex h-10 w-10 rounded-full shadow-lg bg-white border-gray-200 hover:bg-gray-50"
+              size="icon-sm"
+              className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 border-border bg-background shadow-sm sm:flex md:-left-3"
               onClick={prev}
               disabled={currentIndex <= 0}
-              aria-label="Previous agencies"
+              label="Previous agencies"
             >
-              <ChevronLeft className="h-5 w-5 text-gray-600" />
-            </Button>
+              <ChevronLeft className="size-4" />
+            </IconButton>
 
             {/* Carousel */}
             <div ref={carouselRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4" style={{ scrollSnapType: "x mandatory" }}>
@@ -108,16 +108,16 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
             </div>
 
             {/* Right Arrow */}
-            <Button
+            <IconButton
               variant="outline"
-              size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 md:-right-3 hidden sm:flex h-10 w-10 rounded-full shadow-lg bg-white border-gray-200 hover:bg-gray-50"
+              size="icon-sm"
+              className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 border-border bg-background shadow-sm sm:flex md:-right-3"
               onClick={next}
               disabled={currentIndex >= maxIndex}
-              aria-label="Next agencies"
+              label="Next agencies"
             >
-              <ChevronRight className="h-5 w-5 text-gray-600" />
-            </Button>
+              <ChevronRight className="size-4" />
+            </IconButton>
           </div>
         ) : (
             <p className="text-sm text-gray-600" role={error ? "alert" : undefined}>
@@ -132,8 +132,8 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
                 key={i}
                 onClick={() => scrollToIndex(i)}
                 className={cn(
-                  "h-2 w-2 rounded-full transition-all",
-                  i === currentIndex ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"
+                  "h-2 rounded-full transition-all motion-reduce:transition-none",
+                  i === currentIndex ? "w-6 bg-primary" : "w-2 bg-border hover:bg-muted-foreground"
                 )}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -147,7 +147,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
 
 function AgencyCard({ agency }: { agency: AgencySummary }) {
   return (
-    <Card variant="interactive" className="h-full">
+    <Card size="sm" variant="interactive" className="h-full gap-0 pt-0">
       <div className="aspect-[16/10] w-full overflow-hidden bg-gray-100 relative">
         {agency.logo ? (
           <Image
@@ -155,7 +155,7 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
             alt={agency.name}
             fill
             unoptimized
-            className="object-cover transition-transform duration-300 hover:scale-105"
+            className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         ) : (
@@ -164,8 +164,8 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
           </div>
         )}
       </div>
-      <div className="p-4 space-y-2">
-        <h3 className="font-semibold text-gray-900 line-clamp-1">{agency.name}</h3>
+      <CardContent className="space-y-2">
+        <CardTitle className="line-clamp-1">{agency.name}</CardTitle>
         <div className="flex items-center gap-1 text-sm text-gray-500">
           <MapPin className="h-3.5 w-3.5" />
           <span className="truncate">{agency.destination}</span>
@@ -187,7 +187,7 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
             <Link href={`/agencies/${agency.slug}`}>View</Link>
           </Button>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }

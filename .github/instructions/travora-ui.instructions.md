@@ -18,6 +18,7 @@ Follow `frontend/TRAVORA_FRONTEND_RULES.md`. The shared primitives and tokens ar
 - Use the shared `Table` primitives and `Pagination` control for tabular data and paginated lists; keep empty/loading rows and responsive overflow within the table container.
 - Reuse `LoadingState`, `EmptyState`, and `ErrorState` for page-level states, and `Spinner` for compact async actions. Avoid custom spinner markup.
 - Use Lucide icons with 16px default control sizing, accessible names for icon-only actions, and `Tooltip` when their purpose is not otherwise visible.
+- Use `IconButton` for compact, icon-only toolbar and card actions so each control has an accessible name and tooltip. Keep visible text on primary, destructive, and unfamiliar actions; icons should reduce chrome, not make important actions ambiguous.
 - Use `text-display`, `text-page-title`, `text-section-title`, `text-card-title`, `text-body`, `text-body-sm`, and `text-caption` for the established type scale. Labels are 14px; reserve 12px for metadata.
 - Default buttons and form controls are 40px high; small controls are 36px and large buttons are 44px. Keep mobile form text at least 16px.
 - Cards use the shared 10px radius, 16px spacing, subtle border, and shadow. Dialogs use 24px content padding, the shared radius, and a fixed header/footer around a scrollable body.

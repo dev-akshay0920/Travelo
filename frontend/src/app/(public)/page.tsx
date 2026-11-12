@@ -41,9 +41,9 @@ function PopularDestinations() {
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="bg-background py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 animate-slide-up">
+        <div className="mb-8 text-center">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
             <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
             Popular Destinations
@@ -52,11 +52,11 @@ function PopularDestinations() {
           <p className="mt-2 text-lg text-gray-600 max-w-2xl mx-auto">Handpicked locations with the best experiences and verified agencies</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {destinations.map((dest, index) => (
             <article
               key={dest.slug}
-              className="group relative rounded-2xl overflow-hidden bg-gray-100 animate-slide-up"
+              className="group relative overflow-hidden rounded-lg border border-border bg-muted"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <Link href={`/packages?destination=${encodeURIComponent(dest.slug)}`} className="block relative aspect-[4/3] overflow-hidden">
@@ -65,11 +65,11 @@ function PopularDestinations() {
                   alt={dest.name}
                   fill
                   priority={index < 3}
-                  className="object-cover transition-all duration-500 group-hover:scale-110"
+                  className="object-cover"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-colors duration-300" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="absolute bottom-0 left-0 right-0 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="px-2 py-1 rounded-full bg-white/20 backdrop-blur text-white text-xs font-medium">{dest.theme}</span>
                     <span className="flex items-center gap-1 text-white/90 text-sm">
@@ -105,19 +105,19 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="bg-muted py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 animate-slide-up">
+        <div className="mb-8 text-center">
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">How It Works</span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900">Your Journey in 4 Simple Steps</h2>
           <p className="mt-2 text-lg text-gray-600 max-w-2xl mx-auto">We make travel planning effortless so you can focus on the experience</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => (
             <div
               key={step.number}
-              className="relative text-center p-6 animate-slide-up"
+              className="relative p-4 text-center"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="relative mb-6">

@@ -3,7 +3,7 @@
 import { type FormEvent, type ReactNode, useState } from "react";
 import Link from "next/link";
 import { LogIn, Menu, Plane, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/shared/page-container";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
@@ -79,12 +79,20 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </nav>
 
             <div className="flex items-center gap-1 md:hidden">
-              <Button variant="ghost" size="icon-sm" aria-label="Search destinations" onClick={() => setSearchOpen(true)}>
+              <IconButton
+                variant="ghost"
+                label="Search destinations"
+                onClick={() => setSearchOpen(true)}
+              >
                 <Search aria-hidden="true" />
-              </Button>
-              <Button variant="ghost" size="icon-sm" aria-label="Open navigation menu" onClick={() => setMobileMenuOpen(true)}>
+              </IconButton>
+              <IconButton
+                variant="ghost"
+                label="Open navigation menu"
+                onClick={() => setMobileMenuOpen(true)}
+              >
                 <Menu aria-hidden="true" />
-              </Button>
+              </IconButton>
             </div>
           </div>
         </PageContainer>

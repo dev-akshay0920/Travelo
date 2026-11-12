@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Search, Calendar, Users, ChevronDown, MapPin, Sparkles, Sun, Heart, Users as UsersIcon, Mountain, Church, Calendar as CalendarIcon, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageContainer } from "@/components/shared/page-container";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
@@ -83,53 +85,31 @@ export function HeroSearch({ stats }: HeroSearchProps) {
   const totalTravelers = adults + children;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-white py-12 sm:py-16 lg:py-20">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100/50 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-amber-100/50 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }} />
-      </div>
+    <section className="relative overflow-hidden bg-background py-10 sm:py-12">
 
-      {/* Floating particles */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-blue-200/50 rounded-full animate-float"
-            style={{
-              left: `${10 + i * 15}%`,
-              top: `${20 + i * 10}%`,
-              animationDelay: `${i * 0.5}s`,
-              animationDuration: `${4 + i}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-        {/* Headline with staggered animation */}
-        <div className="text-center max-w-3xl mx-auto mb-10 animate-slide-up">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <PageContainer className="relative py-0">
+        {/* Search-focused landing heading */}
+        <div className="mx-auto mb-8 max-w-3xl text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-1.5 text-sm font-medium text-blue-700">
             <Sparkles className="h-4 w-4" />
             Discover handpicked experiences from verified agencies
           </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-tight">
+          <h1 className="text-display font-bold tracking-tight text-foreground">
             Your Perfect Journey
             <br />
             <span className="bg-gradient-to-r from-blue-600 to-amber-500 bg-clip-text text-transparent">
               Starts Here
             </span>
           </h1>
-          <p className="mt-4 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <p className="mx-auto mt-4 max-w-2xl text-body text-muted-foreground">
             Compare curated packages, read real reviews, and book with confidence. No hidden fees, no surprises.
           </p>
         </div>
 
         {/* Search Card */}
-        <div className="max-w-4xl mx-auto animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 p-6 sm:p-8">
-            <form onSubmit={handleSearch} className="space-y-6">
+        <div className="mx-auto max-w-4xl">
+          <Card className="gap-0 p-4 shadow-card sm:p-5">
+            <form onSubmit={handleSearch} className="space-y-4">
               {/* Destination Input with autocomplete */}
               <div className="relative" ref={destinationsRef}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Where to?</label>
@@ -140,11 +120,11 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                     onChange={(e) => { setDestination(e.target.value); setShowDestinations(true); }}
                     onFocus={() => destination && setShowDestinations(true)}
                     placeholder="e.g., Goa, Kerala, Bali, Maldives..."
-                    className="pl-12 pr-12 h-14 text-lg rounded-xl bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    className="h-11 rounded-md border-input bg-muted pl-10 pr-10 text-base focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
                     autoComplete="off"
                   />
                   {showDestinations && destination && (
-                    <div className="absolute z-50 mt-1 w-full bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden animate-slide-down">
+                    <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-popover shadow-md">
                       <div className="p-3 border-b border-gray-100">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Popular Destinations</p>
                       </div>
@@ -154,13 +134,13 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                             key={dest.name}
                             type="button"
                             onClick={() => { setDestination(dest.name); setShowDestinations(false); }}
-                            className="group relative aspect-[4/3] rounded-xl overflow-hidden hover:scale-105 transition-transform"
+                            className="group relative aspect-[4/3] overflow-hidden rounded-lg"
                           >
                             <Image
                               src={dest.image}
                               alt={dest.name}
                               fill
-                              className="object-cover group-hover:scale-110 transition-transform duration-300"
+                              className="object-cover"
                               sizes="100px"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -188,7 +168,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
-                      className="pl-12 h-14 text-lg rounded-xl bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      className="h-11 rounded-md border-input bg-muted pl-10 text-base focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
                     />
                   </div>
                 </div>
@@ -202,7 +182,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate || new Date().toISOString().split("T")[0]}
-                      className="pl-12 h-14 text-lg rounded-xl bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      className="h-11 rounded-md border-input bg-muted pl-10 text-base focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
                     />
                   </div>
                 </div>
@@ -213,7 +193,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-14 justify-between text-left bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                    className="h-11 w-full justify-between border-border bg-background text-left hover:bg-muted"
                     onClick={() => { setShowTravelers(!showTravelers); setShowDestinations(false); }}
                   >
                     <span className="flex items-center gap-3">
@@ -229,15 +209,15 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                   </Button>
 
                   {showTravelers && (
-                    <div className="absolute z-50 mt-2 w-full sm:w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-4 animate-slide-down">
+                    <div className="absolute z-50 mt-2 w-full rounded-lg border border-border bg-popover p-3 shadow-md sm:w-72">
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Adults (18+)</label>
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">{adults}</span>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1}><ChevronDown className="h-4 w-4" /></Button>
-                              <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => setAdults(adults + 1)}><ChevronDown className="h-4 w-4 rotate-180" /></Button>
+                              <IconButton variant="outline" onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} label="Remove one adult"><ChevronDown className="size-4" /></IconButton>
+                              <IconButton variant="outline" onClick={() => setAdults(adults + 1)} label="Add one adult"><ChevronDown className="size-4 rotate-180" /></IconButton>
                             </div>
                           </div>
                         </div>
@@ -246,8 +226,8 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                           <div className="flex items-center justify-between">
                             <span className="text-gray-600">{children}</span>
                             <div className="flex items-center gap-2">
-                              <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0}><ChevronDown className="h-4 w-4" /></Button>
-                              <Button variant="outline" size="icon" className="h-10 w-10" onClick={() => setChildren(children + 1)}><ChevronDown className="h-4 w-4 rotate-180" /></Button>
+                              <IconButton variant="outline" onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} label="Remove one child"><ChevronDown className="size-4" /></IconButton>
+                              <IconButton variant="outline" onClick={() => setChildren(children + 1)} label="Add one child"><ChevronDown className="size-4 rotate-180" /></IconButton>
                             </div>
                           </div>
                         </div>
@@ -292,22 +272,21 @@ export function HeroSearch({ stats }: HeroSearchProps) {
               </div>
 
               {/* Search Button */}
-              <Button type="submit" className="w-full h-14 text-lg font-semibold rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-xl shadow-blue-500/30 transition-all group">
+              <Button type="submit" className="h-11 w-full font-medium">
                 <span className="flex items-center gap-2">
                   <Search className="h-5 w-5" />
                   Search Packages
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-4 w-4" />
                 </span>
               </Button>
             </form>
-          </div>
-
-          {/* Trust Signals - Real Data */}
-          <div className="mt-8">
-            <PlatformStatsDisplay stats={stats} />
-          </div>
+          </Card>
         </div>
-      </div>
+
+        <div className="mt-8">
+          <PlatformStatsDisplay stats={stats} />
+        </div>
+      </PageContainer>
     </section>
   );
 }

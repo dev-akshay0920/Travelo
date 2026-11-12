@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
 import { cn } from "@/lib/utils";
@@ -88,24 +88,22 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
                 />
                 {images.length > 1 && (
                   <>
-                    <Button
+                    <IconButton
                       variant="ghost"
-                      size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80"
                       onClick={prevImage}
-                      aria-label="Previous image"
+                      label="Previous image"
                     >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    <Button
+                      <ChevronLeft className="size-4" />
+                    </IconButton>
+                    <IconButton
                       variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80"
                       onClick={nextImage}
-                      aria-label="Next image"
+                      label="Next image"
                     >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
+                      <ChevronRight className="size-4" />
+                    </IconButton>
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
                       {images.map((_, index) => (
                         <button

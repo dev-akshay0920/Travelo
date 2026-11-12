@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ChevronDown, ChevronUp, X, Calendar, Users, DollarSign, MapPin, Sparkles, Clock, Globe, SlidersHorizontal, Filter, Search, ChevronLeft, ChevronRight, Minus, Plus, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -285,17 +285,17 @@ function FilterContent({ filters, draftFilters, setDraftFilters, setFilters, fac
           <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
             <Label className="text-sm font-medium text-slate-700">Adults</Label>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, adults: Math.max(1, (draftFilters.adults ?? 1) - 1) })} disabled={(draftFilters.adults ?? 1) <= 1} aria-label="Remove one adult"><Minus className="h-3.5 w-3.5" /></Button>
+              <IconButton variant="outline" className="border-border bg-background" onClick={() => setDraftFilters({ ...draftFilters, adults: Math.max(1, (draftFilters.adults ?? 1) - 1) })} disabled={(draftFilters.adults ?? 1) <= 1} label="Remove one adult"><Minus className="size-4" /></IconButton>
               <span className="w-5 text-center text-sm font-semibold tabular-nums text-slate-900">{draftFilters.adults ?? 1}</span>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, adults: (draftFilters.adults ?? 1) + 1 })} aria-label="Add one adult"><Plus className="h-3.5 w-3.5" /></Button>
+              <IconButton variant="outline" className="border-border bg-background" onClick={() => setDraftFilters({ ...draftFilters, adults: (draftFilters.adults ?? 1) + 1 })} label="Add one adult"><Plus className="size-4" /></IconButton>
             </div>
           </div>
           <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5">
             <Label className="text-sm font-medium text-slate-700">Children</Label>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, children: Math.max(0, (draftFilters.children ?? 0) - 1) })} disabled={(draftFilters.children ?? 0) <= 0} aria-label="Remove one child"><Minus className="h-3.5 w-3.5" /></Button>
+              <IconButton variant="outline" className="border-border bg-background" onClick={() => setDraftFilters({ ...draftFilters, children: Math.max(0, (draftFilters.children ?? 0) - 1) })} disabled={(draftFilters.children ?? 0) <= 0} label="Remove one child"><Minus className="size-4" /></IconButton>
               <span className="w-5 text-center text-sm font-semibold tabular-nums text-slate-900">{draftFilters.children ?? 0}</span>
-              <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg border-slate-200 bg-white" onClick={() => setDraftFilters({ ...draftFilters, children: (draftFilters.children ?? 0) + 1 })} aria-label="Add one child"><Plus className="h-3.5 w-3.5" /></Button>
+              <IconButton variant="outline" className="border-border bg-background" onClick={() => setDraftFilters({ ...draftFilters, children: (draftFilters.children ?? 0) + 1 })} label="Add one child"><Plus className="size-4" /></IconButton>
             </div>
           </div>
         </div>
@@ -530,9 +530,9 @@ export function FilterSidebar({ facets, isMobile = false, onClose, viewType, onV
                 </Button>
               )}
               <SheetClose asChild>
-                <Button variant="ghost" size="icon" aria-label="Close filters">
+                <IconButton variant="ghost" label="Close filters">
                   <X className="size-4" />
-                </Button>
+                </IconButton>
               </SheetClose>
             </div>
           </SheetHeader>

@@ -4,10 +4,16 @@ import { useEffect, useState } from "react";
 import { PublicLayout } from "@/features/public/components/public-layout";
 import { MapPin, Building2, Users, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/components/shared/page-container";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
+import { ErrorState } from "@/components/shared/error-state";
+import Link from "next/link";
 import { fetchPublicAgencies } from "@/features/public/api/public-packages.api";
 import type { AgencySummary } from "@/features/public/api/public-packages.api";
 
@@ -17,13 +23,13 @@ interface AgencyCardProps {
 
 function AgencyCard({ agency }: AgencyCardProps) {
   return (
-    <Card className="overflow-hidden border border-border hover:shadow-md transition-shadow duration-200">
+    <Card size="sm" variant="interactive" className="gap-0 overflow-hidden p-0">
       <div className="aspect-[4/3] w-full overflow-hidden bg-muted relative">
         {agency.logo ? (
           <img
             src={agency.logo}
             alt={agency.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="size-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
@@ -31,11 +37,9 @@ function AgencyCard({ agency }: AgencyCardProps) {
           </div>
         )}
       </div>
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-            {agency.name}
-          </h3>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="line-clamp-1">{agency.name}</CardTitle>
           {agency.rating && (
             <Badge variant="outline" className="flex items-center gap-1">
               <Star className="h-3 w-3 fill-yellow-400" />
@@ -43,11 +47,11 @@ function AgencyCard({ agency }: AgencyCardProps) {
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
+        <div className="flex items-center gap-1 text-body-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
           <span>{agency.destination || "Location not specified"}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+        <div className="flex items-center gap-2 text-body-sm text-muted-foreground">
           {agency.packageCount && (
             <span>
               <Users className="h-3 w-3" /> {agency.packageCount} packages
@@ -58,19 +62,19 @@ function AgencyCard({ agency }: AgencyCardProps) {
             <span className="text-xs">Verified</span>
           </span>
         </div>
-        <Button asChild variant="outline" className="w-full">
-          <a href={`/agencies/${agency.slug}`}>View Agency</a>
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <Link href={`/agencies/${encodeURIComponent(agency.slug)}`}>View agency</Link>
         </Button>
-      </div>
+      </CardContent>
     </Card>
   );
 }
 
 function AgencySkeleton() {
   return (
-    <Card className="overflow-hidden border border-border animate-pulse">
+    <Card size="sm" className="animate-pulse gap-0 overflow-hidden p-0">
       <div className="aspect-[4/3] w-full bg-muted" />
-      <div className="p-5">
+      <CardContent className="space-y-3">
         <div className="h-4 w-1/3 bg-muted rounded mb-2" />
         <div className="h-3 w-full bg-muted rounded mb-3" />
         <div className="flex gap-2">
@@ -80,7 +84,7 @@ function AgencySkeleton() {
         <Button className="w-full" disabled>
           Loading...
         </Button>
-      </div>
+      </CardContent>
     </Card>
   );
 }
@@ -115,21 +119,17 @@ export default function AgenciesPage() {
   if (result === null) {
     return (
       <PublicLayout>
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          <header className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Travel Agencies
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Browse verified agencies and find your perfect travel partner.
-            </p>
-          </header>
+        <PageContainer className="space-y-5">
+          <PageHeader
+            title="Travel Agencies"
+            description="Browse verified agencies and find your perfect travel partner."
+          />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <AgencySkeleton key={i} />
             ))}
           </div>
-        </main>
+        </PageContainer>
       </PublicLayout>
     );
   }
@@ -137,60 +137,53 @@ export default function AgenciesPage() {
   if (error) {
     return (
       <PublicLayout>
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-          <header className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Travel Agencies
-            </h1>
-          </header>
-          <div className="text-center py-20">
-            <p className="text-muted-foreground">{error}</p>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Try again
-            </Button>
-          </div>
-        </main>
+        <PageContainer className="space-y-5">
+          <PageHeader title="Travel Agencies" />
+          <ErrorState
+            title="Could not load agencies"
+            description={error}
+            action={
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Try again
+              </Button>
+            }
+          />
+        </PageContainer>
       </PublicLayout>
     );
   }
 
   return (
     <PublicLayout>
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Travel Agencies
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              {filteredItems.length} verified agencies ready to help you plan
-              your trip
-            </p>
-          </div>
-          <div className="flex w-full sm:w-auto gap-2">
+      <PageContainer className="space-y-5">
+        <PageHeader
+          title="Travel Agencies"
+          description={`${filteredItems.length} verified agencies ready to help you plan your trip`}
+          actions={
             <Input
+              aria-label="Search agencies"
               placeholder="Search agencies by name or destination..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full sm:w-80"
             />
-          </div>
-        </header>
+          }
+        />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredItems.length === 0 ? (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-muted-foreground">
-                No agencies found matching your search.
-              </p>
-            </div>
+            <EmptyState
+              className="col-span-full"
+              title="No agencies found"
+              description="Try another agency name or destination."
+            />
           ) : (
             filteredItems.map((agency) => (
               <AgencyCard key={agency.id} agency={agency} />
             ))
           )}
         </div>
-      </main>
+      </PageContainer>
     </PublicLayout>
   );
 }

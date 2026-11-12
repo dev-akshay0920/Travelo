@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { PageHeader } from "@/components/shared/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -159,18 +160,18 @@ export default function NewPackagePage() {
   const inputClassName = "h-8 w-full rounded-[5px] border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40";
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create Package</h1>
-          <p className="text-sm text-muted-foreground">Add a new travel package to your agency.</p>
-        </div>
-      </div>
+    <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6">
+      <PageHeader
+        title="Create Package"
+        description="Add a new travel package to your agency."
+        actions={
+          <IconButton variant="ghost" onClick={() => router.back()} label="Go back">
+            <ArrowLeft />
+          </IconButton>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="grid gap-6">
+      <form onSubmit={handleSubmit} className="grid gap-4">
         <Card size="sm">
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
@@ -279,17 +280,17 @@ export default function NewPackagePage() {
                       />
                     </div>
                     <div className="col-span-6 sm:col-span-1 flex items-end">
-                      <Button
+                      <IconButton
                         type="button"
                         variant="ghost"
-                        size="icon"
                         onClick={() => {
                           const next = (form.destinations || []).filter((_, i) => i !== index);
                           updateField("destinations", next);
                         }}
+                        label={`Remove destination ${index + 1}`}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      </IconButton>
                     </div>
                   </div>
                 ))}

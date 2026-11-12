@@ -155,7 +155,7 @@ export function TravelerInquiryHistory() {
           <p className="text-body-sm text-muted-foreground" aria-live="polite">
             {total} {total === 1 ? "inquiry" : "inquiries"}
           </p>
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+          <Card className="hidden overflow-hidden gap-0 p-0 shadow-none md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -188,7 +188,7 @@ export function TravelerInquiryHistory() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </Card>
 
           <div className="space-y-3 md:hidden">
             {inquiries.map((inquiry) => (

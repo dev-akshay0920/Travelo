@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -517,17 +517,17 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId,
                       />
                     </div>
                     <div className="col-span-6 sm:col-span-1 flex items-end">
-                      <Button
+                      <IconButton
                         type="button"
                         variant="ghost"
-                        size="icon"
                         onClick={() => {
                           const next = (form.destinations || []).filter((_, i) => i !== index);
                           updateField("destinations", next);
                         }}
+                        label={`Remove destination ${index + 1}`}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      </IconButton>
                     </div>
                   </div>
                 ))}
@@ -839,16 +839,15 @@ export function PackageForm({ mode, package: pkg, onSuccess, onCancel, agencyId,
                   <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
                     Day {day.day}
                   </span>
-                  <Button
+                  <IconButton
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
                     onClick={() => removeItineraryDay(index)}
-                    title="Remove day"
+                    label={`Remove itinerary day ${day.day}`}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 />
-                  </Button>
+                  </IconButton>
                 </div>
                 <div className="grid gap-2">
                   <Input

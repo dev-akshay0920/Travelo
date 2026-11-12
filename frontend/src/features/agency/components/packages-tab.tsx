@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { ArrowLeft } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/page-header";
 import { PackageList } from "@/features/packages/components/package-list";
 import { PackageDetailModal } from "@/features/packages/components/package-detail-modal";
 import { PackageForm } from "@/features/packages/components/package-form";
@@ -18,6 +19,7 @@ import {
   updatePackageStatusApi,
 } from "@/features/packages/api/package.api";
 import type { TravelPackage, PackageStatus } from "@/features/packages/types/package.types";
+import { Button, IconButton } from "@/components/ui/button";
 
 type TabValue = "all" | "upcoming" | "current" | "history";
 type PackageFormMode = "create" | "edit";
@@ -172,47 +174,42 @@ export function PackagesTab({ agencyId }: { agencyId?: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {viewMode === "list" ? (
-        <>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Packages</h1>
-              <p className="text-xs text-muted-foreground">Manage your travel packages and track their lifecycle.</p>
-            </div>
-            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground">
+        <PageHeader
+          title="Packages"
+          description="Manage your travel packages and track their lifecycle."
+          actions={
+            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
               {tabs.map((tab) => (
-                <button
+                <Button
                   key={tab.value}
                   type="button"
+                  size="xs"
+                  variant={activeTab === tab.value ? "secondary" : "ghost"}
                   onClick={() => setActiveTab(tab.value)}
-                  data-state={activeTab === tab.value ? "active" : "inactive"}
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  aria-pressed={activeTab === tab.value}
                 >
                   {tab.label}
-                </button>
+                </Button>
               ))}
             </div>
-          </div>
-        </>
+          }
+        />
       ) : (
-        <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleFormCancel}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-border transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold text-foreground">
-              {formMode === "create" ? "Create Package" : "Edit Package"}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              {formMode === "create" ? "Add a new travel package to your agency." : "Update your travel package details."}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title={formMode === "create" ? "Create Package" : "Edit Package"}
+          description={formMode === "create" ? "Add a new travel package to your agency." : "Update your travel package details."}
+          actions={
+            <IconButton
+              variant="outline"
+              onClick={handleFormCancel}
+              label="Back to packages"
+            >
+              <ArrowLeft />
+            </IconButton>
+          }
+        />
       )}
 
       {viewMode === "form" ? (

@@ -4,7 +4,7 @@ import type { TravelPackage, PackageStatus, PackageImage } from "@/features/pack
 import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
 import { Calendar, MapPin, Users, IndianRupee, MoreVertical, Pencil, Trash2, Clock, MapPin as MapPinIcon, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -74,8 +74,9 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
 
   return (
     <Card
+      size="sm"
       variant="interactive"
-      className={cn("flex flex-col pt-0", isSoldOut && "opacity-50")}
+      className={cn("flex flex-col gap-0 pt-0", isSoldOut && "opacity-50")}
     >
       {/* Image - First child of Card for pt-0 */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
@@ -83,7 +84,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
           <img
             src={primaryImage.url}
             alt={primaryImage.altText || pkg.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.015]"
+            className="size-full object-cover"
             loading="lazy"
           />
         ) : (
@@ -109,7 +110,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
       </div>
 
       {/* Content - Tight */}
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="space-y-3">
         {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -122,9 +123,13 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="rounded-lg text-muted-foreground">
+              <IconButton
+                variant="ghost"
+                label={`More actions for ${pkg.name}`}
+                className="rounded-lg text-muted-foreground"
+              >
                 <MoreVertical className="h-4 w-4" />
-              </Button>
+              </IconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-36">
               {onViewDetail && (

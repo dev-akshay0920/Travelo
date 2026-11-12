@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
+import { EmptyState } from "@/components/shared/empty-state";
 
 type PackageListProps = {
   packages: TravelPackage[];
@@ -27,7 +28,7 @@ export function PackageList({ packages, isLoading, onCreateNew, onEdit, onDelete
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-4">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden flex flex-col h-full border-gray-100 shadow-sm pt-0">
+            <Card key={index} size="sm" className="h-full gap-0 overflow-hidden pt-0">
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
                 <Skeleton className="w-full h-full" />
               </div>
@@ -62,19 +63,17 @@ export function PackageList({ packages, isLoading, onCreateNew, onEdit, onDelete
 
   if (!packages.length) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 py-10 px-6 text-center bg-gray-50">
-        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50">
-          <Plus className="h-5 w-5 text-primary" />
-        </div>
-        <h3 className="mt-2 text-sm font-semibold text-gray-900">No packages yet</h3>
-        <p className="mt-1 max-w-sm text-xs text-gray-500">
-          Create your first travel package to get started.
-        </p>
-        <Button onClick={onCreateNew} className="mt-3" size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Create Package
-        </Button>
-      </div>
+      <EmptyState
+        title="No packages yet"
+        description="Create your first travel package to get started."
+        icon={<Plus />}
+        action={
+          <Button onClick={onCreateNew} size="sm">
+            <Plus aria-hidden="true" />
+            Create package
+          </Button>
+        }
+      />
     );
   }
 

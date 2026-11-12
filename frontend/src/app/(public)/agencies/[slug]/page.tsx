@@ -105,9 +105,9 @@ export default function AgencyProfilePage() {
     <PublicLayout>
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-center gap-6">
+          <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-7">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-4">
                 <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
                   {agency.logo?.url ? (
                     <Image src={agency.logo.url} alt={agency.logo.altText || agency.name} fill className="object-cover" />
@@ -148,22 +148,22 @@ export default function AgencyProfilePage() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid gap-8 lg:grid-cols-4">
+        <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-7">
+          <div className="grid gap-5 lg:grid-cols-4">
             {/* Sidebar */}
             <aside className="lg:col-span-1">
-              <div className="sticky top-24 space-y-4">
+              <div className="sticky top-20 space-y-3">
                 {/* About */}
-                <Card className="p-6">
-                  <h3 className="mb-3 text-card-title font-semibold text-foreground">About</h3>
+                <Card size="sm" className="gap-2 p-3">
+                  <h3 className="text-card-title font-semibold text-foreground">About</h3>
                   <p className="text-body-sm leading-relaxed text-muted-foreground">
                     {agency.about || "This agency has not added an introduction yet."}
                   </p>
                 </Card>
 
                 {/* Services */}
-                <Card className="p-6">
-                  <h3 className="mb-3 text-card-title font-semibold text-foreground">Services</h3>
+                <Card size="sm" className="gap-2 p-3">
+                  <h3 className="text-card-title font-semibold text-foreground">Services</h3>
                   {agency.services?.length ? (
                     <ul className="space-y-2">
                       {agency.services.map((service) => (
@@ -180,8 +180,8 @@ export default function AgencyProfilePage() {
 
                 {/* Contact */}
                 {(agency.contact?.phone || agency.contact?.email || agency.contact?.website) && (
-                <Card className="p-6">
-                  <h3 className="mb-3 text-card-title font-semibold text-foreground">Contact</h3>
+                <Card size="sm" className="gap-2 p-3">
+                  <h3 className="text-card-title font-semibold text-foreground">Contact</h3>
                   <div className="space-y-3 text-body-sm">
                     {agency.contact?.phone && <a href={`tel:${agency.contact.phone}`} className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-primary">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
@@ -211,7 +211,7 @@ export default function AgencyProfilePage() {
 
             {/* Packages */}
             <div className="lg:col-span-3">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-section-title font-semibold text-foreground">Packages by {agency.name}</h2>
                 <span className="text-body-sm text-muted-foreground">{total} packages</span>
               </div>
@@ -233,19 +233,19 @@ export default function AgencyProfilePage() {
 
 function AgencySidebarSkeleton() {
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
+    <div className="space-y-3">
+      <Card size="sm" className="gap-2 p-3">
         <Skeleton className="h-5 w-24 mb-3" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4 mt-2" />
       </Card>
-      <Card className="p-6">
+      <Card size="sm" className="gap-2 p-3">
         <Skeleton className="h-5 w-20 mb-3" />
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
         </div>
       </Card>
-      <Card className="p-6">
+      <Card size="sm" className="gap-2 p-3">
         <Skeleton className="h-5 w-20 mb-3" />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}

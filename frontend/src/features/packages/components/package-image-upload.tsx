@@ -12,7 +12,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -492,35 +492,34 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
                           </Badge>
                         )}
                         {!image.isPrimary && !isUploading && (
-                          <Button
+                          <IconButton
                             type="button"
                             variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
+                            size="icon-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSetPrimary(image.key);
                             }}
-                            title="Set as primary"
+                            label="Set as primary"
                             disabled={isUploading}
                           >
-                            <Star className="h-3 w-3 text-muted-foreground" />
-                          </Button>
+                            <Star className="size-3 text-muted-foreground" />
+                          </IconButton>
                         )}
-                        <Button
+                        <IconButton
                           type="button"
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive"
+                          size="icon-xs"
+                          className="text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteImage(image.key);
                           }}
-                          title="Delete"
+                          label="Delete image"
                           disabled={isUploading}
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                          <Trash2 className="size-3" />
+                        </IconButton>
                       </div>
                       <div className="w-full">
                         <Input

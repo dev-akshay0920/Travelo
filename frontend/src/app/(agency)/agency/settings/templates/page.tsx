@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Edit, Copy, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -114,7 +115,7 @@ export default function SettingsTemplatesTab() {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        <Card className="gap-0 overflow-hidden p-0">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -144,35 +145,32 @@ export default function SettingsTemplatesTab() {
                     <TableCell className="capitalize text-muted-foreground">{template.type}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
+                        <IconButton
                           type="button"
                           variant="ghost"
-                          size="icon-sm"
                           onClick={() => openEdit(template)}
-                          title="Edit"
+                          label={`Edit ${template.name}`}
                         >
                           <Edit />
-                        </Button>
-                        <Button
+                        </IconButton>
+                        <IconButton
                           type="button"
                           variant="ghost"
-                          size="icon-sm"
                           onClick={() => handleDuplicate(template.id)}
-                          title="Duplicate"
+                          label={`Duplicate ${template.name}`}
                         >
                           <Copy />
-                        </Button>
+                        </IconButton>
                         {!template.isDefault && (
-                          <Button
+                          <IconButton
                             type="button"
                             variant="ghost"
-                            size="icon-sm"
                             onClick={() => handleDelete(template.id)}
                             className="text-destructive hover:text-destructive"
-                            title="Delete"
+                            label={`Delete ${template.name}`}
                           >
                             <Trash2 />
-                          </Button>
+                          </IconButton>
                         )}
                       </div>
                     </TableCell>
@@ -181,7 +179,7 @@ export default function SettingsTemplatesTab() {
               )}
             </TableBody>
           </Table>
-        </div>
+        </Card>
       )}
 
       <TemplateCreateEditModal

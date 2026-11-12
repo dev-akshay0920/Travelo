@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useCallback, useRef } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -605,12 +605,12 @@ export default function AgencyPage() {
                     fallback={agency.name.slice(0, 2).toUpperCase()}
                     className="size-24"
                   />
-                  <Button
+                  <IconButton
                     type="button"
                     variant="default"
                     size="icon-lg"
                     className="absolute -bottom-1 -right-1 rounded-full border-4 border-card shadow-sm"
-                    aria-label={agency.logo?.url || pendingAgencyLogo ? "Change agency profile image" : "Add agency profile image"}
+                    label={agency.logo?.url || pendingAgencyLogo ? "Change agency profile image" : "Add agency profile image"}
                     aria-describedby="agency-logo-help"
                     disabled={
                       agency.status !== "draft" ||
@@ -621,7 +621,7 @@ export default function AgencyPage() {
                     onClick={() => agencyLogoInputRef.current?.click()}
                   >
                     <Camera aria-hidden="true" />
-                  </Button>
+                  </IconButton>
                   <Input
                     ref={agencyLogoInputRef}
                     id="agency-logo"

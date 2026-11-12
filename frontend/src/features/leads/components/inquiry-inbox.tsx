@@ -270,7 +270,7 @@ export function InquiryInbox({ agencyId, isAgencyLoading }: InquiryInboxProps) {
         />
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+          <Card className="hidden overflow-hidden gap-0 p-0 shadow-none md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -297,7 +297,7 @@ export function InquiryInbox({ agencyId, isAgencyLoading }: InquiryInboxProps) {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </Card>
 
           <div className="space-y-3 md:hidden">
             {items.map((lead) => (

@@ -266,7 +266,7 @@ export default function TravellerWatchlistPage() {
                 size="sm"
                 variant="interactive"
                 className={cn(
-                  "flex flex-col pt-0",
+                  "flex flex-col gap-0 pt-0",
                   !item.available && "opacity-80"
                 )}
               >
@@ -276,7 +276,7 @@ export default function TravellerWatchlistPage() {
                       src={item.imageUrl}
                       alt={item.name}
                       fill
-                      className="object-cover transition-transform duration-300 hover:scale-[1.015]"
+                      className="object-cover"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   ) : (
@@ -334,7 +334,7 @@ export default function TravellerWatchlistPage() {
               </Card>
             ))}
             {agencies.map((item) => (
-              <Card key={item.id} size="sm" variant="interactive" className="flex flex-col pt-0">
+              <Card key={item.id} size="sm" variant="interactive" className="flex flex-col gap-0 pt-0">
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
                   {item.logo ? (
                     <Image
@@ -342,7 +342,7 @@ export default function TravellerWatchlistPage() {
                       alt={item.name}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-300 hover:scale-[1.015]"
+                      className="object-cover"
                     />
                   ) : (
                     <Building2 aria-hidden="true" className="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
