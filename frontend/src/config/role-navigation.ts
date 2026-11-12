@@ -1,3 +1,11 @@
+import {
+  Building2,
+  LayoutDashboard,
+  MessageSquareText,
+  Settings,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import type { NavigationItem } from "@/config/navigation";
 import { routeSegments } from "@/config/navigation";
 
@@ -12,10 +20,12 @@ export const agencyNavigation: NavigationItem[] = [
   { label: "Packages", href: "/agency", segment: routeSegments.agency, key: "packages" },
 ];
 
-export const adminNavigation: NavigationItem[] = [
-  { label: "Dashboard", href: "/admin", segment: routeSegments.admin },
-  { label: "Users", href: "/admin/users", segment: routeSegments.admin },
-  { label: "Agencies", href: "/admin/agencies", segment: routeSegments.admin },
-  { label: "Leads", href: "/admin/leads", segment: routeSegments.admin },
-  { label: "Settings", href: "/admin/settings", segment: routeSegments.admin },
+type AdminNavigationItem = NavigationItem & { icon: LucideIcon };
+
+export const adminNavigation: AdminNavigationItem[] = [
+  { label: "Dashboard", href: "/admin", segment: routeSegments.admin, icon: LayoutDashboard },
+  { label: "Users", href: "/admin/users", segment: routeSegments.admin, icon: Users },
+  { label: "Agencies", href: "/admin/agencies", segment: routeSegments.admin, icon: Building2 },
+  { label: "Leads", href: "/admin/leads", segment: routeSegments.admin, icon: MessageSquareText },
+  { label: "Settings", href: "/admin/settings", segment: routeSegments.admin, icon: Settings },
 ];

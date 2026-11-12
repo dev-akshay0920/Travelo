@@ -7,21 +7,25 @@ interface AppShellHeaderProps {
   role: RoleKey;
   greeting?: string;
   brandMark?: ReactNode;
+  brandName?: string;
 }
 
 export function AppShellHeader({
   role,
   greeting = "Welcome back",
   brandMark,
+  brandName = "Travora",
 }: AppShellHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 h-16 shrink-0 border-b border-border bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-border bg-background">
       <div className="flex h-full items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          {brandMark}
-          <p className="truncate text-sm font-medium text-muted-foreground">
-            {greeting}
-          </p>
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground md:hidden">
+            {brandMark}
+            {brandName}
+          </span>
+          <span className="hidden h-5 w-px bg-border md:block" aria-hidden="true" />
+          <p className="truncate text-body-sm text-muted-foreground">{greeting}</p>
         </div>
         <UserMenu role={role} />
       </div>

@@ -1,45 +1,40 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
 
-import { Plane } from "lucide-react";
-import { UserMenu } from "@/components/shared/user-menu";
+import { AppShellHeader } from "@/components/shared/app-shell-header";
+import { IconSidebar } from "@/components/shared/icon-sidebar";
 import { PageContainer } from "@/components/shared/page-container";
 import { adminNavigation } from "@/config/role-navigation";
-import { APP_NAME } from "@/lib/constants";
-import type { RoleKey } from "@/config/routes";
+import { usePathname } from "next/navigation";
 
 type AdminShellProps = {
   children: ReactNode;
 };
 
 export function AdminShell({ children }: AdminShellProps) {
+  const pathname = usePathname();
+  const items = adminNavigation.map((item) => ({
+    label: item.label,
+    href: item.href,
+    icon: item.icon,
+    isActive: pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`)),
+  }));
+
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
-      <header className="sticky top-0 z-40 flex-shrink-0 glass-nav">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Plane className="h-5 w-5 text-primary" aria-hidden="true" />
-            <span className="text-xl font-semibold tracking-tight text-foreground">{APP_NAME}</span>
-          </Link>
-          <nav className="hidden items-center gap-6 md:flex">
-            {adminNavigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <UserMenu role={"admin" as RoleKey} />
-        </div>
-      </header>
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
-        <PageContainer>{children}</PageContainer>
-      </main>
+    <div className="flex h-dvh overflow-hidden">
+      <IconSidebar
+        items={items}
+        brandHref="/admin"
+        brandLabel="Travora"
+        sectionLabel="Administration"
+      />
+      <div className="flex h-dvh min-w-0 flex-1 flex-col md:ml-60">
+        <AppShellHeader role="admin" greeting="Administration" />
+        <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+          <PageContainer className="min-h-full pb-24 md:pb-5">{children}</PageContainer>
+        </main>
+      </div>
     </div>
   );
 }

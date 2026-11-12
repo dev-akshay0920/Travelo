@@ -215,11 +215,11 @@ The application must feel calm and premium.
 
 ## 10. VISUAL DESIGN LANGUAGE
 
-Travora should look: **modern, trustworthy, premium, friendly, clean, spacious, travel-oriented.**
+Travora should feel like a **calm, polished travel workspace**: clear and efficient like a productivity app, while preserving the warmth and imagery of travel discovery. Outlook is a reference for compact navigation, useful pane hierarchy, crisp dividers, and restrained interactions—not a template to copy. Never copy Microsoft branding, icons, layouts, or product-specific UI.
 
-**Avoid:** excessive gradients, excessive glassmorphism, excessive shadows, overly rounded interfaces, huge cards, excessive decorative elements, visually noisy pages, generic SaaS layouts.
+**Avoid:** excessive gradients, glassmorphism, shadows, oversized cards, decorative motion, inconsistent corner radii, noisy dashboards, and dense unstructured data.
 
-**Prefer:** strong typography, whitespace, subtle borders, restrained shadows, clear hierarchy, consistent spacing, meaningful imagery, clear calls to action.
+**Prefer:** compact persistent navigation, a quiet top bar, clear page titles and actions, aligned data tables, subtle borders and selected states, consistent spacing, meaningful travel imagery, and purposeful calls to action.
 
 ---
 
@@ -231,9 +231,9 @@ Use the shared Tailwind typography utilities defined in `src/app/globals.css`:
 
 ```text
 Display        text-display        36px–60px, responsive
-Page title     text-page-title     30px / 36px
-Section title  text-section-title  24px / 32px
-Card title     text-card-title     18px / 24px
+Page title     text-page-title     24px / 32px
+Section title  text-section-title  20px / 28px
+Card title     text-card-title     16px / 24px
 Body           text-body           15px / 24px
 Supporting     text-body-sm        14px / 20px
 Caption        text-caption        12px / 16px
@@ -258,8 +258,8 @@ Standard component scale:
 |-----------|----------|
 | Buttons | 40px default, 36px small, 44px large; medium weight; primary uses the primary token |
 | Form controls | 40px default, 36px compact; 14px text on desktop and at least 16px on small screens |
-| Cards | 12px radius, 20px padding, subtle border and shadow; compact cards use 16px padding |
-| Dialogs | 24px padding, 12px radius, 32rem default maximum width, clear title/description/footer |
+| Cards | 10px radius, 16px padding, subtle border and shadow; compact cards use 12px padding |
+| Dialogs | 24px content padding, 10px radius, fixed header/footer, scrollable body, 32rem default maximum width |
 | Menus and selects | Popover surface, shared border/radius/shadow, 14px menu items |
 | Dates | Human-readable dates use `d MMM yyyy`; form/API date values remain ISO `yyyy-MM-dd` |
 
@@ -277,9 +277,11 @@ Use the existing Button, Card, Dialog, Select, Calendar, Input, and Label primit
 
 - Use `PageContainer` for the shared content width and responsive horizontal gutters. Do not add another page-level gutter/max-width wrapper inside a shell that already uses it.
 - Use `PageStack` when a page needs the shared vertical section rhythm; keep denser card-internal spacing local.
-- Reuse `AppShellHeader` and `IconSidebar` for authenticated shells. Role-specific navigation data belongs in feature shells, while shared layout and tooltip behavior stay in `components/shared/`.
-- Use `Tooltip` for icon-only desktop actions and preserve visible labels on touch/mobile navigation.
+- Reuse `AppShellHeader` and `IconSidebar` for every authenticated role. Keep the desktop sidebar labeled and persistent, and retain visible labels in the mobile navigation bar. Role-specific navigation data belongs in feature shells, while shell layout stays in `components/shared/`.
+- Use `Tooltip` for icon-only actions, not controls that already display their label.
 - Use `Spinner` for compact async actions, and `LoadingState`, `EmptyState`, and `ErrorState` for page-level feedback. Keep loading layouts stable and do not invent per-page spinner styles.
+- Use Lucide icons at the shared 16px control scale (20px only for prominent empty states or brand marks). Icon-only actions need an accessible name and a tooltip where the purpose is not otherwise visible.
+- Keep interaction motion short and subtle. Honor `prefers-reduced-motion`; avoid translating cards or animating decorative content in workspace surfaces.
 - New components must use semantic colors. Existing palette-named Tailwind classes are mapped through compatibility aliases; do not add further legacy palette classes or hard-coded colors.
 
 ---

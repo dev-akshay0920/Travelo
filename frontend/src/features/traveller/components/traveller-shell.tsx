@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import { Compass, Heart, LogOut, MessageSquareText, Plane, User } from "lucide-react";
+import { Compass, Heart, MessageSquareText, Plane, User } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
 import { IconSidebar } from "@/components/shared/icon-sidebar";
@@ -28,17 +28,18 @@ export function TravellerShell({ children }: TravellerShellProps) {
   }));
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <IconSidebar
         items={items}
-        footerItems={[{ label: "Sign out", href: "/signin", icon: LogOut }]}
         brandHref="/traveller/explore"
-        brandLabel="Traveller explore"
+        brandLabel="Travora"
+        sectionLabel="Travel workspace"
       />
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col md:ml-16">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col md:ml-60">
         <AppShellHeader
           role="traveller"
+          greeting="Travel workspace"
           brandMark={<Plane className="size-5 text-primary md:hidden" aria-hidden="true" />}
         />
         <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Plane, type LucideIcon } from "lucide-react";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type SidebarItem =
@@ -27,22 +26,24 @@ interface IconSidebarProps {
   footerItems?: SidebarItem[];
   brandHref?: string;
   brandLabel?: string;
+  sectionLabel?: string;
 }
 
 function NavigationItem({ item }: { item: SidebarItem }) {
   const Icon = item.icon;
   const content = (
     <>
-      <Icon aria-hidden="true" className="size-5 shrink-0" />
-      <span className="text-caption font-medium md:sr-only">{item.label}</span>
+      <Icon aria-hidden="true" className="size-4 shrink-0" />
+      <span className="truncate text-caption font-medium md:text-sm">{item.label}</span>
     </>
   );
   const className = cn(
-    "inline-flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:size-10 md:flex-row",
-    item.isActive && "bg-accent text-accent-foreground hover:bg-accent",
+    "relative inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 text-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none md:min-h-10 md:w-full md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3 md:text-left",
+    item.isActive &&
+      "bg-accent text-accent-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary hover:bg-accent",
   );
 
-  const trigger = typeof item.href === "string" ? (
+  return typeof item.href === "string" ? (
     <Link
       href={item.href}
       aria-label={item.label}
@@ -63,15 +64,6 @@ function NavigationItem({ item }: { item: SidebarItem }) {
       {content}
     </button>
   );
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        {item.label}
-      </TooltipContent>
-    </Tooltip>
-  );
 }
 
 export function IconSidebar({
@@ -79,23 +71,29 @@ export function IconSidebar({
   footerItems = [],
   brandHref = "/",
   brandLabel = "Home",
+  sectionLabel = "Workspace",
 }: IconSidebarProps) {
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card md:inset-y-0 md:left-0 md:right-auto md:flex md:w-16 md:flex-col md:border-r md:border-t-0">
-      <div className="hidden h-16 items-center justify-center border-b border-border md:flex">
+    <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card md:inset-y-0 md:left-0 md:right-auto md:flex md:w-60 md:flex-col md:border-r md:border-t-0">
+      <div className="hidden h-14 shrink-0 items-center border-b border-border px-5 md:flex">
         <Link
           href={brandHref}
-          aria-label={brandLabel}
-          className="inline-flex size-10 items-center justify-center rounded-md text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-w-0 items-center gap-2.5 rounded-md text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Plane aria-hidden="true" className="size-5" />
+          <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Plane aria-hidden="true" className="size-4" />
+          </span>
+          <span className="truncate text-sm font-semibold tracking-tight">{brandLabel}</span>
         </Link>
       </div>
-      <div className="flex items-center justify-around gap-1 px-2 py-2 md:flex-1 md:flex-col md:justify-between md:gap-1 md:overflow-y-auto md:px-0 md:py-4">
+      <div className="flex items-center justify-around gap-1 px-2 py-2 md:flex-1 md:flex-col md:justify-between md:gap-4 md:overflow-y-auto md:px-3 md:py-4">
         <nav
           aria-label="Main navigation"
-          className="flex flex-1 items-center justify-around gap-1 md:flex-col md:justify-start"
+          className="flex flex-1 items-center justify-around gap-1 md:flex-col md:items-stretch md:justify-start"
         >
+          <span className="hidden px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground md:block">
+            {sectionLabel}
+          </span>
           {items.map((item) => (
             <NavigationItem key={item.label} item={item} />
           ))}
@@ -103,7 +101,7 @@ export function IconSidebar({
         {footerItems.length > 0 && (
           <nav
             aria-label="Account navigation"
-            className="flex items-center gap-1 border-l border-border pl-1 md:flex-col md:border-l-0 md:border-t md:pl-0 md:pt-3"
+            className="hidden items-center gap-1 border-border md:flex md:w-full md:flex-col md:items-stretch md:border-t md:pt-3"
           >
             {footerItems.map((item) => (
               <NavigationItem key={item.label} item={item} />

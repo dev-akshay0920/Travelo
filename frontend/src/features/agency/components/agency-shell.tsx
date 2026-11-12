@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 
 import {
   LayoutDashboard,
-  LogOut,
   MessageSquareText,
   Package,
   Plane,
@@ -42,7 +41,7 @@ export function AgencyShell({
   const showSettingsSubNav = activeTab === "settings" && !!onSettingsSubTabChange;
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <IconSidebar
         items={tabItems.map((item) => ({
           label: item.label,
@@ -50,14 +49,15 @@ export function AgencyShell({
           isActive: activeTab === item.key,
           href: item.href,
         }))}
-        footerItems={[{ label: "Sign out", href: "/signin", icon: LogOut }]}
         brandHref="/agency"
-        brandLabel="Agency dashboard"
+        brandLabel="Travora"
+        sectionLabel="Agency workspace"
       />
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col md:ml-16">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col md:ml-60">
         <AppShellHeader
           role="agency"
+          greeting="Agency workspace"
           brandMark={<Plane className="size-5 text-primary md:hidden" aria-hidden="true" />}
         />
         <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
