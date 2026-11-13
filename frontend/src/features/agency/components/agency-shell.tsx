@@ -54,14 +54,14 @@ export function AgencyShell({
         sectionLabel="Agency workspace"
       />
 
-      <div className="flex h-dvh min-w-0 flex-1 flex-col md:ml-60">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col lg:ml-60">
         <AppShellHeader
           role="agency"
           greeting="Agency workspace"
-          brandMark={<Plane className="size-5 text-primary md:hidden" aria-hidden="true" />}
+          brandMark={<Plane className="size-5 text-primary lg:hidden" aria-hidden="true" />}
         />
         <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-          <PageContainer className="min-h-full pb-24 md:pb-5">
+          <PageContainer className="min-h-full pb-24 lg:pb-5">
             {showSettingsSubNav && (
               <div
                 aria-label="Profile and settings sections"

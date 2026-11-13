@@ -29,10 +29,10 @@ export function AdminShell({ children }: AdminShellProps) {
         brandLabel="Travora"
         sectionLabel="Administration"
       />
-      <div className="flex h-dvh min-w-0 flex-1 flex-col md:ml-60">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col lg:ml-60">
         <AppShellHeader role="admin" greeting="Administration" />
         <main className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-          <PageContainer className="min-h-full pb-24 md:pb-5">{children}</PageContainer>
+          <PageContainer className="min-h-full pb-24 lg:pb-5">{children}</PageContainer>
         </main>
       </div>
     </div>

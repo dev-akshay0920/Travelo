@@ -32,26 +32,18 @@ export function PackageList({ packages, isLoading, onCreateNew, onEdit, onDelete
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
                 <Skeleton className="w-full h-full" />
               </div>
-              <CardContent className="p-2.5 pb-2 space-y-2">
+              <CardContent className="space-y-3 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <Skeleton className="h-4 w-3/4 rounded" />
-                    <Skeleton className="h-3 w-1/2 rounded mt-0.5" />
+                    <Skeleton className="mt-1 h-3 w-1/2 rounded" />
                   </div>
                   <Skeleton className="h-8 w-8 rounded-lg" />
                 </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <Skeleton className="h-18 w-full rounded-lg" />
-                  <Skeleton className="h-18 w-full rounded-lg" />
-                  <Skeleton className="h-18 w-full rounded-lg" />
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <Skeleton className="h-14 w-full rounded-lg" />
-                  <Skeleton className="h-14 w-full rounded-lg" />
-                </div>
-                <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-gray-100">
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-3 w-2/3 rounded" />
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <Skeleton className="h-4 w-24 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
                 </div>
               </CardContent>
             </Card>

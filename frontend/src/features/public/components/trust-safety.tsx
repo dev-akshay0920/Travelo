@@ -15,16 +15,6 @@ const iconMap = {
   "check-circle": CheckCircle2,
 } as const;
 
-const colorClasses = {
-  blue: { bg: "bg-blue-50", iconBg: "bg-blue-100", iconColor: "text-blue-700", hoverBg: "group-hover:bg-blue-600", hoverIcon: "group-hover:text-white" },
-  amber: { bg: "bg-amber-50", iconBg: "bg-amber-100", iconColor: "text-amber-700", hoverBg: "group-hover:bg-amber-600", hoverIcon: "group-hover:text-white" },
-  emerald: { bg: "bg-emerald-50", iconBg: "bg-emerald-100", iconColor: "text-emerald-700", hoverBg: "group-hover:bg-emerald-600", hoverIcon: "group-hover:text-white" },
-  purple: { bg: "bg-purple-50", iconBg: "bg-purple-100", iconColor: "text-purple-700", hoverBg: "group-hover:bg-purple-600", hoverIcon: "group-hover:text-white" },
-  green: { bg: "bg-green-50", iconBg: "bg-green-100", iconColor: "text-green-700", hoverBg: "group-hover:bg-green-600", hoverIcon: "group-hover:text-white" },
-  indigo: { bg: "bg-indigo-50", iconBg: "bg-indigo-100", iconColor: "text-indigo-700", hoverBg: "group-hover:bg-indigo-600", hoverIcon: "group-hover:text-white" },
-  rose: { bg: "bg-rose-50", iconBg: "bg-rose-100", iconColor: "text-rose-700", hoverBg: "group-hover:bg-rose-600", hoverIcon: "group-hover:text-white" },
-} as const;
-
 interface TrustSafetyProps {
   badges: TrustBadge[];
 }
@@ -51,7 +41,6 @@ export function TrustSafety({ badges }: TrustSafetyProps) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" role="list">
           {activeBadges.map((item) => {
             const Icon = iconMap[item.icon as keyof typeof iconMap];
-            const colors = colorClasses[item.color as keyof typeof colorClasses];
 
             return (
               <Card
@@ -61,7 +50,7 @@ export function TrustSafety({ badges }: TrustSafetyProps) {
                 role="listitem"
               >
                 <CardContent className="flex flex-col items-center gap-3">
-                  <div className={`flex size-10 items-center justify-center rounded-md ${colors.iconBg} ${colors.iconColor}`}>
+                  <div className="flex size-10 items-center justify-center rounded-md bg-accent text-accent-foreground">
                     <Icon className="size-5" aria-hidden="true" />
                   </div>
                   <h3 className="text-card-title font-semibold text-foreground">{item.title}</h3>

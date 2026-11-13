@@ -20,17 +20,6 @@ const iconMap = {
   calendar: Calendar,
 } as const;
 
-const colorClasses = {
-  blue: { iconBg: "bg-blue-100", iconColor: "text-blue-700" },
-  purple: { iconBg: "bg-purple-100", iconColor: "text-purple-700" },
-  amber: { iconBg: "bg-amber-100", iconColor: "text-amber-700" },
-  emerald: { iconBg: "bg-emerald-100", iconColor: "text-emerald-700" },
-  rose: { iconBg: "bg-rose-100", iconColor: "text-rose-700" },
-  indigo: { iconBg: "bg-indigo-100", iconColor: "text-indigo-700" },
-  green: { iconBg: "bg-green-100", iconColor: "text-green-700" },
-  orange: { iconBg: "bg-orange-100", iconColor: "text-orange-700" },
-} as const;
-
 interface FeaturesSectionProps {
   features: FeatureItem[];
 }
@@ -53,7 +42,6 @@ export function FeaturesSection({ features }: FeaturesSectionProps) {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" role="list">
           {activeFeatures.map((feature) => {
             const Icon = iconMap[feature.icon as keyof typeof iconMap];
-            const colors = colorClasses[feature.color as keyof typeof colorClasses];
 
             return (
               <Card
@@ -63,7 +51,7 @@ export function FeaturesSection({ features }: FeaturesSectionProps) {
                 role="listitem"
               >
                 <CardContent className="flex flex-col items-center gap-3">
-                  <div className={`flex size-10 items-center justify-center rounded-md ${colors.iconBg} ${colors.iconColor}`}>
+                  <div className="flex size-10 items-center justify-center rounded-md bg-accent text-accent-foreground">
                     <Icon className="size-5" aria-hidden="true" />
                   </div>
                   <h3 className="text-card-title font-semibold text-foreground">{feature.title}</h3>

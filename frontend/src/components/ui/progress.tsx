@@ -26,7 +26,7 @@ function Progress({ value = 0, className, indicatorClassName, ...props }: Progre
       <div
         data-slot="progress-indicator"
         className={cn(
-          "h-full rounded-full bg-primary transition-all",
+          "h-full rounded-full bg-primary transition-[width] duration-150 ease-out motion-reduce:transition-none",
           indicatorClassName
         )}
         style={{ width: `${clampedValue}%` }}

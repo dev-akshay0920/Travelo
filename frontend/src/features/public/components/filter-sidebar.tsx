@@ -70,7 +70,7 @@ function FilterSection({ title, icon: Icon, expanded, onToggle, children, count,
             )}
           </div>
         </div>
-        <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-transform duration-200", expanded && "rotate-180")}>
+        <div className={cn("flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-transform duration-150 ease-out motion-reduce:transition-none", expanded && "rotate-180")}>
           <ChevronDown className="h-4 w-4" />
         </div>
       </button>

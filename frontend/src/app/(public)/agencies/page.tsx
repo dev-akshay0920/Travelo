@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PublicLayout } from "@/features/public/components/public-layout";
-import { MapPin, Building2, Users, Star } from "lucide-react";
+import { MapPin, Building2, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,34 +37,28 @@ function AgencyCard({ agency }: AgencyCardProps) {
           </div>
         )}
       </div>
-      <CardContent className="space-y-3">
+      <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="line-clamp-1">{agency.name}</CardTitle>
           {agency.rating && (
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Star className="h-3 w-3 fill-yellow-400" />
+            <Badge variant="secondary" className="gap-1">
+              <Star aria-hidden="true" className="size-3 fill-current" />
               {agency.rating.toFixed(1)}
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1 text-body-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          <span>{agency.destination || "Location not specified"}</span>
+        <div className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+          <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="truncate">{agency.destination || "Location not specified"}</span>
         </div>
-        <div className="flex items-center gap-2 text-body-sm text-muted-foreground">
-          {agency.packageCount && (
-            <span>
-              <Users className="h-3 w-3" /> {agency.packageCount} packages
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-100" />
-            <span className="text-xs">Verified</span>
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
+          <span className="text-caption text-muted-foreground">
+            {agency.packageCount ?? 0} packages
           </span>
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/agencies/${encodeURIComponent(agency.slug)}`}>View agency</Link>
+          </Button>
         </div>
-        <Button asChild variant="outline" size="sm" className="w-full">
-          <Link href={`/agencies/${encodeURIComponent(agency.slug)}`}>View agency</Link>
-        </Button>
       </CardContent>
     </Card>
   );

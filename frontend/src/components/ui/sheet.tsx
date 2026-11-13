@@ -24,7 +24,7 @@ function SheetContent({
       <DialogPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "fixed inset-y-0 z-50 flex h-dvh w-full flex-col gap-0 border-border bg-background text-foreground shadow-xl outline-none data-open:animate-in data-closed:animate-out data-closed:duration-200 data-open:duration-300",
+          "fixed inset-y-0 z-50 flex h-dvh w-full flex-col gap-0 border-border bg-background text-foreground shadow-xl outline-none data-open:animate-in data-closed:animate-out data-closed:duration-150 data-open:duration-150 motion-reduce:duration-0",
           side === "right"
             ? "right-0 border-l data-open:slide-in-from-right data-closed:slide-out-to-right"
             : "left-0 border-r data-open:slide-in-from-left data-closed:slide-out-to-left",

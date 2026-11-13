@@ -1,16 +1,21 @@
 "use client";
 
-import type { TravelPackage, PackageStatus, PackageImage } from "@/features/public/types/public-filters.types";
-import { PACKAGE_STATUS_COLORS } from "@/features/packages/types/package.types";
-import { Calendar, MapPin, Users, IndianRupee, MoreVertical, Pencil, Trash2, Clock, MapPin as MapPinIcon } from "lucide-react";
 import Link from "next/link";
+import { CalendarDays, MapPin, MapPin as MapPinIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
-import { Button, IconButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { formatDisplayDate } from "@/lib/date-format";
+import { Button, IconButton } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { InquiryFormDialog } from "@/features/leads/components/inquiry-form-dialog";
+import type { TravelPackage, PackageStatus, PackageImage } from "@/features/public/types/public-filters.types";
+import { formatDisplayDate } from "@/lib/date-format";
 
 type PackageCardProps = {
   package: TravelPackage;
@@ -20,67 +25,28 @@ type PackageCardProps = {
   onViewDetail?: (pkg: TravelPackage) => void;
 };
 
-function formatPrice(price: number, currency: string = "INR"): string {
-  if (currency === "INR") {
-    return `₹${price.toLocaleString("en-IN")}`;
-  }
-  return `${currency} ${price.toLocaleString("en-US")}`;
+function formatPrice(price: number, currency = "INR"): string {
+  return currency === "INR"
+    ? `₹${price.toLocaleString("en-IN")}`
+    : `${currency} ${price.toLocaleString("en-US")}`;
 }
 
 function getPrimaryImage(pkg: TravelPackage): PackageImage | undefined {
-  return pkg.images?.find((img) => img.isPrimary) || pkg.images?.[0];
+  return pkg.images?.find((image) => image.isPrimary) ?? pkg.images?.[0];
 }
 
-function calculateDuration(startDate: string, endDate: string): string {
-  if (!startDate || !endDate) return "—";
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return `${diffDays}D`;
-}
-
-function getSeatColor(available: number, max?: number): string {
-  if (available <= 0) return "text-muted-foreground";
-  if (!max) return "text-success";
-  const pct = (available / max) * 100;
-  if (pct > 50) return "text-success";
-  if (pct > 20) return "text-warning";
-  return "text-destructive";
-}
-
-function getSeatBg(available: number, max?: number): string {
-  if (available <= 0) return "bg-muted";
-  if (!max) return "bg-success-muted";
-  const pct = (available / max) * 100;
-  if (pct > 50) return "bg-success-muted";
-  if (pct > 20) return "bg-warning-muted";
-  return "bg-destructive-muted";
-}
-
-function getSeatBorder(available: number, max?: number): string {
-  if (available <= 0) return "border-border";
-  if (!max) return "border-success/30";
-  const pct = (available / max) * 100;
-  if (pct > 50) return "border-success/30";
-  if (pct > 20) return "border-warning/30";
-  return "border-destructive/30";
-}
-
-export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, onViewDetail }: PackageCardProps) {
-  const availableSeats = pkg.availableSeats ?? 0;
-  const maxSeats = pkg.maxTravelers ?? 0;
+export function PackageCard({
+  package: pkg,
+  onEdit,
+  onDelete,
+  onViewDetail,
+}: PackageCardProps) {
   const primaryImage = getPrimaryImage(pkg);
-  const duration = calculateDuration(pkg.startDate, pkg.endDate);
-  const isSoldOut = availableSeats <= 0;
+  const isAvailable = pkg.status === "active" && pkg.availableSeats > 0;
+  const hasActions = Boolean(onEdit || onDelete || onViewDetail);
 
   return (
-    <Card
-      size="sm"
-      variant="interactive"
-      className={cn("flex flex-col gap-0 pt-0", isSoldOut && "opacity-50")}
-    >
-      {/* Image - Compact 16:10 */}
+    <Card size="sm" variant="interactive" className="h-full gap-0 p-0">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         {primaryImage ? (
           <img
@@ -90,85 +56,63 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
             loading="lazy"
           />
         ) : (
-          <MapPinIcon className="absolute inset-0 w-10 h-10 mx-auto my-auto text-muted-foreground" />
+          <MapPinIcon
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-muted-foreground"
+          />
         )}
-        
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-transparent" />
-        
-        {/* Top Left: Status Badge */}
-        <span className={cn(
-          "absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-caption font-semibold",
-          "bg-card/95 shadow-sm",
-          PACKAGE_STATUS_COLORS[pkg.status as PackageStatus]
-        )}>
-          {pkg.status.replace("_", " ")}
-        </span>
-
-        {/* Price - bottom left on image */}
-        <div className="absolute bottom-1.5 left-1.5">
-          <div className="bg-card/95 rounded-lg px-3 py-2 shadow-md">
-            <span className="font-bold text-foreground">{formatPrice(pkg.price, pkg.currency)}</span>
-            <span className="text-caption text-muted-foreground ml-1">/{pkg.priceType === "per_person" ? "person" : "pkg"}</span>
-          </div>
+        {!isAvailable && (
+          <Badge variant="secondary" className="absolute left-3 top-3 border-0">
+            {pkg.status === "active" ? "Sold out" : pkg.status.replaceAll("_", " ")}
+          </Badge>
+        )}
+        <div className="absolute bottom-3 left-3 rounded-md bg-card px-2.5 py-1.5 text-body-sm font-semibold text-foreground shadow-card">
+          {formatPrice(pkg.price, pkg.currency)}
+          <span className="ml-1 text-caption font-normal text-muted-foreground">
+            /{pkg.priceType === "per_person" ? "person" : "package"}
+          </span>
         </div>
       </div>
 
-      {/* Content - Tight */}
-      <CardContent className="space-y-3">
-        {/* Title Row */}
+      <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-semibold text-card-title text-foreground line-clamp-1">{pkg.name}</h3>
-            <p className="flex items-center gap-1 text-body-sm text-muted-foreground mt-1">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
+            <h3 className="line-clamp-1 text-card-title font-semibold text-foreground">
+              {pkg.name}
+            </h3>
+            <p className="mt-1 flex items-center gap-1.5 text-body-sm text-muted-foreground">
+              <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
               <span className="truncate">{pkg.destination}</span>
-              <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-muted text-caption font-medium text-muted-foreground">{duration}</span>
             </p>
           </div>
-          
-          {/* Actions Dropdown */}
-          {(onEdit || onDelete || onViewDetail) && (
+          {hasActions && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <IconButton
-                  variant="ghost" 
+                  variant="ghost"
                   label={`More actions for ${pkg.name}`}
                   className="shrink-0 text-muted-foreground"
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical aria-hidden="true" className="size-4" />
                 </IconButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-36">
+              <DropdownMenuContent align="end">
                 {onViewDetail && (
-                  <DropdownMenuItem 
-                    onClick={() => onViewDetail!(pkg)}
-                    className="text-body-sm font-medium"
-                    inset
-                  >
-                    View Details
+                  <DropdownMenuItem onClick={() => onViewDetail(pkg)}>
+                    View details
                   </DropdownMenuItem>
                 )}
                 {onEdit && (
-                  <DropdownMenuItem 
-                    onClick={() => onEdit!(pkg)}
-                    className="text-body-sm font-medium"
-                    inset
-                  >
-                    <Pencil className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                  <DropdownMenuItem onClick={() => onEdit(pkg)}>
+                    <Pencil aria-hidden="true" className="size-3.5" />
                     Edit
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
                   <>
-                    <DropdownMenuSeparator className="my-1" />
-                    <DropdownMenuItem 
-                      onClick={() => onDelete!(pkg)} 
-                      variant="destructive"
-                      className="text-body-sm font-medium"
-                      inset
-                    >
-                      <Trash2 className="h-3.5 w-3.5 flex-shrink-0" />
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onDelete(pkg)} variant="destructive">
+                      <Trash2 aria-hidden="true" className="size-3.5" />
                       Delete
                     </DropdownMenuItem>
                   </>
@@ -178,65 +122,20 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
           )}
         </div>
 
-        {/* 3 Key Info Rows */}
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
-            <p className="text-caption font-semibold text-muted-foreground">Start</p>
-            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
-              <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-              {formatDisplayDate(pkg.startDate, "—")}
-            </p>
-          </div>
-          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
-            <p className="text-caption font-semibold text-muted-foreground">End</p>
-            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
-              <Calendar className="h-3 w-3 text-primary flex-shrink-0" />
-              {formatDisplayDate(pkg.endDate, "—")}
-            </p>
-          </div>
-          <div className={cn("rounded-lg border-2 p-2 min-w-0", getSeatBg(availableSeats, maxSeats), getSeatBorder(availableSeats, maxSeats))}>
-            <p className="text-caption font-semibold text-muted-foreground">Seats</p>
-            <p className={cn("font-bold text-card-title", getSeatColor(availableSeats, maxSeats))}>{availableSeats > 0 ? availableSeats : "Sold Out"}</p>
-            {maxSeats > 0 && availableSeats > 0 && <p className="text-caption text-muted-foreground">of {maxSeats}</p>}
-          </div>
+        <div className="flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
+          <CalendarDays aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="truncate">
+            {formatDisplayDate(pkg.startDate, "Date not set")} – {formatDisplayDate(pkg.endDate, "Date not set")}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span className="shrink-0">{pkg.durationDays} days</span>
         </div>
 
-        {/* Last Booking + Price Valid / Nights-Days */}
-        <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
-            <p className="text-caption font-semibold text-muted-foreground">Last Booking</p>
-            <p className="font-semibold text-body-sm text-foreground truncate flex items-center justify-center gap-1">
-              <Clock className="h-3 w-3 text-brand-accent flex-shrink-0" />
-              {formatDisplayDate(pkg.bookingDeadline, "—")}
-            </p>
-          </div>
-          {pkg.priceValidUntil ? (
-            <div className="bg-brand-accent-soft rounded-lg border border-brand-accent/30 p-2.5 min-w-0">
-              <p className="text-caption font-semibold text-brand-accent-foreground">Price Valid</p>
-              <p className="font-medium text-body-sm text-brand-accent-foreground truncate">{formatDisplayDate(pkg.priceValidUntil, "—")}</p>
-            </div>
-          ) : (
-            <div className="bg-muted rounded-lg border border-border p-2.5 min-w-0">
-              <p className="text-caption font-semibold text-muted-foreground">Nights/Days</p>
-              <p className="font-medium text-body-sm text-foreground truncate">{pkg.durationNights}N / {pkg.durationDays}D</p>
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Tags */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent text-accent-foreground border border-border whitespace-nowrap">
-            {pkg.geographicScope.charAt(0).toUpperCase() + pkg.geographicScope.slice(1)}
-          </span>
-          <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent text-accent-foreground border border-border whitespace-nowrap">
-            {pkg.tripTheme.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-          </span>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="mt-auto grid gap-2 pt-1 sm:grid-cols-2">
           <Button asChild type="button" variant="outline" size="sm">
             <Link href={`/packages/${encodeURIComponent(pkg.id)}`}>View details</Link>
           </Button>
-          {pkg.status === "active" && pkg.availableSeats > 0 ? (
+          {isAvailable ? (
             <InquiryFormDialog
               agencyId={pkg.agencyId}
               packageId={pkg.id}
@@ -246,7 +145,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete, onStatusChange, on
             />
           ) : (
             <Button type="button" size="sm" className="w-full" disabled>
-              Currently unavailable
+              Unavailable
             </Button>
           )}
         </div>

@@ -98,7 +98,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
                 <article
                   key={agency.id}
                   className={cn(
-                    "flex-shrink-0 snap-center transition-transform duration-300",
+                    "flex-shrink-0 snap-center",
                     "w-full sm:max-w-[280px] md:max-w-[300px]"
                   )}
                 >
@@ -132,7 +132,7 @@ export function AgencyCarousel({ agencies, error }: AgencyCarouselProps) {
                 key={i}
                 onClick={() => scrollToIndex(i)}
                 className={cn(
-                  "h-2 rounded-full transition-all motion-reduce:transition-none",
+                  "h-2 rounded-full transition-[width,background-color] duration-150 ease-out motion-reduce:transition-none",
                   i === currentIndex ? "w-6 bg-primary" : "w-2 bg-border hover:bg-muted-foreground"
                 )}
                 aria-label={`Go to slide ${i + 1}`}
@@ -164,26 +164,23 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
           </div>
         )}
       </div>
-      <CardContent className="space-y-2">
+      <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
         <CardTitle className="line-clamp-1">{agency.name}</CardTitle>
-        <div className="flex items-center gap-1 text-sm text-gray-500">
-          <MapPin className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+          <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
           <span className="truncate">{agency.destination}</span>
         </div>
-        <div className="flex items-center gap-2">
-          {agency.rating && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
-              <Star className="h-3 w-3 fill-current" />
-              {agency.rating.toFixed(1)}
-            </span>
-          )}
-          {agency.reviewCount && (
-            <span className="text-xs text-gray-500">({agency.reviewCount} reviews)</span>
-          )}
-        </div>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-sm text-gray-600">{agency.packageCount} packages</span>
-          <Button variant="ghost" size="sm" asChild className="text-blue-600 hover:text-blue-700 font-medium">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-caption text-muted-foreground">{agency.packageCount} packages</span>
+            {agency.rating && (
+              <span className="inline-flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
+                <Star aria-hidden="true" className="size-3 fill-current text-brand-accent" />
+                {agency.rating.toFixed(1)}
+              </span>
+            )}
+          </div>
+          <Button variant="secondary" size="sm" asChild>
             <Link href={`/agencies/${agency.slug}`}>View</Link>
           </Button>
         </div>
@@ -194,13 +191,15 @@ function AgencyCard({ agency }: { agency: AgencySummary }) {
 
 function AgencyCardSkeleton() {
   return (
-    <Card className="h-full overflow-hidden border border-gray-100 w-full sm:max-w-[280px] md:max-w-[300px] animate-pulse">
+    <Card size="sm" className="h-full w-full gap-0 overflow-hidden p-0 animate-pulse sm:max-w-[280px] md:max-w-[300px]">
       <Skeleton className="aspect-[16/10] w-full" />
-      <div className="p-4 space-y-3">
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-8 w-full" />
+      <div className="space-y-3 p-3">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-8 w-16" />
+        </div>
       </div>
     </Card>
   );

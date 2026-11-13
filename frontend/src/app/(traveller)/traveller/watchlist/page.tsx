@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { watchlistApi } from "@/features/watchlist/api/watchlist.api";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Package, Building2, AlertTriangle, RefreshCw, MapPin, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { formatDisplayDate } from "@/lib/date-format";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
@@ -295,41 +294,40 @@ export default function TravellerWatchlistPage() {
                     </div>
                   </div>}
                 </div>
-                <CardContent className="space-y-2">
-                  <h3 className="text-card-title font-semibold text-foreground line-clamp-1">{item.name}</h3>
-                  <p className="flex items-center gap-1 text-body-sm text-muted-foreground">
-                    <MapPin aria-hidden="true" className="size-3 flex-shrink-0" />
+                <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="line-clamp-1 text-card-title font-semibold text-foreground">{item.name}</h3>
+                    <IconButton
+                      variant="ghost"
+                      size="icon-sm"
+                      label={`Remove ${item.name} from saved items`}
+                      onClick={() => toggleWatchlist(item)}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Heart aria-hidden="true" className="size-4 fill-current" />
+                    </IconButton>
+                  </div>
+                  <p className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+                    <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
                     <span className="truncate">{item.destination}</span>
                   </p>
-                  <div className="flex items-center justify-between text-caption text-muted-foreground">
-                    <span>{item.available ? `${item.availableSeats} seats listed` : "No longer available"}</span>
-                    <span>{formatDisplayDate(item.createdAt, "—")}</span>
-                  </div>
-                  <p className="text-caption text-muted-foreground text-right">
-                    {item.agencyName}
+                  <p className="mt-auto border-t border-border pt-3 text-caption text-muted-foreground">
+                    {item.available ? `${item.availableSeats} seats · ${item.agencyName}` : "No longer available"}
                   </p>
                 </CardContent>
-                <CardContent className="mt-auto flex gap-2 border-t border-border pt-3">
+                <CardContent className="border-t border-border py-3">
                   {item.available ? (
-                    <Button asChild size="sm" className="flex-1">
+                    <Button asChild size="sm" variant="secondary" className="w-full">
                       <Link href={`/packages/${encodeURIComponent(item.packageId)}`}>
-                        <Eye className="mr-1.5 h-3.5 w-3.5" />
-                        View Package
+                        <Eye aria-hidden="true" />
+                        View package
                       </Link>
                     </Button>
                   ) : (
-                    <Button type="button" size="sm" className="flex-1" disabled>
+                    <Button type="button" size="sm" variant="secondary" className="w-full" disabled>
                       Currently unavailable
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleWatchlist(item)}
-                  >
-                    <Heart className="mr-1.5 h-3.5 w-3.5" />
-                    Unsave
-                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -348,46 +346,42 @@ export default function TravellerWatchlistPage() {
                     <Building2 aria-hidden="true" className="absolute left-1/2 top-1/2 size-12 -translate-x-1/2 -translate-y-1/2 text-muted-foreground" />
                   )}
                 </div>
-                <CardContent className="space-y-2">
+                <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <h3 className="text-card-title font-semibold text-foreground line-clamp-1">{item.name}</h3>
-                      <p className="flex items-center gap-1 text-body-sm text-muted-foreground">
-                        <MapPin aria-hidden="true" className="size-3 flex-shrink-0" />
+                      <p className="mt-1 flex items-center gap-1.5 text-body-sm text-muted-foreground">
+                        <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
                         <span className="truncate">{item.destination}</span>
                       </p>
                     </div>
+                    <IconButton
+                      variant="ghost"
+                      size="icon-sm"
+                      label={`Remove ${item.name} from saved items`}
+                      onClick={() => toggleWatchlist(item)}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      <Heart aria-hidden="true" className="size-4 fill-current" />
+                    </IconButton>
                   </div>
-                  <div className="flex items-center justify-between text-caption text-muted-foreground">
-                    <span>
-                      {item.packageCount === undefined
-                        ? "Travel agency"
-                        : `${item.packageCount} packages`}
-                    </span>
-                    <span>{formatDisplayDate(item.createdAt, "—")}</span>
-                  </div>
+                  <p className="mt-auto border-t border-border pt-3 text-caption text-muted-foreground">
+                    {item.packageCount === undefined ? "Travel agency" : `${item.packageCount} packages`}
+                  </p>
                 </CardContent>
-                <CardContent className="mt-auto flex gap-2 border-t border-border pt-3">
+                <CardContent className="border-t border-border py-3">
                   {item.available ? (
-                    <Button asChild size="sm" className="flex-1">
+                    <Button asChild size="sm" variant="secondary" className="w-full">
                       <Link href={`/agencies/${encodeURIComponent(item.slug)}`}>
-                        <Eye className="mr-1.5 h-3.5 w-3.5" />
-                        View Agency
+                        <Eye aria-hidden="true" />
+                        View agency
                       </Link>
                     </Button>
                   ) : (
-                    <Button type="button" size="sm" className="flex-1" disabled>
+                    <Button type="button" size="sm" variant="secondary" className="w-full" disabled>
                       Currently unavailable
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleWatchlist(item)}
-                  >
-                    <Heart className="mr-1.5 h-3.5 w-3.5" />
-                    Unsave
-                  </Button>
                 </CardContent>
               </Card>
             ))}

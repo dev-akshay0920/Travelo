@@ -28,7 +28,7 @@ function BarChart({ data, maxValue, className, ...props }: BarChartProps) {
           <div key={index} className="flex flex-1 flex-col items-center gap-2">
             <div className="relative flex h-36 w-full items-end justify-center">
               <div
-                className="w-full rounded-t-md bg-primary transition-all"
+                className="w-full rounded-t-md bg-primary transition-[height] duration-150 ease-out motion-reduce:transition-none"
                 style={{ height: `${height}%` }}
               />
             </div>

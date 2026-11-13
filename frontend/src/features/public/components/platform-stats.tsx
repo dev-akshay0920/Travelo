@@ -9,33 +9,33 @@ interface PlatformStatsDisplayProps {
 
 export function PlatformStatsDisplay({ stats }: PlatformStatsDisplayProps) {
   const statItems = [
-    { label: "Verified Agencies", value: stats.verifiedAgencies.toLocaleString("en-IN"), icon: Award, color: "text-blue-600", bg: "bg-blue-100" },
-    { label: "Happy Travellers", value: stats.happyTravellers.toLocaleString("en-IN"), icon: Users, color: "text-emerald-600", bg: "bg-emerald-100" },
-    { label: "Destinations", value: stats.destinations.toLocaleString("en-IN"), icon: MapPin, color: "text-amber-600", bg: "bg-amber-100" },
-    { label: "Packages Available", value: stats.totalPackages.toLocaleString("en-IN"), icon: Package, color: "text-purple-600", bg: "bg-purple-100" },
+    { label: "Verified Agencies", value: stats.verifiedAgencies.toLocaleString("en-IN"), icon: Award },
+    { label: "Happy Travellers", value: stats.happyTravellers.toLocaleString("en-IN"), icon: Users },
+    { label: "Destinations", value: stats.destinations.toLocaleString("en-IN"), icon: MapPin },
+    { label: "Packages Available", value: stats.totalPackages.toLocaleString("en-IN"), icon: Package },
   ];
 
   return (
-    <div className="mt-8 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-sm animate-fade-in" style={{ animationDelay: '0.4s' }} role="list" aria-label="Platform statistics">
-      {statItems.map((item, index) => (
+    <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm sm:gap-10 animate-fade-in" role="list" aria-label="Platform statistics">
+      {statItems.map((item) => (
         <div key={item.label} className="flex items-center gap-2 group" role="listitem">
-          <div className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${item.bg} ${item.color} group-hover:scale-110`}>
-            <item.icon className="h-5 w-5" aria-hidden="true" />
+          <div className="flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
+            <item.icon className="size-4" aria-hidden="true" />
           </div>
           <div className="text-left">
-            <p className="font-bold text-gray-900">{item.value}</p>
-            <p className="text-gray-500 text-xs">{item.label}</p>
+            <p className="font-semibold text-foreground">{item.value}</p>
+            <p className="text-caption text-muted-foreground">{item.label}</p>
           </div>
         </div>
       ))}
-      <div className="w-px h-10 bg-gray-200 hidden sm:block mx-2" aria-hidden="true" />
+      <div className="mx-2 hidden h-10 w-px bg-border sm:block" aria-hidden="true" />
       <div className="flex items-center gap-2">
-        <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
-          <Star className="h-5 w-5 text-amber-600" />
+        <div className="flex size-9 items-center justify-center rounded-md bg-accent text-brand-accent">
+          <Star aria-hidden="true" className="size-4" />
         </div>
         <div>
-          <p className="font-bold text-gray-900">{stats.avgRating}</p>
-          <p className="text-gray-500 text-xs">{stats.totalReviews.toLocaleString("en-IN")} reviews</p>
+          <p className="font-semibold text-foreground">{stats.avgRating}</p>
+          <p className="text-caption text-muted-foreground">{stats.totalReviews.toLocaleString("en-IN")} reviews</p>
         </div>
       </div>
     </div>
@@ -54,7 +54,7 @@ function PlatformStatsSkeleton() {
           </div>
         </div>
       ))}
-      <div className="w-px h-10 bg-gray-200 hidden sm:block mx-2" />
+      <div className="mx-2 hidden h-10 w-px bg-border sm:block" />
       <div className="flex items-center gap-2">
         <div className="h-10 w-10 rounded-xl bg-gray-200" />
         <div>

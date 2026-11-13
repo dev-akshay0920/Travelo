@@ -450,7 +450,7 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
                   <div
                     key={image.key}
                     className={cn(
-                      "relative aspect-square rounded-lg border overflow-hidden transition-all",
+                      "relative aspect-square rounded-lg border overflow-hidden transition-colors duration-150 ease-out motion-reduce:transition-none",
                       "bg-background",
                       reorderMode && "cursor-grabbing",
                       isPending && "opacity-75"
@@ -534,7 +534,7 @@ const PackageImageUpload = forwardRef<PackageImageUploadRef, PackageImageUploadP
                     </div>
                     {reorderMode && !isPending && !isUploading && (
                       <div className="absolute top-1 left-1 z-10">
-                        <GripVertical className="h-6 w-6 text-white bg-black/50 rounded cursor-grab" />
+                        <GripVertical aria-hidden="true" className="size-4 cursor-grab rounded bg-black/50 text-white" />
                       </div>
                     )}
                     {isPending && (

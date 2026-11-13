@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Grid, List, ChevronDown, X, SlidersHorizontal, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { usePackageFilters } from "@/features/public/hooks/use-package-filters";
 import type { PackageFilters, SortOption } from "@/features/public/types/public-filters.types";
 import { SORT_OPTIONS } from "@/features/public/types/public-filters.types";
@@ -66,7 +65,7 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
 
       {/* Active Filter Pills */}
       {activeFilters.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 animate-slide-in">
+        <div className="flex flex-wrap items-center gap-2 animate-fade-in">
           {activeFilters.map((filter) => (
             <span key={filter.key} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-sm text-gray-700">
               {filter.label}
@@ -141,14 +140,6 @@ export function ResultsToolbar({ total, hasFilters }: { total: number; hasFilter
           {hasFilters && <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-caption flex items-center justify-center">2</span>}
         </Button>
       </div>
-
-      <style jsx>{`
-        @keyframes slide-in {
-          from { opacity: 0; transform: translateX(-10px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-slide-in { animation: slide-in 0.2s ease-out; }
-      `}</style>
     </div>
   );
 }

@@ -121,27 +121,20 @@ function PackageCardSkeleton({ mode }: { mode: "grid" | "list" }) {
   return (
     <Card size="sm" className="animate-pulse gap-0 pt-0">
       <div className="aspect-[16/10] w-full bg-gray-100" />
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <Skeleton className="h-4 w-3/4 rounded" />
-            <Skeleton className="h-3 w-1/2 rounded mt-1" />
+            <Skeleton className="mt-1 h-3 w-1/2 rounded" />
           </div>
           <Skeleton className="h-8 w-8 rounded-lg" />
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          <Skeleton className="h-18 w-full rounded-lg" />
-          <Skeleton className="h-18 w-full rounded-lg" />
-          <Skeleton className="h-18 w-full rounded-lg" />
+        <Skeleton className="h-3 w-2/3 rounded" />
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-3 w-16 rounded" />
         </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          <Skeleton className="h-14 w-full rounded-lg" />
-          <Skeleton className="h-14 w-full rounded-lg" />
-        </div>
-        <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-gray-100">
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-        </div>
+        {mode === "grid" && <Skeleton className="h-8 w-full rounded-md" />}
       </CardContent>
     </Card>
   );

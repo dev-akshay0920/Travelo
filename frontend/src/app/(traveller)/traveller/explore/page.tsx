@@ -11,13 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button, IconButton } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageStack } from "@/components/shared/page-container";
-import { Building2, CalendarDays, Heart, MapPin, Package as PackageIcon, Users, Search } from "lucide-react";
+import { Building2, Heart, MapPin, Package as PackageIcon, Search, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { watchlistApi } from "@/features/watchlist/api/watchlist.api";
 import { toast } from "sonner";
-import { formatDisplayDate } from "@/lib/date-format";
 import { Pagination } from "@/components/ui/pagination";
 
 type ViewType = "packages" | "agencies" | "both";
@@ -299,19 +298,7 @@ export default function TravellerExplorePage() {
                     {activeFilters.length} active
                   </span>
                 )}
-                <svg
-                  className="h-5 w-5 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
+                <SlidersHorizontal aria-hidden="true" className="size-4 text-muted-foreground" />
               </span>
             </Button>
           </div>
@@ -358,17 +345,11 @@ export default function TravellerExplorePage() {
                             className="absolute inset-0 w-12 h-12 mx-auto my-auto text-gray-300"
                           />
                         )}
-                        <span
-                          className={cn(
-                            "absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold",
-                            "bg-white/95 backdrop-blur-sm shadow-sm",
-                            pkg.status === "active"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
-                          )}
-                        >
-                          {pkg.status.replace("_", " ")}
-                        </span>
+                        {pkg.status !== "active" && (
+                          <Badge variant="secondary" className="absolute left-3 top-3 border-0">
+                            {pkg.status.replaceAll("_", " ")}
+                          </Badge>
+                        )}
                         <IconButton
                           type="button"
                           variant="ghost"
@@ -394,46 +375,29 @@ export default function TravellerExplorePage() {
                           </div>
                         </div>
                       </div>
-                      <CardContent className="flex flex-1 flex-col gap-3 py-3">
-                        <h3 className="line-clamp-1 text-base font-semibold leading-5 text-gray-900">
+                      <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
+                        <h3 className="line-clamp-1 text-card-title font-semibold text-foreground">
                           {pkg.name}
                         </h3>
-                        <p className="flex items-center gap-1.5 text-sm leading-5 text-gray-500">
-                          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                        <p className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+                          <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
                           <span className="truncate">{pkg.destination}</span>
                         </p>
-                        <div className="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3 text-xs">
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-500">Travel dates</p>
-                            <p className="mt-1 flex items-center gap-1.5 font-semibold text-gray-800">
-                              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                              <span className="truncate">
-                                {formatDisplayDate(pkg.startDate, "Date not set")} – {formatDisplayDate(pkg.endDate, "Date not set")}
-                              </span>
-                            </p>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-500">Duration</p>
-                            <p className="mt-1 truncate font-semibold text-gray-800">
-                              {pkg.durationDays} days · {pkg.durationNights} nights
-                            </p>
-                          </div>
-                          <div className="col-span-2 flex items-center gap-1.5 text-gray-600">
-                            <Users className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                            <span>{pkg.availableSeats} seats available</span>
-                          </div>
+                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3 text-caption text-muted-foreground">
+                          <span>{pkg.durationDays} days · {pkg.durationNights} nights</span>
+                          <span>{pkg.availableSeats} seats left</span>
                         </div>
                       </CardContent>
-                      <CardContent className="flex justify-end border-t border-border py-3">
+                      <CardContent className="border-t border-border py-3">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           asChild
-                          className="min-w-24"
+                          className="w-full"
                         >
                           <Link href={`/packages/${encodeURIComponent(pkg.id)}`}>
-                            <PackageIcon className="h-3.5 w-3.5 mr-1.5" />
-                            View details
+                            <PackageIcon aria-hidden="true" />
+                            View package
                           </Link>
                         </Button>
                       </CardContent>
@@ -462,9 +426,6 @@ export default function TravellerExplorePage() {
                             <Building2 className="h-12 w-12 text-gray-300" />
                           </div>
                         )}
-                        <Badge variant="outline" className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs backdrop-blur-sm">
-                          {agency.packageCount} packages
-                        </Badge>
                         <IconButton
                           type="button"
                           variant="ghost"
@@ -478,26 +439,22 @@ export default function TravellerExplorePage() {
                           <Heart className={cn("size-4", savedItems.has(`agency:${agency.id}`) && "fill-current text-destructive")} />
                         </IconButton>
                       </div>
-                      <CardContent className="flex flex-1 flex-col gap-3 py-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <h3 className="line-clamp-1 text-base font-semibold leading-5 text-gray-900">
-                              {agency.name}
-                            </h3>
-                            <p className="mt-1 flex items-center gap-1.5 text-sm leading-5 text-gray-500">
-                              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate">{agency.destination}</span>
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {agency.packageCount} {agency.packageCount === 1 ? "package" : "packages"}
-                          </Badge>
-                        </div>
+                      <CardContent className="flex flex-1 flex-col gap-2.5 py-3">
+                        <h3 className="line-clamp-1 text-card-title font-semibold text-foreground">
+                          {agency.name}
+                        </h3>
+                        <p className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+                          <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+                          <span className="truncate">{agency.destination}</span>
+                        </p>
+                        <p className="mt-auto border-t border-border pt-3 text-caption text-muted-foreground">
+                          {agency.packageCount} {agency.packageCount === 1 ? "package" : "packages"}
+                        </p>
                       </CardContent>
-                      <CardContent className="flex justify-end border-t border-border py-3">
-                        <Button variant="outline" size="sm" asChild className="min-w-28">
+                      <CardContent className="border-t border-border py-3">
+                        <Button variant="secondary" size="sm" asChild className="w-full">
                           <Link href={`/packages?agencySlug=${encodeURIComponent(agency.slug)}`}>
-                            <PackageIcon className="mr-1.5 h-3.5 w-3.5" />View packages
+                            <PackageIcon aria-hidden="true" />View packages
                           </Link>
                         </Button>
                       </CardContent>

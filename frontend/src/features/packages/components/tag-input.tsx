@@ -78,7 +78,7 @@ export function TagInput({
   return (
     <div className="space-y-2">
       <div
-        className="rounded-md border border-input bg-background focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-2 transition-all"
+        className="rounded-md border border-input bg-background transition-colors duration-150 ease-out focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/50 motion-reduce:transition-none"
         onClick={() => inputRef.current?.focus()}
       >
         <div className="flex flex-wrap gap-2 p-2">

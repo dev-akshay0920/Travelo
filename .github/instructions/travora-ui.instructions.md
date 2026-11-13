@@ -14,15 +14,19 @@ Follow `frontend/TRAVORA_FRONTEND_RULES.md`. The shared primitives and tokens ar
 - Use `PageContainer` for consistent page width/gutters and `PageStack` for vertical section rhythm; avoid nesting page gutters inside a shell that already provides them.
 - Use `AppShellHeader` and `IconSidebar` for authenticated shells across roles. Keep desktop navigation labeled and persistent; retain visible labels in mobile navigation. Keep role-specific links/configuration in the feature shell.
 - Reuse the shared `Card` primitive and its `size`/`variant` props. Prefer compact 10px-radius surfaces with subtle borders; avoid glass or custom hover treatments that override the shared card surface.
+- Keep content cards scannable: one clear title, at most two short metadata rows, and one obvious primary action. Avoid nested metric tiles, repeated labels, and decorative icons; reserve secondary details for a detail view.
+- Use one restrained icon treatment per card when it improves recognition. Keep status, category, and availability as compact semantic badges or metadata rather than multiple colored panels.
 - Structure long dialogs with a fixed `DialogHeader`, a `DialogBody` that owns vertical scrolling, and a fixed `DialogFooter`. Use the shared `Sheet` primitives for mobile filter/search panels instead of hand-built overlays.
 - Use the shared `Table` primitives and `Pagination` control for tabular data and paginated lists; keep empty/loading rows and responsive overflow within the table container.
 - Reuse `LoadingState`, `EmptyState`, and `ErrorState` for page-level states, and `Spinner` for compact async actions. Avoid custom spinner markup.
 - Use Lucide icons with 16px default control sizing, accessible names for icon-only actions, and `Tooltip` when their purpose is not otherwise visible.
+- Use 16px icons in controls/navigation and 14px beside compact metadata. Reserve larger icons for prominent feature/empty-state illustrations and brand marks; keep icon color semantic and consistent instead of assigning each icon a separate color.
 - Use `IconButton` for compact, icon-only toolbar and card actions so each control has an accessible name and tooltip. Keep visible text on primary, destructive, and unfamiliar actions; icons should reduce chrome, not make important actions ambiguous.
+- Use the shared `Table` primitives for all data tables. Keep headers muted, rows compact, and hover feedback to a subtle surface-color change; do not add one-off row heights, shadows, or table colors.
 - Use `text-display`, `text-page-title`, `text-section-title`, `text-card-title`, `text-body`, `text-body-sm`, and `text-caption` for the established type scale. Labels are 14px; reserve 12px for metadata.
 - Default buttons and form controls are 40px high; small controls are 36px and large buttons are 44px. Keep mobile form text at least 16px.
 - Cards use the shared 10px radius, 16px spacing, subtle border, and shadow. Dialogs use 24px content padding, the shared radius, and a fixed header/footer around a scrollable body.
 - Use shared popover surfaces for dropdowns and selects. Use `d MMM yyyy` for human-readable dates; keep date-only form/API values in ISO `yyyy-MM-dd`.
 - Preserve responsive behavior, keyboard interaction, visible focus, accessible labels, and disabled/error states. Avoid glassmorphism and decorative global backgrounds.
 - New UI must use semantic colors. Legacy palette utilities are compatibility aliases to the design tokens; do not add more palette-specific utility classes or raw color values.
-- Keep workspace transitions brief and honor reduced-motion preferences. Avoid decorative movement and lift-on-hover effects in productivity surfaces.
+- Keep interaction transitions brief (about 150ms) and honor reduced-motion preferences. Prefer color/fade feedback; avoid staggered entrances, floating, pulsing, scaling, and lift-on-hover effects in productivity surfaces. Reserve pulse for loading skeletons.

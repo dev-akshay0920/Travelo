@@ -114,7 +114,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
               <div className="relative" ref={destinationsRef}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Where to?</label>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <MapPin aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={destination}
                     onChange={(e) => { setDestination(e.target.value); setShowDestinations(true); }}
@@ -162,7 +162,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Calendar aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="date"
                       value={startDate}
@@ -176,7 +176,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Calendar aria-hidden="true" className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="date"
                       value={endDate}
@@ -197,15 +197,15 @@ export function HeroSearch({ stats }: HeroSearchProps) {
                     onClick={() => { setShowTravelers(!showTravelers); setShowDestinations(false); }}
                   >
                     <span className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600" />
+                      <div className="flex size-8 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                        <Users aria-hidden="true" className="size-4" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{totalTravelers} Traveler{totalTravelers !== 1 ? "s" : ""}</p>
                         <p className="text-xs text-gray-500">{adults} Adult{adults !== 1 ? "s" : ""}{children > 0 ? `, ${children} Child${children !== 1 ? "ren" : ""}` : ""}</p>
                       </div>
                     </span>
-                    <ChevronDown className={cn("h-5 w-5 text-gray-400 transition-transform", showTravelers && "rotate-180")} />
+                    <ChevronDown className={cn("size-4 text-muted-foreground transition-transform duration-150 ease-out motion-reduce:transition-none", showTravelers && "rotate-180")} />
                   </Button>
 
                   {showTravelers && (
@@ -274,7 +274,7 @@ export function HeroSearch({ stats }: HeroSearchProps) {
               {/* Search Button */}
               <Button type="submit" className="h-11 w-full font-medium">
                 <span className="flex items-center gap-2">
-                  <Search className="h-5 w-5" />
+                  <Search aria-hidden="true" className="size-4" />
                   Search Packages
                   <ArrowRight className="h-4 w-4" />
                 </span>

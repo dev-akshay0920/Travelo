@@ -970,7 +970,7 @@ export default function AgencyPage() {
               variant="secondary"
               onClick={handleSave}
               disabled={agency.status !== "draft" || isSaving || isSubmitting || isUploadingLogo}
-              className="md:w-40 shadow-sm transition-all duration-200 hover:shadow-md"
+              className="md:w-40"
             >
               {isSaving ? <Spinner label="Saving agency" size="sm" className="mr-2" /> : <Save className="mr-2 h-4 w-4" />}
               Save Draft
@@ -979,7 +979,7 @@ export default function AgencyPage() {
               type="button"
               onClick={handleSubmit}
               disabled={agency.status !== "draft" || isSaving || isSubmitting || isUploadingLogo}
-              className="md:w-48 shadow-lg shadow-indigo-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/30"
+              className="md:w-48"
             >
               {isSubmitting ? <Spinner label="Submitting agency" size="sm" className="mr-2" /> : <Send className="mr-2 h-4 w-4" />}
               Submit for Approval

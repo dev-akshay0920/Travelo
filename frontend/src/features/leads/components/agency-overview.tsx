@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
-  Check,
-  Circle,
   ClipboardList,
+  MessageSquareText,
   PackageCheck,
   UserRoundCheck,
 } from "lucide-react";
@@ -184,19 +183,6 @@ export function AgencyOverview({ agency, isAgencyLoading }: AgencyOverviewProps)
             <Link href="/agency/settings/profile">Review profile</Link>
           </Button>
         </CardContent>
-        <CardContent>
-          <ul className="grid gap-2 sm:grid-cols-2" aria-label="Profile readiness checklist">
-            {profileChecklist.map((item) => {
-              const Icon = item.complete ? Check : Circle;
-              return (
-                <li key={item.label} className="flex items-center gap-2 text-body-sm text-muted-foreground">
-                  <Icon aria-hidden="true" className="size-4 shrink-0 text-primary" />
-                  {item.label}
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
       </Card>
 
       {error && (
@@ -207,28 +193,43 @@ export function AgencyOverview({ agency, isAgencyLoading }: AgencyOverviewProps)
 
       <section aria-label="Agency activity" className="grid gap-4 sm:grid-cols-3">
         <Card size="sm">
-          <CardHeader>
-            <CardDescription>Public active packages</CardDescription>
-            <CardTitle className="text-2xl tabular-nums">
-              {dashboard?.packages.activePublic ?? 0}
-            </CardTitle>
+          <CardHeader className="flex-row items-center justify-between">
+            <div className="space-y-1">
+              <CardDescription>Active packages</CardDescription>
+              <CardTitle className="text-2xl tabular-nums">
+                {dashboard?.packages.activePublic ?? 0}
+              </CardTitle>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <PackageCheck aria-hidden="true" className="size-4" />
+            </span>
           </CardHeader>
         </Card>
         <Card size="sm">
-          <CardHeader>
-            <CardDescription>New inquiries</CardDescription>
-            <CardTitle className="text-2xl tabular-nums">
-              {dashboard?.leads.byStatus.new ?? 0}
-            </CardTitle>
+          <CardHeader className="flex-row items-center justify-between">
+            <div className="space-y-1">
+              <CardDescription>New inquiries</CardDescription>
+              <CardTitle className="text-2xl tabular-nums">
+                {dashboard?.leads.byStatus.new ?? 0}
+              </CardTitle>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <MessageSquareText aria-hidden="true" className="size-4" />
+            </span>
           </CardHeader>
         </Card>
         <Card size="sm">
-          <CardHeader>
-            <CardDescription>Inquiries in progress</CardDescription>
-            <CardTitle className="text-2xl tabular-nums">
-              {(dashboard?.leads.byStatus.contacted ?? 0) +
-                (dashboard?.leads.byStatus.qualified ?? 0)}
-            </CardTitle>
+          <CardHeader className="flex-row items-center justify-between">
+            <div className="space-y-1">
+              <CardDescription>In progress</CardDescription>
+              <CardTitle className="text-2xl tabular-nums">
+                {(dashboard?.leads.byStatus.contacted ?? 0) +
+                  (dashboard?.leads.byStatus.qualified ?? 0)}
+              </CardTitle>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground">
+              <UserRoundCheck aria-hidden="true" className="size-4" />
+            </span>
           </CardHeader>
         </Card>
       </section>
@@ -239,7 +240,7 @@ export function AgencyOverview({ agency, isAgencyLoading }: AgencyOverviewProps)
             <CardTitle>Recent inquiries</CardTitle>
             <CardDescription>Latest messages from travelers.</CardDescription>
           </div>
-          <ClipboardList aria-hidden="true" className="size-5 text-muted-foreground" />
+          <ClipboardList aria-hidden="true" className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           {dashboard?.leads.latest.length ? (

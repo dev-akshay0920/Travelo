@@ -20,11 +20,11 @@ export function AppShellHeader({
     <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-border bg-background">
       <div className="flex h-full items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground md:hidden">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground lg:hidden">
             {brandMark}
             {brandName}
           </span>
-          <span className="hidden h-5 w-px bg-border md:block" aria-hidden="true" />
+          <span className="hidden h-5 w-px bg-border lg:block" aria-hidden="true" />
           <p className="truncate text-body-sm text-muted-foreground">{greeting}</p>
         </div>
         <UserMenu role={role} />

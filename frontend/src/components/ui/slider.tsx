@@ -29,16 +29,16 @@ function Slider({
       {...props}
     >
       <SliderPrimitive.Track className={cn(
-        "relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200",
+        "relative h-2 w-full grow overflow-hidden rounded-full bg-muted",
         orientation === "vertical" && "h-full w-2.5",
       )}>
         <SliderPrimitive.Range className={cn(
-          "absolute h-full bg-gradient-to-r from-blue-500 to-blue-600",
+          "absolute h-full bg-primary",
           orientation === "vertical" && "w-full",
         )} />
       </SliderPrimitive.Track>
       <SliderPrimitive.Thumb className={cn(
-        "block h-5 w-5 rounded-full bg-white border-2 border-blue-600 shadow-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110",
+        "block size-5 rounded-full border-2 border-primary bg-background shadow-xs transition-colors duration-150 ease-out hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
         orientation === "vertical" && "bottom-0 left-1/2 -translate-x-1/2",
         orientation === "horizontal" && "top-1/2 -translate-y-1/2",
       )} />

@@ -110,7 +110,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
                           key={index}
                           onClick={() => setSelectedImage({ packageId: pkg.id, index })}
                           className={cn(
-                            "h-2 w-2 rounded-full transition-all",
+                            "h-2 w-2 rounded-full transition-[width,background-color] duration-150 ease-out motion-reduce:transition-none",
                             index === selectedImageIndex
                               ? "bg-primary w-6"
                               : "bg-white/50 hover:bg-white/75"
@@ -129,7 +129,7 @@ export function PackageDetailModal({ package: pkg, isOpen, onClose, onEdit }: Pa
                       key={image.key}
                       onClick={() => setSelectedImage({ packageId: pkg.id, index })}
                       className={cn(
-                        "relative flex-shrink-0 aspect-square w-20 rounded-lg overflow-hidden border-2 transition-all",
+                        "relative flex-shrink-0 aspect-square w-20 rounded-lg overflow-hidden border-2 transition-colors duration-150 ease-out motion-reduce:transition-none",
                         index === selectedImageIndex
                           ? "border-primary"
                           : "border-transparent hover:border-muted-foreground/50"

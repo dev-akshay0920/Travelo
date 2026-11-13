@@ -268,6 +268,11 @@ Use the existing Button, Card, Dialog, Select, Calendar, Input, and Label primit
 ### Cards, dialogs, search panels, and data lists
 
 - Use the shared `Card` surface, spacing, and `size`/`variant` props. Do not add glass-card treatments or page-specific hover shadows; use `variant="interactive"` only when the card itself is actionable.
+- Keep content cards scannable: one clear title, at most two short metadata rows, and one obvious primary action. Avoid nested metric tiles, repeated labels, and decorative icons; reserve secondary details for a detail view.
+- Use one restrained icon treatment per card when it improves recognition. Keep status, category, and availability as compact semantic badges or metadata rather than multiple colored panels.
+- Use Lucide icons at 16px in controls/navigation and 14px beside compact metadata. Reserve larger icons for prominent feature/empty-state illustrations and brand marks; use semantic colors consistently rather than coloring every icon independently.
+- Standardize tables through the shared primitives: muted headers, compact rows, 12px horizontal cell padding, subtle hover color, and no per-page shadows or row treatments.
+- Keep interaction feedback to brief color changes (about 150ms) and simple opacity entrances (at most 160ms). Avoid staggered entrances, floating, scaling, and hover lifts in workspace UI; pulse is reserved for loading skeletons. Honor reduced-motion preferences.
 - Long dialogs have a fixed header and footer with only the `DialogBody` scrolling. Keep the dialog content within the viewport and preserve keyboard close/focus behavior.
 - Build mobile filter/search panels with `Sheet`, `SheetHeader`, `SheetBody`, and `SheetFooter`. The header and actions stay fixed while panel content scrolls; do not hand-build modal overlays.
 - Use `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, and `TableCell` for data tables. Keep horizontal overflow in the table container.

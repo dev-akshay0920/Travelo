@@ -34,11 +34,11 @@ function NavigationItem({ item }: { item: SidebarItem }) {
   const content = (
     <>
       <Icon aria-hidden="true" className="size-4 shrink-0" />
-      <span className="truncate text-caption font-medium md:text-sm">{item.label}</span>
+      <span className="truncate text-caption font-medium lg:text-sm">{item.label}</span>
     </>
   );
   const className = cn(
-    "relative inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 text-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none md:min-h-10 md:w-full md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3 md:text-left",
+    "relative inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 text-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none lg:min-h-10 lg:w-full lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-left",
     item.isActive &&
       "bg-accent text-accent-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary hover:bg-accent",
   );
@@ -74,8 +74,8 @@ export function IconSidebar({
   sectionLabel = "Workspace",
 }: IconSidebarProps) {
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card md:inset-y-0 md:left-0 md:right-auto md:flex md:w-60 md:flex-col md:border-r md:border-t-0">
-      <div className="hidden h-14 shrink-0 items-center border-b border-border px-5 md:flex">
+    <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-t-0">
+      <div className="hidden h-14 shrink-0 items-center border-b border-border px-5 lg:flex">
         <Link
           href={brandHref}
           className="inline-flex min-w-0 items-center gap-2.5 rounded-md text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -86,12 +86,12 @@ export function IconSidebar({
           <span className="truncate text-sm font-semibold tracking-tight">{brandLabel}</span>
         </Link>
       </div>
-      <div className="flex items-center justify-around gap-1 px-2 py-2 md:flex-1 md:flex-col md:justify-between md:gap-4 md:overflow-y-auto md:px-3 md:py-4">
+      <div className="flex items-center justify-around gap-1 px-2 py-2 lg:flex-1 lg:flex-col lg:justify-between lg:gap-4 lg:overflow-y-auto lg:px-3 lg:py-4">
         <nav
           aria-label="Main navigation"
-          className="flex flex-1 items-center justify-around gap-1 md:flex-col md:items-stretch md:justify-start"
+          className="flex flex-1 items-center justify-around gap-1 lg:flex-col lg:items-stretch lg:justify-start"
         >
-          <span className="hidden px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground md:block">
+          <span className="hidden px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground lg:block">
             {sectionLabel}
           </span>
           {items.map((item) => (
@@ -101,7 +101,7 @@ export function IconSidebar({
         {footerItems.length > 0 && (
           <nav
             aria-label="Account navigation"
-            className="hidden items-center gap-1 border-border md:flex md:w-full md:flex-col md:items-stretch md:border-t md:pt-3"
+            className="hidden items-center gap-1 border-border lg:flex lg:w-full lg:flex-col lg:items-stretch lg:border-t lg:pt-3"
           >
             {footerItems.map((item) => (
               <NavigationItem key={item.label} item={item} />
