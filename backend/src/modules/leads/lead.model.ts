@@ -11,11 +11,24 @@ export interface LeadDocument extends Document {
   travelerId: Types.ObjectId;
   travelerName: string;
   travelerEmail: string;
+  travelerPhone?: string;
   message: string;
   requestedStartDate?: Date;
   travelerCount?: number;
   status: LeadStatus;
   agencyNote: string;
+  pipelineStageId?: Types.ObjectId;
+  leadSourceId?: Types.ObjectId;
+  assignedStaffId?: Types.ObjectId;
+  estimatedValue?: number;
+  probability?: number;
+  expectedCloseDate?: Date;
+  lastFollowUpAt?: Date;
+  nextFollowUpAt?: Date;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  leadFormSubmissionId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +67,11 @@ const LeadSchema = new Schema<LeadDocument>(
       lowercase: true,
       maxlength: 255,
     },
+    travelerPhone: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+    },
     message: {
       type: String,
       required: true,
@@ -80,13 +98,66 @@ const LeadSchema = new Schema<LeadDocument>(
       maxlength: 2000,
       default: "",
     },
+    pipelineStageId: {
+      type: Schema.Types.ObjectId,
+      ref: "LeadPipeline",
+    },
+    leadSourceId: {
+      type: Schema.Types.ObjectId,
+      ref: "LeadSource",
+    },
+    assignedStaffId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    estimatedValue: {
+      type: Number,
+      min: 0,
+    },
+    probability: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    expectedCloseDate: {
+      type: Date,
+    },
+    lastFollowUpAt: {
+      type: Date,
+    },
+    nextFollowUpAt: {
+      type: Date,
+    },
+    utmSource: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    utmMedium: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    utmCampaign: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    leadFormSubmissionId: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
   },
   { timestamps: true }
 );
 
-LeadSchema.index({ agencyId:  1, createdAt: -1 });
+LeadSchema.index({ agencyId: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, status: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, packageId: 1, createdAt: -1 });
 LeadSchema.index({ travelerId: 1, createdAt: -1 });
+LeadSchema.index({ agencyId: 1, pipelineStageId: 1, createdAt: -1 });
+LeadSchema.index({ agencyId: 1, assignedStaffId: 1, createdAt: -1 });
+LeadSchema.index({ agencyId: 1, nextFollowUpAt: 1 });
 
 export const Lead = models.Lead || model<LeadDocument>("Lead", LeadSchema);

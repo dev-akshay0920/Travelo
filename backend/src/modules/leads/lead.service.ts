@@ -21,11 +21,26 @@ export interface LeadDTO {
   packageName?: string;
   travelerName: string;
   travelerEmail: string;
+  travelerPhone?: string;
   message: string;
   requestedStartDate?: string;
   travelerCount?: number;
   status: LeadStatus;
   agencyNote: string;
+  pipelineStageId?: string;
+  pipelineStage?: { id: string; name: string; color: string; order: number } | null;
+  leadSourceId?: string;
+  leadSource?: { id: string; name: string } | null;
+  assignedStaffId?: string;
+  assignedStaff?: { id: string; name: string; email: string } | null;
+  estimatedValue?: number;
+  probability?: number;
+  expectedCloseDate?: string;
+  lastFollowUpAt?: string;
+  nextFollowUpAt?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,6 +71,7 @@ function toLeadDTO(lead: LeadDocument): LeadDTO {
     ...(lead.packageName ? { packageName: lead.packageName } : {}),
     travelerName: lead.travelerName,
     travelerEmail: lead.travelerEmail,
+    ...(lead.travelerPhone ? { travelerPhone: lead.travelerPhone } : {}),
     message: lead.message,
     ...(lead.requestedStartDate
       ? { requestedStartDate: lead.requestedStartDate.toISOString().slice(0, 10) }
@@ -63,6 +79,19 @@ function toLeadDTO(lead: LeadDocument): LeadDTO {
     ...(lead.travelerCount !== undefined ? { travelerCount: lead.travelerCount } : {}),
     status: lead.status,
     agencyNote: lead.agencyNote,
+    ...(lead.pipelineStageId ? { pipelineStageId: String(lead.pipelineStageId) } : {}),
+    ...(lead.leadSourceId ? { leadSourceId: String(lead.leadSourceId) } : {}),
+    ...(lead.assignedStaffId ? { assignedStaffId: String(lead.assignedStaffId) } : {}),
+    ...(lead.estimatedValue !== undefined ? { estimatedValue: lead.estimatedValue } : {}),
+    ...(lead.probability !== undefined ? { probability: lead.probability } : {}),
+    ...(lead.expectedCloseDate
+      ? { expectedCloseDate: lead.expectedCloseDate.toISOString().slice(0, 10) }
+      : {}),
+    ...(lead.lastFollowUpAt ? { lastFollowUpAt: lead.lastFollowUpAt.toISOString() } : {}),
+    ...(lead.nextFollowUpAt ? { nextFollowUpAt: lead.nextFollowUpAt.toISOString() } : {}),
+    ...(lead.utmSource ? { utmSource: lead.utmSource } : {}),
+    ...(lead.utmMedium ? { utmMedium: lead.utmMedium } : {}),
+    ...(lead.utmCampaign ? { utmCampaign: lead.utmCampaign } : {}),
     createdAt: lead.createdAt.toISOString(),
     updatedAt: lead.updatedAt.toISOString(),
   };

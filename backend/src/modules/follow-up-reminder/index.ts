@@ -1,0 +1,1 @@
+export { followUpReminderRouter } from "./follow-up-reminder.routes";

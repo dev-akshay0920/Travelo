@@ -8,6 +8,8 @@ import {
   Package,
   Plane,
   UserRound,
+  Kanban,
+  Clock,
 } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
@@ -15,7 +17,13 @@ import { IconSidebar } from "@/components/shared/icon-sidebar";
 import { PageContainer } from "@/components/shared/page-container";
 import { Button } from "@/components/ui/button";
 
-type AgencyTab = "dashboard" | "inquiries" | "packages" | "settings";
+type AgencyTab =
+  | "dashboard"
+  | "inquiries"
+  | "packages"
+  | "pipeline"
+  | "followups"
+  | "settings";
 type SettingsSubTab = "templates" | "profile";
 
 type AgencyShellProps = {
@@ -29,6 +37,8 @@ const tabItems = [
   { label: "Overview", key: "dashboard" as const, icon: LayoutDashboard, href: "/agency" },
   { label: "Inquiries", key: "inquiries" as const, icon: MessageSquareText, href: "/agency/inquiries" },
   { label: "Packages", key: "packages" as const, icon: Package, href: "/agency/packages" },
+  { label: "Pipeline", key: "pipeline" as const, icon: Kanban, href: "/agency/pipeline" },
+  { label: "Follow-ups", key: "followups" as const, icon: Clock, href: "/agency/followups" },
   { label: "Profile", key: "settings" as const, icon: UserRound, href: "/agency/settings/profile" },
 ];
 

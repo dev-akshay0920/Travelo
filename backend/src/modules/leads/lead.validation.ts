@@ -15,14 +15,28 @@ export const createLeadSchema = z
     agencyId: objectIdSchema,
     packageId: objectIdSchema.optional(),
     message: z.string().trim().min(10).max(2000),
+    travelerPhone: z.string().trim().max(20).optional(),
     requestedStartDate: isoDateSchema.optional(),
     travelerCount: z.number().int().min(1).max(30).optional(),
+    pipelineStageId: objectIdSchema.optional(),
+    leadSourceId: objectIdSchema.optional(),
+    assignedStaffId: objectIdSchema.optional(),
+    estimatedValue: z.number().nonnegative().optional(),
+    probability: z.number().min(0).max(100).optional(),
+    expectedCloseDate: isoDateSchema.optional(),
+    nextFollowUpAt: isoDateSchema.optional(),
+    utmSource: z.string().trim().max(100).optional(),
+    utmMedium: z.string().trim().max(100).optional(),
+    utmCampaign: z.string().trim().max(100).optional(),
   })
   .strict();
 
 export const listLeadsQuerySchema = z
   .object({
     status: z.enum(LEAD_STATUSES).optional(),
+    pipelineStageId: objectIdSchema.optional(),
+    leadSourceId: objectIdSchema.optional(),
+    assignedStaffId: objectIdSchema.optional(),
     packageId: objectIdSchema.optional(),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20),
@@ -40,10 +54,21 @@ export const updateLeadSchema = z
   .object({
     status: z.enum(LEAD_STATUSES).optional(),
     agencyNote: z.string().trim().max(2000).optional(),
+    pipelineStageId: objectIdSchema.optional(),
+    leadSourceId: objectIdSchema.optional(),
+    assignedStaffId: objectIdSchema.optional(),
+    estimatedValue: z.number().nonnegative().optional(),
+    probability: z.number().min(0).max(100).optional(),
+    expectedCloseDate: isoDateSchema.optional(),
+    lastFollowUpAt: isoDateSchema.optional(),
+    nextFollowUpAt: isoDateSchema.optional(),
+    utmSource: z.string().trim().max(100).optional(),
+    utmMedium: z.string().trim().max(100).optional(),
+    utmCampaign: z.string().trim().max(100).optional(),
   })
   .strict()
-  .refine((value) => value.status !== undefined || value.agencyNote !== undefined, {
-    message: "Provide a status or agency note to update.",
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Provide at least one field to update.",
   });
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;

@@ -88,4 +88,11 @@ export const UserRepository = {
       .select("name email emailVerified createdAt")
       .exec();
   },
+
+  async findByIds(ids: string[]): Promise<UserDocument[]> {
+    const validIds = ids.filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
+    if (validIds.length === 0) return [];
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return User.find({ _id: { $in: validIds } }).exec();
+  },
 };

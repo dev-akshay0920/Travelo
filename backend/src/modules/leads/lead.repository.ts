@@ -4,6 +4,9 @@ import { Lead } from "./lead.model";
 
 export interface LeadListFilters {
   status?: LeadStatus;
+  pipelineStageId?: string;
+  leadSourceId?: string;
+  assignedStaffId?: string;
   packageId?: string;
   page: number;
   limit: number;
@@ -22,12 +25,17 @@ export const LeadRepository = {
       agencyId: new Types.ObjectId(agencyId),
     };
     if (filters.status) query.status = filters.status;
+    if (filters.pipelineStageId) query.pipelineStageId = new Types.ObjectId(filters.pipelineStageId);
+    if (filters.leadSourceId) query.leadSourceId = new Types.ObjectId(filters.leadSourceId);
+    if (filters.assignedStaffId) query.assignedStaffId = new Types.ObjectId(filters.assignedStaffId);
     if (filters.packageId) query.packageId = new Types.ObjectId(filters.packageId);
 
     const [items, total] = await Promise.all([
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
       Lead.find(query)
-        .select("agencyId packageId packageName travelerName travelerEmail message requestedStartDate travelerCount status agencyNote createdAt updatedAt")
+        .select(
+          "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+        )
         .sort({ createdAt: -1, _id: -1 })
         .skip((filters.page - 1) * filters.limit)
         .limit(filters.limit)
@@ -74,23 +82,61 @@ export const LeadRepository = {
       _id: new Types.ObjectId(id),
       agencyId: new Types.ObjectId(agencyId),
     })
-      .select("agencyId packageId packageName travelerName travelerEmail message requestedStartDate travelerCount status agencyNote createdAt updatedAt")
+      .select(
+        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+      )
       .exec();
   },
 
   async updateByIdAndAgency(
     id: string,
     agencyId: string,
-    update: { status?: LeadStatus; agencyNote?: string }
+    update: {
+      status?: LeadStatus;
+      agencyNote?: string;
+      pipelineStageId?: string;
+      leadSourceId?: string;
+      assignedStaffId?: string;
+      estimatedValue?: number;
+      probability?: number;
+      expectedCloseDate?: string;
+      lastFollowUpAt?: string;
+      nextFollowUpAt?: string;
+      utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
+    }
   ): Promise<LeadDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
+    const $set: Record<string, unknown> = {};
+    if (update.status !== undefined) $set.status = update.status;
+    if (update.agencyNote !== undefined) $set.agencyNote = update.agencyNote;
+    if (update.pipelineStageId !== undefined)
+      $set.pipelineStageId = new Types.ObjectId(update.pipelineStageId);
+    if (update.leadSourceId !== undefined) $set.leadSourceId = new Types.ObjectId(update.leadSourceId);
+    if (update.assignedStaffId !== undefined)
+      $set.assignedStaffId = new Types.ObjectId(update.assignedStaffId);
+    if (update.estimatedValue !== undefined) $set.estimatedValue = update.estimatedValue;
+    if (update.probability !== undefined) $set.probability = update.probability;
+    if (update.expectedCloseDate !== undefined)
+      $set.expectedCloseDate = new Date(`${update.expectedCloseDate}T00:00:00.000Z`);
+    if (update.lastFollowUpAt !== undefined)
+      $set.lastFollowUpAt = new Date(`${update.lastFollowUpAt}T00:00:00.000Z`);
+    if (update.nextFollowUpAt !== undefined)
+      $set.nextFollowUpAt = new Date(`${update.nextFollowUpAt}T00:00:00.000Z`);
+    if (update.utmSource !== undefined) $set.utmSource = update.utmSource;
+    if (update.utmMedium !== undefined) $set.utmMedium = update.utmMedium;
+    if (update.utmCampaign !== undefined) $set.utmCampaign = update.utmCampaign;
+
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return Lead.findOneAndUpdate(
       { _id: new Types.ObjectId(id), agencyId: new Types.ObjectId(agencyId) },
-      { $set: update },
+      { $set },
       { new: true, runValidators: true }
     )
-      .select("agencyId packageId packageName travelerName travelerEmail message requestedStartDate travelerCount status agencyNote createdAt updatedAt")
+      .select(
+        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+      )
       .exec();
   },
 

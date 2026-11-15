@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,12 +50,22 @@ function getServerSnapshot() {
 }
 
 export function UserMenu({ role, userName }: UserMenuProps) {
+  const router = useRouter();
   const storedUserName = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const resolvedUserName = userName ?? storedUserName;
 
   const homeRoute = getHomeRouteForRole(role);
   const roleLabel = role === "agency" ? "Agency" : role === "admin" ? "Admin" : "Traveller";
   const fallback = resolvedUserName ?? "User";
+
+  const handleSignOut = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("travora_access_token");
+      window.localStorage.removeItem("travora_user");
+      document.cookie = "travora_access_token=; path=/; max-age=0; SameSite=Lax";
+    }
+    router.push("/signin");
+  };
 
   return (
     <DropdownMenu>
@@ -86,6 +97,7 @@ export function UserMenu({ role, userName }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"
+          onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out

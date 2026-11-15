@@ -37,7 +37,13 @@ import type {
 } from "@/features/agencies/types/agency.types";
 import { AGENCY_SERVICE_OPTIONS } from "@/features/agencies/types/agency.types";
 
-type Tab = "dashboard" | "inquiries" | "packages" | "settings";
+type Tab =
+  | "dashboard"
+  | "inquiries"
+  | "packages"
+  | "pipeline"
+  | "followups"
+  | "settings";
 type SettingsSubTab = "templates" | "profile";
 
 export default function AgencyPage() {
@@ -46,9 +52,13 @@ export default function AgencyPage() {
     ? "inquiries"
     : pathname === "/agency/packages"
       ? "packages"
-      : pathname.startsWith("/agency/settings")
-        ? "settings"
-        : "dashboard";
+      : pathname === "/agency/pipeline"
+        ? "pipeline"
+        : pathname === "/agency/followups"
+          ? "followups"
+          : pathname.startsWith("/agency/settings")
+            ? "settings"
+            : "dashboard";
   const [settingsSelection, setSettingsSelection] = useState<{
     pathname: string;
     tab: SettingsSubTab;
