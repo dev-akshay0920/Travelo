@@ -1,5 +1,5 @@
 import type { TaskDocument } from "./task.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateTaskInput {
   title: string;

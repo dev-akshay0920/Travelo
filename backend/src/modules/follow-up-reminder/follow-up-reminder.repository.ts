@@ -17,7 +17,7 @@ export const FollowUpReminderRepository = {
   async listByAgency(
     agencyId: string,
     filters: FollowUpReminderListFilters
-  ): Promise<{ items: FollowUpReminderDocument[]; total: number }> {
+  ): Promise<{ items: FollowUpReminderDocument[]; total: number; page: number; limit: number; totalPages: number }> {
     const query: Record<string, unknown> = { agencyId: new Types.ObjectId(agencyId) };
     if (filters.isCompleted !== undefined) query.isCompleted = filters.isCompleted;
     if (filters.staffId) query.staffId = new Types.ObjectId(filters.staffId);
@@ -30,14 +30,22 @@ export const FollowUpReminderRepository = {
         .exec(),
       FollowUpReminder.countDocuments(query).exec(),
     ]);
-    return { items, total };
+    return {
+      items,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
   },
 
   async listDue(
-    before: Date
+    before: Date,
+    agencyId: string
   ): Promise<FollowUpReminderDocument[]> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return FollowUpReminder.find({
+      agencyId: new Types.ObjectId(agencyId),
       isCompleted: false,
       reminderAt: { $lte: before },
     })

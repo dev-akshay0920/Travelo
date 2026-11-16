@@ -104,3 +104,18 @@ export const updateBookingStatusSchema = z.object({
     status: z.enum(["enquiry", "quoted", "deposit_paid", "confirmed", "completed", "cancelled", "refunded"]),
   }),
 });
+
+export const addSupplierBookingSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  }),
+  body: SupplierBookingInputSchema,
+});
+
+export const updateSupplierBookingSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/),
+    supplierBookingId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  }),
+  body: SupplierBookingInputSchema.partial(),
+});

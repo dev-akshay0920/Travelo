@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 import { SubscriptionPlanModel } from "./subscription.model";
 import type { SubscriptionPlanDocument } from "./subscription.model";
 import type { SubscriptionPlanListQuery } from "./subscription-plan.types";

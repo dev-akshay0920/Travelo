@@ -1,10 +1,9 @@
 import { Types } from "mongoose";
 import {
-  ForbiddenError,
   NotFoundError,
   UnauthorizedError,
 } from "../../shared/errors/app-error";
-import { AgencyRepository } from "../agencies/agency.repository";
+import { requireAgencyMemberDocument } from "../staff/agency-membership.service";
 import { UserRepository } from "../users/user.repository";
 import { Lead } from "../leads/lead.model";
 import type { FollowUpReminderDocument } from "./follow-up-reminder.model";
@@ -53,23 +52,13 @@ async function getActiveUser(userId: string) {
   return user;
 }
 
-async function requireAgencyOwner(userId: string) {
-  const user = await getActiveUser(userId);
-  if (user.roleId?.key !== "agency") {
-    throw new ForbiddenError("Agency owner access is required.");
-  }
-  const agency = await AgencyRepository.findByOwnerUserId(userId);
-  if (!agency) throw new NotFoundError("Agency profile not found.");
-  return agency;
-}
-
 export const FollowUpReminderService = {
   async create(
     userId: string,
     input: CreateFollowUpReminderInput
   ): Promise<FollowUpReminderDTO> {
     const user = await getActiveUser(userId);
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
 
     const staffId = input.staffId ? new Types.ObjectId(input.staffId) : user._id;
 
@@ -98,7 +87,7 @@ export const FollowUpReminderService = {
     userId: string,
     filters: ListFollowUpRemindersQuery
   ): Promise<{ items: FollowUpReminderDTO[]; total: number; page: number; limit: number; totalPages: number }> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const { items, total } = await FollowUpReminderRepository.listByAgency(
       String(agency._id),
       filters
@@ -120,9 +109,10 @@ export const FollowUpReminderService = {
     };
   },
 
-  async getDue(_userId: string): Promise<FollowUpReminderDTO[]> {
+  async getDue(userId: string): Promise<FollowUpReminderDTO[]> {
+    const agency = await requireAgencyMemberDocument(userId);
     const now = new Date();
-    const reminders = await FollowUpReminderRepository.listDue(now);
+    const reminders = await FollowUpReminderRepository.listDue(now, String(agency._id));
 
     const staffIds = [...new Set(reminders.map((r) => String(r.staffId)))];
     const users = staffIds.length > 0 ? await UserRepository.findByIds(staffIds) : [];
@@ -139,7 +129,7 @@ export const FollowUpReminderService = {
     id: string,
     input: UpdateFollowUpReminderInput
   ): Promise<FollowUpReminderDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const updateData: Record<string, unknown> = { ...input };
     if (input.reminderAt !== undefined) {
       updateData.reminderAt = new Date(input.reminderAt);
@@ -154,7 +144,7 @@ export const FollowUpReminderService = {
   },
 
   async delete(userId: string, id: string): Promise<void> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const reminder = await FollowUpReminderRepository.deleteByIdAndAgency(
       id,
       String(agency._id)

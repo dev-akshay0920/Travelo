@@ -51,6 +51,15 @@ const EnvSchema = z.object({
     z.string().min(1).optional()
   ),
   FILEBASE_PUBLIC_BASE_URL: optionalUrl,
+  AI_API_KEY: z.preprocess(
+    (value: unknown) => value === "" ? undefined : value,
+    z.string().trim().min(1).optional()
+  ),
+  AI_BASE_URL: optionalUrl,
+  AI_MODEL: z.preprocess(
+    (value: unknown) => value === "" ? undefined : value,
+    z.string().trim().min(1).optional()
+  ),
 }).superRefine((value, context) => {
   const filebaseValues = [
     value.FILEBASE_ENDPOINT,

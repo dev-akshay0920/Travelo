@@ -5,6 +5,8 @@ import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { UnauthorizedError, ValidationError } from "../../shared/errors/app-error";
 import { LeadService } from "./lead.service";
 import {
+  bulkImportLeadsSchema,
+  createAgencyLeadSchema,
   createLeadSchema,
   listLeadsQuerySchema,
   listMyLeadsQuerySchema,
@@ -26,6 +28,20 @@ export const createLead = asyncHandler(async (req: Request, res: Response) => {
   const input = createLeadSchema.parse(req.body);
   const lead = await LeadService.create(authenticatedUserId(req), input);
   res.status(HTTP_STATUS.CREATED).json(success({ lead }));
+});
+
+export const createAgencyLead = asyncHandler(async (req: Request, res: Response) => {
+  const input = createAgencyLeadSchema.parse(req.body);
+  const lead = await LeadService.createForAgency(authenticatedUserId(req), input);
+  res.status(HTTP_STATUS.CREATED).json(success({ lead }, { message: "Lead created successfully" }));
+});
+
+export const bulkImportLeads = asyncHandler(async (req: Request, res: Response) => {
+  const input = bulkImportLeadsSchema.parse(req.body);
+  const result = await LeadService.bulkImportForAgency(authenticatedUserId(req), input);
+  res
+    .status(HTTP_STATUS.CREATED)
+    .json(success({ result }, { message: "Lead import completed" }));
 });
 
 export const listLeads = asyncHandler(async (req: Request, res: Response) => {

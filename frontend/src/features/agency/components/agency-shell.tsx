@@ -3,13 +3,24 @@
 import type { ReactNode } from "react";
 
 import {
+  BarChart3,
+  Building2,
+  CalendarCheck2,
+  CheckSquare,
+  Clock,
+  CreditCard,
+  FileText,
+  FolderOpen,
+  Kanban,
   LayoutDashboard,
+  Map as MapIcon,
   MessageSquareText,
   Package,
   Plane,
+  ReceiptText,
   UserRound,
-  Kanban,
-  Clock,
+  Users,
+  UsersRound,
 } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
@@ -17,12 +28,23 @@ import { IconSidebar } from "@/components/shared/icon-sidebar";
 import { PageContainer } from "@/components/shared/page-container";
 import { Button } from "@/components/ui/button";
 
-type AgencyTab =
+export type AgencyTab =
   | "dashboard"
   | "inquiries"
+  | "leads"
   | "packages"
   | "pipeline"
   | "followups"
+  | "itineraries"
+  | "quotations"
+  | "bookings"
+  | "invoices"
+  | "suppliers"
+  | "documents"
+  | "tasks"
+  | "staff"
+  | "reports"
+  | "billing"
   | "settings";
 type SettingsSubTab = "templates" | "profile";
 
@@ -36,9 +58,20 @@ type AgencyShellProps = {
 const tabItems = [
   { label: "Overview", key: "dashboard" as const, icon: LayoutDashboard, href: "/agency" },
   { label: "Inquiries", key: "inquiries" as const, icon: MessageSquareText, href: "/agency/inquiries" },
-  { label: "Packages", key: "packages" as const, icon: Package, href: "/agency/packages" },
+  { label: "Leads", key: "leads" as const, icon: Users, href: "/agency/leads" },
   { label: "Pipeline", key: "pipeline" as const, icon: Kanban, href: "/agency/pipeline" },
   { label: "Follow-ups", key: "followups" as const, icon: Clock, href: "/agency/followups" },
+  { label: "Itineraries", key: "itineraries" as const, icon: MapIcon, href: "/agency/itineraries" },
+  { label: "Quotations", key: "quotations" as const, icon: FileText, href: "/agency/quotations" },
+  { label: "Bookings", key: "bookings" as const, icon: CalendarCheck2, href: "/agency/bookings" },
+  { label: "Invoices", key: "invoices" as const, icon: ReceiptText, href: "/agency/invoices" },
+  { label: "Suppliers", key: "suppliers" as const, icon: Building2, href: "/agency/suppliers" },
+  { label: "Documents", key: "documents" as const, icon: FolderOpen, href: "/agency/documents" },
+  { label: "Tasks", key: "tasks" as const, icon: CheckSquare, href: "/agency/tasks" },
+  { label: "Staff", key: "staff" as const, icon: UsersRound, href: "/agency/staff" },
+  { label: "Reports", key: "reports" as const, icon: BarChart3, href: "/agency/reports" },
+  { label: "Billing", key: "billing" as const, icon: CreditCard, href: "/agency/billing" },
+  { label: "Packages", key: "packages" as const, icon: Package, href: "/agency/packages" },
   { label: "Profile", key: "settings" as const, icon: UserRound, href: "/agency/settings/profile" },
 ];
 
@@ -61,7 +94,6 @@ export function AgencyShell({
         }))}
         brandHref="/agency"
         brandLabel="Travora"
-        sectionLabel="Agency workspace"
       />
 
       <div className="flex h-dvh min-w-0 flex-1 flex-col lg:ml-60">

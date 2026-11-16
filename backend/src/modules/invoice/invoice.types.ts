@@ -1,5 +1,5 @@
-import type { InvoiceDocument } from "./invoice.model";
-import { Types } from "mongoose";
+import type { InvoiceDocument, InvoicePaymentMethod } from "./invoice.model";
+import type { Types } from "mongoose";
 
 export interface CreateInvoiceInput {
   bookingId?: string;
@@ -58,6 +58,23 @@ export interface InvoiceListResponse {
   totalPages: number;
 }
 
+export interface InvoicePaymentDTO {
+  amount: number;
+  method: InvoicePaymentMethod;
+  transactionId?: string;
+  notes?: string;
+  paidAt: string;
+  recordedBy?: string;
+}
+
+export interface RecordInvoicePaymentInput {
+  amount: number;
+  method: InvoicePaymentMethod;
+  transactionId?: string;
+  notes?: string;
+  paidAt?: string | Date;
+}
+
 export interface InvoiceDTO {
   id: string;
   agencyId: string;
@@ -74,6 +91,7 @@ export interface InvoiceDTO {
   taxPercentage: number;
   dueDate?: string;
   paidAmount: number;
+  payments: InvoicePaymentDTO[];
   pdfUrl?: string;
   pdfKey?: string;
   paymentLinkUrl?: string;
@@ -100,6 +118,7 @@ interface InvoiceLean {
   taxPercentage: number;
   dueDate?: Date;
   paidAmount: number;
+  payments?: InvoicePaymentDTO[];
   pdfUrl?: string;
   pdfKey?: string;
   paymentLinkUrl?: string;
@@ -127,6 +146,14 @@ export function toInvoiceDTO(doc: InvoiceDocument | InvoiceLean): InvoiceDTO {
     taxPercentage: doc.taxPercentage,
     dueDate: doc.dueDate?.toISOString(),
     paidAmount: doc.paidAmount,
+    payments: (doc.payments ?? []).map((payment) => ({
+      amount: payment.amount,
+      method: payment.method,
+      transactionId: payment.transactionId,
+      notes: payment.notes,
+      paidAt: new Date(payment.paidAt).toISOString(),
+      recordedBy: payment.recordedBy?.toString(),
+    })),
     pdfUrl: doc.pdfUrl,
     pdfKey: doc.pdfKey,
     paymentLinkUrl: doc.paymentLinkUrl,

@@ -1,5 +1,5 @@
 import type { DocumentFileDocument } from "./document.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateDocumentInput {
   leadId?: string;

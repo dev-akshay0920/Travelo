@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { platformInvoiceRepository } from "./platform-invoice.repository";
-import type { CreatePlatformInvoiceInput, UpdatePlatformInvoiceInput, PlatformInvoiceListQuery, PlatformInvoiceDTO, PlatformInvoiceListResponse } from "./platform-invoice.types";
+import type { CreatePlatformInvoiceInput, UpdatePlatformInvoiceInput, PlatformInvoiceListQuery, PlatformInvoiceDTO, PlatformInvoiceListResponse, PlatformInvoicePaymentMethod } from "./platform-invoice.types";
 import { toPlatformInvoiceDTO } from "./platform-invoice.types";
 import { AppError } from "../../shared/errors/app-error";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -72,20 +72,23 @@ export class PlatformInvoiceService {
     };
   }
 
-  async getOverdueInvoices(): Promise<PlatformInvoiceDTO[]> {
-    const invoices = await platformInvoiceRepository.getOverdueInvoices();
+  async getOverdueInvoices(agencyId: Types.ObjectId): Promise<PlatformInvoiceDTO[]> {
+    const invoices = await platformInvoiceRepository.getOverdueInvoices(agencyId);
     return invoices.map(toPlatformInvoiceDTO);
   }
 
-  async getBySubscriptionId(subscriptionId: string): Promise<PlatformInvoiceDTO[]> {
-    const invoices = await platformInvoiceRepository.getBySubscriptionId(new Types.ObjectId(subscriptionId));
+  async getBySubscriptionId(subscriptionId: string, agencyId: Types.ObjectId): Promise<PlatformInvoiceDTO[]> {
+    const invoices = await platformInvoiceRepository.getBySubscriptionId(
+      new Types.ObjectId(subscriptionId),
+      agencyId
+    );
     return invoices.map(toPlatformInvoiceDTO);
   }
 
   async recordPayment(
     agencyId: Types.ObjectId,
     id: string,
-    paymentMethod: string,
+    paymentMethod: PlatformInvoicePaymentMethod,
     reference?: string,
     paidAt?: string | Date
   ): Promise<PlatformInvoiceDTO> {
@@ -95,7 +98,7 @@ export class PlatformInvoiceService {
       {
         status: "paid",
         paidAt: paidAt ? new Date(paidAt) : new Date(),
-        paymentMethod: paymentMethod as any,
+        paymentMethod,
         paymentReference: reference,
       }
     );

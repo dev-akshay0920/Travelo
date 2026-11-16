@@ -31,8 +31,37 @@ export const createLeadSchema = z
   })
   .strict();
 
+export const createAgencyLeadSchema = z
+  .object({
+    travelerName: z.string().trim().min(2).max(100),
+    travelerEmail: z.string().trim().email().max(255),
+    travelerPhone: z.string().trim().max(20).optional(),
+    message: z.string().trim().max(2000).optional(),
+    packageId: objectIdSchema.optional(),
+    requestedStartDate: isoDateSchema.optional(),
+    travelerCount: z.number().int().min(1).max(30).optional(),
+    pipelineStageId: objectIdSchema.optional(),
+    leadSourceId: objectIdSchema.optional(),
+    assignedStaffId: objectIdSchema.optional(),
+    estimatedValue: z.number().nonnegative().optional(),
+    probability: z.number().min(0).max(100).optional(),
+    expectedCloseDate: isoDateSchema.optional(),
+    nextFollowUpAt: isoDateSchema.optional(),
+    utmSource: z.string().trim().max(100).optional(),
+    utmMedium: z.string().trim().max(100).optional(),
+    utmCampaign: z.string().trim().max(100).optional(),
+  })
+  .strict();
+
+export const bulkImportLeadsSchema = z
+  .object({
+    leads: z.array(createAgencyLeadSchema).min(1).max(500),
+  })
+  .strict();
+
 export const listLeadsQuerySchema = z
   .object({
+    search: z.string().trim().max(100).optional(),
     status: z.enum(LEAD_STATUSES).optional(),
     pipelineStageId: objectIdSchema.optional(),
     leadSourceId: objectIdSchema.optional(),
@@ -72,6 +101,8 @@ export const updateLeadSchema = z
   });
 
 export type CreateLeadInput = z.infer<typeof createLeadSchema>;
+export type CreateAgencyLeadInput = z.infer<typeof createAgencyLeadSchema>;
+export type BulkImportLeadsInput = z.infer<typeof bulkImportLeadsSchema>;
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
 export type ListMyLeadsQuery = z.infer<typeof listMyLeadsQuerySchema>;
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;

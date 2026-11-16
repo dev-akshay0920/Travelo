@@ -1,5 +1,5 @@
 import type { BookingPaymentDocument } from "./booking-payment.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateBookingPaymentInput {
   bookingId: string;

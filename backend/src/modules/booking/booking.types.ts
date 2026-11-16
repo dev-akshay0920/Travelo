@@ -1,5 +1,5 @@
 import type { BookingDocument, TravellerRoster, SupplierBooking } from "./booking.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateBookingInput {
   leadId?: string;
@@ -62,6 +62,20 @@ export interface BookingListResponse {
   totalPages: number;
 }
 
+export interface SupplierBookingDTO {
+  id?: string;
+  supplierId: string;
+  referenceNumber?: string;
+  checkIn?: string;
+  checkOut?: string;
+  guests?: number;
+  rooms?: number;
+  totalCost: number;
+  currency: string;
+  status: "pending" | "confirmed" | "cancelled";
+  documentUrl?: string;
+}
+
 export interface BookingDTO {
   id: string;
   agencyId: string;
@@ -80,7 +94,7 @@ export interface BookingDTO {
   currency: string;
   departureDate: string;
   staffId?: string;
-  supplierBookings: SupplierBooking[];
+  supplierBookings: SupplierBookingDTO[];
   voucherUrl?: string;
   voucherKey?: string;
   createdAt: string;
@@ -131,7 +145,21 @@ export function toBookingDTO(doc: BookingDocument | BookingLean): BookingDTO {
     currency: doc.currency,
     departureDate: doc.departureDate.toISOString(),
     staffId: doc.staffId?.toString(),
-    supplierBookings: doc.supplierBookings,
+    supplierBookings: (doc.supplierBookings ?? []).map((supplierBooking) => ({
+      ...(supplierBooking._id ? { id: String(supplierBooking._id) } : {}),
+      supplierId: String(supplierBooking.supplierId),
+      ...(supplierBooking.referenceNumber
+        ? { referenceNumber: supplierBooking.referenceNumber }
+        : {}),
+      ...(supplierBooking.checkIn ? { checkIn: supplierBooking.checkIn.toISOString() } : {}),
+      ...(supplierBooking.checkOut ? { checkOut: supplierBooking.checkOut.toISOString() } : {}),
+      ...(supplierBooking.guests !== undefined ? { guests: supplierBooking.guests } : {}),
+      ...(supplierBooking.rooms !== undefined ? { rooms: supplierBooking.rooms } : {}),
+      totalCost: supplierBooking.totalCost,
+      currency: supplierBooking.currency,
+      status: supplierBooking.status,
+      ...(supplierBooking.documentUrl ? { documentUrl: supplierBooking.documentUrl } : {}),
+    })),
     voucherUrl: doc.voucherUrl,
     voucherKey: doc.voucherKey,
     createdAt: doc.createdAt.toISOString(),

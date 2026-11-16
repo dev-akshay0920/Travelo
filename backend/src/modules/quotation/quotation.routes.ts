@@ -13,6 +13,9 @@ import {
 
 const router = Router();
 
+router.get("/public/:token", validate(publicQuotationSchema), quotationController.getPublic);
+router.post("/public/:token/accept", validate(publicQuotationSchema), quotationController.acceptPublic);
+
 router.use(authMiddleware);
 
 router.post("/", validate(createQuotationSchema), quotationController.create);
@@ -24,8 +27,5 @@ router.put("/:id", validate(updateQuotationSchema), quotationController.update);
 router.post("/:id/send", quotationController.send);
 router.post("/:id/accept", quotationController.accept);
 router.delete("/:id", validate(deleteQuotationSchema), quotationController.delete);
-
-router.get("/public/:token", validate(publicQuotationSchema), quotationController.getPublic);
-router.post("/public/:token/accept", validate(publicQuotationSchema), quotationController.acceptPublic);
 
 export default router;

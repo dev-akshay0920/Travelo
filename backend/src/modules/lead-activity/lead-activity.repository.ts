@@ -15,7 +15,7 @@ export const LeadActivityRepository = {
   async listByLead(
     leadId: string,
     filters: LeadActivityListFilters
-  ): Promise<{ items: LeadActivityDocument[]; total: number }> {
+  ): Promise<{ items: LeadActivityDocument[]; total: number; page: number; limit: number; totalPages: number }> {
     const query = { leadId: new Types.ObjectId(leadId) };
     const [items, total] = await Promise.all([
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
@@ -26,7 +26,13 @@ export const LeadActivityRepository = {
         .exec(),
       LeadActivity.countDocuments(query).exec(),
     ]);
-    return { items, total };
+    return {
+      items,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
   },
 
   async findByIdAndAgency(

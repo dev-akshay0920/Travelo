@@ -8,6 +8,8 @@ declare global {
         roleKey: string;
         roleName: string;
         agencyId?: string;
+        staffRole?: string;
+        permissions?: string[];
       };
     }
   }

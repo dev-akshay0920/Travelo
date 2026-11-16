@@ -1,5 +1,5 @@
 import type { AgencySubscriptionDocument } from "./agency-subscription.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateAgencySubscriptionInput {
   agencyId: string;

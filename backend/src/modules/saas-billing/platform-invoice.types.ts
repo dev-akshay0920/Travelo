@@ -1,5 +1,7 @@
 import type { PlatformInvoiceDocument } from "./platform-invoice.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
+
+export type PlatformInvoicePaymentMethod = "razorpay" | "stripe" | "bank_transfer" | "manual";
 
 export interface CreatePlatformInvoiceInput {
   agencyId: string;
@@ -10,7 +12,7 @@ export interface CreatePlatformInvoiceInput {
   currency?: string;
   taxPercentage?: number;
   dueDate: string | Date;
-  paymentMethod?: "razorpay" | "stripe" | "bank_transfer" | "manual";
+  paymentMethod?: PlatformInvoicePaymentMethod;
   billingPeriodStart: string | Date;
   billingPeriodEnd: string | Date;
   notes?: string;
@@ -19,7 +21,7 @@ export interface CreatePlatformInvoiceInput {
 export interface UpdatePlatformInvoiceInput {
   status?: "draft" | "sent" | "paid" | "overdue" | "void" | "refunded";
   paidAt?: string | Date;
-  paymentMethod?: "razorpay" | "stripe" | "bank_transfer" | "manual";
+  paymentMethod?: PlatformInvoicePaymentMethod;
   paymentReference?: string;
   pdfUrl?: string;
   pdfKey?: string;

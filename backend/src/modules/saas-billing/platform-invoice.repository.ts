@@ -171,18 +171,19 @@ export class PlatformInvoiceRepository {
     };
   }
 
-  async getOverdueInvoices(): Promise<PlatformInvoiceLean[]> {
+  async getOverdueInvoices(agencyId: Types.ObjectId): Promise<PlatformInvoiceLean[]> {
     const now = new Date();
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return PlatformInvoiceModel.find({
+      agencyId,
       status: { $in: ["sent", "overdue"] },
       dueDate: { $lt: now },
     }).lean().exec();
   }
 
-  async getBySubscriptionId(subscriptionId: Types.ObjectId): Promise<PlatformInvoiceLean[]> {
+  async getBySubscriptionId(subscriptionId: Types.ObjectId, agencyId: Types.ObjectId): Promise<PlatformInvoiceLean[]> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
-    return PlatformInvoiceModel.find({ subscriptionId }).sort({ createdAt: -1 }).lean().exec();
+    return PlatformInvoiceModel.find({ subscriptionId, agencyId }).sort({ createdAt: -1 }).lean().exec();
   }
 }
 

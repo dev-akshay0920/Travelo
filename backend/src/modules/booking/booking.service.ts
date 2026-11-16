@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import { bookingRepository } from "./booking.repository";
-import type { CreateBookingInput, UpdateBookingInput, BookingListQuery, BookingDTO, BookingListResponse } from "./booking.types";
+import type { CreateBookingInput, UpdateBookingInput, BookingListQuery, BookingDTO, BookingListResponse, SupplierBookingDTO } from "./booking.types";
+import type { SupplierBooking } from "./booking.model";
 import { toBookingDTO } from "./booking.types";
 import { AppError } from "../../shared/errors/app-error";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -115,12 +116,26 @@ async list(agencyId: Types.ObjectId, query: BookingListQuery): Promise<BookingLi
   async addSupplierBooking(
     id: string,
     agencyId: Types.ObjectId,
-    supplierBooking: Omit<BookingDTO["supplierBookings"][0], "id">
+    supplierBooking: Omit<SupplierBookingDTO, "id">
   ): Promise<BookingDTO> {
+    const supplierBookingData: SupplierBooking = {
+      supplierId: new Types.ObjectId(supplierBooking.supplierId),
+      totalCost: supplierBooking.totalCost,
+      currency: supplierBooking.currency,
+      status: supplierBooking.status,
+      ...(supplierBooking.referenceNumber
+        ? { referenceNumber: supplierBooking.referenceNumber }
+        : {}),
+      ...(supplierBooking.checkIn ? { checkIn: new Date(supplierBooking.checkIn) } : {}),
+      ...(supplierBooking.checkOut ? { checkOut: new Date(supplierBooking.checkOut) } : {}),
+      ...(supplierBooking.guests !== undefined ? { guests: supplierBooking.guests } : {}),
+      ...(supplierBooking.rooms !== undefined ? { rooms: supplierBooking.rooms } : {}),
+      ...(supplierBooking.documentUrl ? { documentUrl: supplierBooking.documentUrl } : {}),
+    };
     const booking = await bookingRepository.addSupplierBooking(
       new Types.ObjectId(id),
       agencyId,
-      { ...supplierBooking, supplierId: new Types.ObjectId(supplierBooking.supplierId) } as any
+      supplierBookingData
     );
     if (!booking) {
       throw new AppError("Booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
@@ -132,13 +147,24 @@ async list(agencyId: Types.ObjectId, query: BookingListQuery): Promise<BookingLi
     id: string,
     agencyId: Types.ObjectId,
     supplierBookingId: string,
-    data: Partial<BookingDTO["supplierBookings"][0]>
+    data: Partial<Omit<SupplierBookingDTO, "id">>
   ): Promise<BookingDTO> {
+    const updateData: Partial<SupplierBooking> = {};
+    if (data.supplierId) updateData.supplierId = new Types.ObjectId(data.supplierId);
+    if (data.totalCost !== undefined) updateData.totalCost = data.totalCost;
+    if (data.currency !== undefined) updateData.currency = data.currency;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.referenceNumber !== undefined) updateData.referenceNumber = data.referenceNumber;
+    if (data.checkIn !== undefined) updateData.checkIn = new Date(data.checkIn);
+    if (data.checkOut !== undefined) updateData.checkOut = new Date(data.checkOut);
+    if (data.guests !== undefined) updateData.guests = data.guests;
+    if (data.rooms !== undefined) updateData.rooms = data.rooms;
+    if (data.documentUrl !== undefined) updateData.documentUrl = data.documentUrl;
     const booking = await bookingRepository.updateSupplierBooking(
       new Types.ObjectId(id),
       agencyId,
       new Types.ObjectId(supplierBookingId),
-      data as any
+      updateData
     );
     if (!booking) {
       throw new AppError("Booking or supplier booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);

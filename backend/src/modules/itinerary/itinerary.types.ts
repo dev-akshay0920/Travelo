@@ -1,5 +1,5 @@
 import type { ItineraryDocument, ItineraryDay } from "./itinerary.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateItineraryInput {
   leadId?: string;

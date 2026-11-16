@@ -27,7 +27,6 @@ export function AdminShell({ children }: AdminShellProps) {
         items={items}
         brandHref="/admin"
         brandLabel="Travora"
-        sectionLabel="Administration"
       />
       <div className="flex h-dvh min-w-0 flex-1 flex-col lg:ml-60">
         <AppShellHeader role="admin" greeting="Administration" />

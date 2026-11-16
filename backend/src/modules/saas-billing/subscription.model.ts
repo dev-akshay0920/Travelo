@@ -1,4 +1,5 @@
-import { Schema, model, models, Document } from "mongoose";
+import type { Document } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface SubscriptionPlanDocument extends Document {
   name: string;

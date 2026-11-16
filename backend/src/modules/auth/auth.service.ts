@@ -3,6 +3,8 @@ import { Types } from "mongoose";
 import { RoleRepository } from "../roles/role.repository";
 import { UserRepository } from "../users/user.repository";
 import { AgencyRepository } from "../agencies/agency.repository";
+import { getPermissionsForRole } from "../staff/role-permissions";
+import { staffRepository } from "../staff/staff.repository";
 import { ConflictError, ValidationError, UnauthorizedError } from "../../shared/errors/app-error";
 import { signAccessToken } from "../../shared/utils/jwt";
 import type { SignUpPayload, SignUpResponse, SignInPayload, SignInResponse } from "./auth.types";
@@ -119,11 +121,27 @@ export const AuthService = {
     const roleName = user.roleId?.name ?? "";
 
     let agencyId: string | undefined;
+    let staffRole: string | undefined;
+    let permissions: string[] | undefined;
 
     if (roleKey === "agency") {
       const agency = await AgencyRepository.findByOwnerUserId(String(user._id));
       if (agency) {
         agencyId = String(agency._id);
+        staffRole = "owner";
+        permissions = getPermissionsForRole("owner");
+      }
+    }
+
+    if (!agencyId) {
+      const staff = await staffRepository.findActiveByUserId(new Types.ObjectId(String(user._id)));
+      if (staff) {
+        agencyId = String(staff.agencyId);
+        staffRole = staff.role;
+        permissions =
+          staff.permissions && staff.permissions.length > 0
+            ? staff.permissions
+            : getPermissionsForRole(staff.role);
       }
     }
 
@@ -133,6 +151,8 @@ export const AuthService = {
       roleKey,
       roleName,
       agencyId,
+      staffRole,
+      permissions,
     });
 
     const agency = agencyId

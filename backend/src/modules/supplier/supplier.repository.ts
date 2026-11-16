@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 import { SupplierModel, SupplierRateCardModel } from "./supplier.model";
 import type { SupplierDocument, SupplierRateCardDocument } from "./supplier.model";
 import type { SupplierListQuery, SupplierRateCardListQuery } from "./supplier.types";

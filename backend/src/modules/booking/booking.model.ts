@@ -1,4 +1,5 @@
-import { Schema, model, models, Document, Types } from "mongoose";
+import type { Document, Types } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export interface TravellerRoster {
   name: string;
@@ -10,6 +11,7 @@ export interface TravellerRoster {
 }
 
 export interface SupplierBooking {
+  _id?: Types.ObjectId;
   supplierId: Types.ObjectId;
   referenceNumber?: string;
   checkIn?: Date;
@@ -70,8 +72,7 @@ const SupplierBookingSchema = new Schema<SupplierBooking>(
     currency: { type: String, default: "INR" },
     status: { type: String, enum: ["pending", "confirmed", "cancelled"], default: "pending" },
     documentUrl: { type: String },
-  },
-  { _id: false }
+  }
 );
 
 const BookingSchema = new Schema<BookingDocument>(

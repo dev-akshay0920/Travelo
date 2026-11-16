@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
 import { InvoiceModel } from "./invoice.model";
-import type { InvoiceDocument } from "./invoice.model";
+import type { InvoiceDocument, InvoicePaymentMethod } from "./invoice.model";
 import type { InvoiceListQuery } from "./invoice.types";
+import { BookingPaymentModel } from "../booking-payment/booking-payment.model";
 
 interface InvoiceLean {
   _id: Types.ObjectId;
@@ -52,6 +53,7 @@ export class InvoiceRepository {
     notes?: string;
     termsAndConditions?: string;
   }): Promise<InvoiceDocument> {
+    const paidAmount = data.paidAmount || 0;
     const invoice = new InvoiceModel({
       ...data,
       agencyId: data.agencyId,
@@ -65,7 +67,15 @@ export class InvoiceRepository {
       gstin: data.gstin,
       taxPercentage: data.taxPercentage || 0,
       dueDate: data.dueDate,
-      paidAmount: data.paidAmount || 0,
+      paidAmount,
+      status:
+        paidAmount <= 0
+          ? data.dueDate && data.dueDate.getTime() < Date.now()
+            ? "overdue"
+            : "unpaid"
+          : paidAmount + 0.001 >= data.total
+            ? "paid"
+            : "partial",
       invoiceNumber: this.generateInvoiceNumber(),
       notes: data.notes,
       termsAndConditions: data.termsAndConditions,
@@ -180,13 +190,102 @@ export class InvoiceRepository {
     return InvoiceModel.findOneAndUpdate({ _id: id, agencyId }, { $set: { status } }, { new: true }).exec();
   }
 
-  async recordPayment(id: Types.ObjectId, agencyId: Types.ObjectId, amount: number): Promise<InvoiceDocument | null> {
+  async addEmbeddedPayment(
+    id: Types.ObjectId,
+    agencyId: Types.ObjectId,
+    payment: {
+      amount: number;
+      method: InvoicePaymentMethod;
+      transactionId?: string;
+      notes?: string;
+      paidAt: Date;
+      recordedBy?: Types.ObjectId;
+    }
+  ): Promise<InvoiceDocument | null> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return InvoiceModel.findOneAndUpdate(
       { _id: id, agencyId },
-      { $inc: { paidAmount: amount }, $set: { status: { $cond: [{ $gte: ["$paidAmount", "$total"] }, "paid", "partial"] } } },
+      { $push: { payments: payment } },
       { new: true }
     ).exec();
+  }
+
+  async getLedgerPaidAmount(
+    id: Types.ObjectId,
+    agencyId: Types.ObjectId
+  ): Promise<{ total: number; count: number }> {
+    const result = await BookingPaymentModel.aggregate([
+      { $match: { invoiceId: id, agencyId } },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]).exec();
+    return { total: result[0]?.total || 0, count: result[0]?.count || 0 };
+  }
+
+  async listLedgerPayments(
+    id: Types.ObjectId,
+    agencyId: Types.ObjectId
+  ): Promise<
+    Array<{
+      amount: number;
+      method: InvoicePaymentMethod;
+      transactionId?: string;
+      notes?: string;
+      paidAt: Date;
+      recordedBy?: Types.ObjectId;
+    }>
+  > {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const payments = await BookingPaymentModel.find({ invoiceId: id, agencyId })
+      .sort({ paidAt: -1 })
+      .lean()
+      .exec();
+    return payments.map((payment: {
+      amount: number;
+      method: InvoicePaymentMethod;
+      transactionId?: string;
+      notes?: string;
+      paidAt: Date;
+      recordedBy?: Types.ObjectId;
+    }) => ({
+      amount: payment.amount,
+      method: payment.method,
+      transactionId: payment.transactionId,
+      notes: payment.notes,
+      paidAt: payment.paidAt,
+      recordedBy: payment.recordedBy,
+    }));
+  }
+
+  async recalculateTotals(id: Types.ObjectId, agencyId: Types.ObjectId): Promise<InvoiceDocument | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const invoice = await InvoiceModel.findOne({ _id: id, agencyId }).exec();
+    if (!invoice) {
+      return null;
+    }
+
+    const ledger = await this.getLedgerPaidAmount(id, agencyId);
+    const embeddedPaid = (invoice.payments ?? []).reduce(
+      (sum: number, payment: { amount: number }) => sum + payment.amount,
+      0
+    );
+    const hasLedgerEntries = ledger.count > 0 || (invoice.payments?.length ?? 0) > 0;
+
+    if (hasLedgerEntries) {
+      invoice.paidAmount = ledger.total + embeddedPaid;
+    }
+    if (invoice.status !== "cancelled") {
+      const paidAmount = invoice.paidAmount ?? 0;
+      const overdue = Boolean(invoice.dueDate && invoice.dueDate.getTime() < Date.now());
+      if (paidAmount <= 0) {
+        invoice.status = overdue ? "overdue" : "unpaid";
+      } else if (paidAmount + 0.001 >= invoice.total) {
+        invoice.status = "paid";
+      } else {
+        invoice.status = overdue ? "overdue" : "partial";
+      }
+    }
+
+    return invoice.save();
   }
 }
 

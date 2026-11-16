@@ -23,7 +23,7 @@ export class AgencySubscriptionService {
     const now = new Date();
     const trialEndsAt = input.trialDays ? new Date(now.getTime() + input.trialDays * 24 * 60 * 60 * 1000) : undefined;
     
-    let periodEnd = new Date(now);
+    const periodEnd = new Date(now);
     if (input.billingCycle === "yearly") {
       periodEnd.setFullYear(periodEnd.getFullYear() + 1);
     } else {

@@ -1,5 +1,5 @@
 import type { SupplierDocument, SupplierRateCardDocument } from "./supplier.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateSupplierInput {
   name: string;

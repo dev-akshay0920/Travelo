@@ -1,10 +1,9 @@
 import { Types } from "mongoose";
 import {
-  ForbiddenError,
   NotFoundError,
   UnauthorizedError,
 } from "../../shared/errors/app-error";
-import { AgencyRepository } from "../agencies/agency.repository";
+import { requireAgencyMemberDocument } from "../staff/agency-membership.service";
 import { UserRepository } from "../users/user.repository";
 import { Lead } from "../leads/lead.model";
 import type { LeadActivityDocument } from "./lead-activity.model";
@@ -48,23 +47,13 @@ async function getActiveUser(userId: string) {
   return user;
 }
 
-async function requireAgencyOwner(userId: string) {
-  const user = await getActiveUser(userId);
-  if (user.roleId?.key !== "agency") {
-    throw new ForbiddenError("Agency owner access is required.");
-  }
-  const agency = await AgencyRepository.findByOwnerUserId(userId);
-  if (!agency) throw new NotFoundError("Agency profile not found.");
-  return agency;
-}
-
 export const LeadActivityService = {
   async create(
     userId: string,
     input: CreateLeadActivityInput
   ): Promise<LeadActivityDTO> {
     const user = await getActiveUser(userId);
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
 
     // Verify lead belongs to agency
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
@@ -91,7 +80,7 @@ export const LeadActivityService = {
     leadId: string,
     filters: ListLeadActivitiesQuery
   ): Promise<{ items: LeadActivityDTO[]; total: number; page: number; limit: number; totalPages: number }> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
 
     // Verify lead belongs to agency
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript

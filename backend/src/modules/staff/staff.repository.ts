@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 import { StaffModel } from "./staff.model";
 import type { StaffDocument } from "./staff.model";
 import type { StaffListQuery, StaffRole } from "./staff.types";
@@ -47,6 +47,11 @@ export class StaffRepository {
   async findByUserIdAndAgency(userId: Types.ObjectId, agencyId: Types.ObjectId): Promise<StaffDocument | null> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return StaffModel.findOne({ userId, agencyId }).exec();
+  }
+
+  async findActiveByUserId(userId: Types.ObjectId): Promise<StaffDocument | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return StaffModel.findOne({ userId, isActive: true }).exec();
   }
 
   async updateByIdAndAgency(

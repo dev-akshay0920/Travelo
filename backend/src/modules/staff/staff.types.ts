@@ -1,5 +1,5 @@
 import type { StaffDocument } from "./staff.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export type StaffRole = "owner" | "admin" | "manager" | "agent" | "accountant" | "viewer";
 

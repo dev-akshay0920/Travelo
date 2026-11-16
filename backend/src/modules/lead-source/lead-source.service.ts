@@ -1,11 +1,7 @@
-import { Types } from "mongoose";
 import {
-  ForbiddenError,
   NotFoundError,
-  UnauthorizedError,
 } from "../../shared/errors/app-error";
-import { AgencyRepository } from "../agencies/agency.repository";
-import { UserRepository } from "../users/user.repository";
+import { requireAgencyMemberDocument } from "../staff/agency-membership.service";
 import type { LeadSourceDocument } from "./lead-source.model";
 import { LeadSourceRepository } from "./lead-source.repository";
 import type {
@@ -40,29 +36,12 @@ function toLeadSourceDTO(source: LeadSourceDocument): LeadSourceDTO {
   };
 }
 
-async function getActiveUser(userId: string) {
-  if (!Types.ObjectId.isValid(userId)) throw new UnauthorizedError();
-  const user = await UserRepository.findByIdWithRole(userId);
-  if (!user || user.status !== "active") throw new UnauthorizedError();
-  return user;
-}
-
-async function requireAgencyOwner(userId: string) {
-  const user = await getActiveUser(userId);
-  if (user.roleId?.key !== "agency") {
-    throw new ForbiddenError("Agency owner access is required.");
-  }
-  const agency = await AgencyRepository.findByOwnerUserId(userId);
-  if (!agency) throw new NotFoundError("Agency profile not found.");
-  return agency;
-}
-
 export const LeadSourceService = {
   async create(
     userId: string,
     input: CreateLeadSourceInput
   ): Promise<LeadSourceDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const source = await LeadSourceRepository.create({
       agencyId: agency._id,
       name: input.name,
@@ -79,7 +58,7 @@ export const LeadSourceService = {
     userId: string,
     filters: ListLeadSourcesQuery
   ): Promise<{ items: LeadSourceDTO[]; total: number; page: number; limit: number; totalPages: number }> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const { items, total } = await LeadSourceRepository.listByAgency(
       String(agency._id),
       filters
@@ -94,7 +73,7 @@ export const LeadSourceService = {
   },
 
   async getById(userId: string, id: string): Promise<LeadSourceDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const source = await LeadSourceRepository.findByIdAndAgency(id, String(agency._id));
     if (!source) throw new NotFoundError("Lead source not found.");
     return toLeadSourceDTO(source);
@@ -105,14 +84,14 @@ export const LeadSourceService = {
     id: string,
     input: UpdateLeadSourceInput
   ): Promise<LeadSourceDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const source = await LeadSourceRepository.updateByIdAndAgency(id, String(agency._id), input);
     if (!source) throw new NotFoundError("Lead source not found.");
     return toLeadSourceDTO(source);
   },
 
   async delete(userId: string, id: string): Promise<void> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const source = await LeadSourceRepository.deleteByIdAndAgency(id, String(agency._id));
     if (!source) throw new NotFoundError("Lead source not found.");
   },

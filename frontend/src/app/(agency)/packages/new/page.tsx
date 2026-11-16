@@ -148,7 +148,7 @@ export default function NewPackagePage() {
     try {
       const response = await createPackageApi(form);
       toast.success("Package created successfully.");
-      router.push(`/agency/packages/${response.package.id}/edit`);
+      router.push(`/packages/${response.package.id}/edit`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create package.";
       toast.error(message);

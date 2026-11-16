@@ -16,7 +16,7 @@ export const LeadSourceRepository = {
   async listByAgency(
     agencyId: string,
     filters: LeadSourceListFilters
-  ): Promise<{ items: LeadSourceDocument[]; total: number }> {
+  ): Promise<{ items: LeadSourceDocument[]; total: number; page: number; limit: number; totalPages: number }> {
     const query: Record<string, unknown> = { agencyId: new Types.ObjectId(agencyId) };
     if (filters.isActive !== undefined) query.isActive = filters.isActive;
     const [items, total] = await Promise.all([
@@ -28,7 +28,13 @@ export const LeadSourceRepository = {
         .exec(),
       LeadSource.countDocuments(query).exec(),
     ]);
-    return { items, total };
+    return {
+      items,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
   },
 
   async findByIdAndAgency(id: string, agencyId: string): Promise<LeadSourceDocument | null> {

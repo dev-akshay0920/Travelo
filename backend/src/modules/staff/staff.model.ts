@@ -1,4 +1,5 @@
-import { Schema, model, models, Document, Types } from "mongoose";
+import type { Document, Types } from "mongoose";
+import { Schema, model, models } from "mongoose";
 
 export type StaffRole = "owner" | "admin" | "manager" | "agent" | "accountant" | "viewer";
 

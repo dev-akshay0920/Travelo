@@ -1,5 +1,7 @@
 import { Types } from "mongoose";
 import { bookingPaymentRepository } from "./booking-payment.repository";
+import { invoiceRepository } from "../invoice/invoice.repository";
+import { bookingRepository } from "../booking/booking.repository";
 import type { CreateBookingPaymentInput, UpdateBookingPaymentInput, BookingPaymentListQuery, BookingPaymentDTO, BookingPaymentListResponse } from "./booking-payment.types";
 import { toBookingPaymentDTO } from "./booking-payment.types";
 import { AppError } from "../../shared/errors/app-error";
@@ -18,6 +20,7 @@ export class BookingPaymentService {
     };
 
     const payment = await bookingPaymentRepository.create(data);
+    await this.syncTotals(agencyId, data.bookingId, data.invoiceId);
     return toBookingPaymentDTO(payment);
   }
 
@@ -30,6 +33,11 @@ export class BookingPaymentService {
   }
 
   async update(id: string, agencyId: Types.ObjectId, input: UpdateBookingPaymentInput): Promise<BookingPaymentDTO> {
+    const existing = await bookingPaymentRepository.findByIdAndAgency(new Types.ObjectId(id), agencyId);
+    if (!existing) {
+      throw new AppError("Payment not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+
     const updateData: Record<string, unknown> = { ...input };
     if (input.bookingId) updateData.bookingId = new Types.ObjectId(input.bookingId);
     if (input.invoiceId) updateData.invoiceId = new Types.ObjectId(input.invoiceId);
@@ -39,14 +47,27 @@ export class BookingPaymentService {
     if (!payment) {
       throw new AppError("Payment not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
+
+    await this.syncTotals(agencyId, payment.bookingId, payment.invoiceId);
+    if (existing.bookingId && !existing.bookingId.equals(payment.bookingId)) {
+      await this.syncTotals(agencyId, existing.bookingId, existing.invoiceId);
+    }
+    if (existing.invoiceId && !existing.invoiceId.equals(payment.invoiceId)) {
+      await this.syncTotals(agencyId, existing.bookingId, existing.invoiceId);
+    }
     return toBookingPaymentDTO(payment);
   }
 
   async delete(id: string, agencyId: Types.ObjectId): Promise<void> {
+    const existing = await bookingPaymentRepository.findByIdAndAgency(new Types.ObjectId(id), agencyId);
+    if (!existing) {
+      throw new AppError("Payment not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
     const deleted = await bookingPaymentRepository.deleteByIdAndAgency(new Types.ObjectId(id), agencyId);
     if (!deleted) {
       throw new AppError("Payment not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
+    await this.syncTotals(agencyId, existing.bookingId, existing.invoiceId);
   }
 
   async list(agencyId: Types.ObjectId, query: BookingPaymentListQuery): Promise<BookingPaymentListResponse> {
@@ -67,6 +88,19 @@ export class BookingPaymentService {
 
   async getTotalPaidForBooking(bookingId: string, agencyId: Types.ObjectId): Promise<number> {
     return bookingPaymentRepository.getTotalPaidForBooking(new Types.ObjectId(bookingId), agencyId);
+  }
+
+  private async syncTotals(
+    agencyId: Types.ObjectId,
+    bookingId?: Types.ObjectId | null,
+    invoiceId?: Types.ObjectId | null
+  ): Promise<void> {
+    if (bookingId) {
+      await bookingRepository.recalculatePaidAmount(bookingId, agencyId);
+    }
+    if (invoiceId) {
+      await invoiceRepository.recalculateTotals(invoiceId, agencyId);
+    }
   }
 }
 

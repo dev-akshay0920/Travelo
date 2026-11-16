@@ -33,7 +33,6 @@ export function TravellerShell({ children }: TravellerShellProps) {
         items={items}
         brandHref="/traveller/explore"
         brandLabel="Travora"
-        sectionLabel="Travel workspace"
       />
 
       <div className="flex h-dvh min-w-0 flex-1 flex-col lg:ml-60">

@@ -6,12 +6,22 @@ import {
   ValidationError,
 } from "../../shared/errors/app-error";
 import { AgencyRepository } from "../agencies/agency.repository";
+import {
+  requireAgencyMemberDocument,
+  requireAgencyOwnerDocument,
+} from "../staff/agency-membership.service";
 import { PackageRepository } from "../packages/package.repository";
 import { UserRepository } from "../users/user.repository";
-import type { AgencyDocument } from "../agencies/agency.model";
+
 import type { LeadDocument, LeadStatus } from "./lead.model";
 import { LeadRepository } from "./lead.repository";
-import type { CreateLeadInput, ListLeadsQuery, UpdateLeadInput } from "./lead.validation";
+import type {
+  BulkImportLeadsInput,
+  CreateAgencyLeadInput,
+  CreateLeadInput,
+  ListLeadsQuery,
+  UpdateLeadInput,
+} from "./lead.validation";
 import type { ListMyLeadsQuery } from "./lead.validation";
 import { Package } from "../packages/package.model";
 
@@ -104,16 +114,6 @@ async function getActiveUser(userId: string) {
   return user;
 }
 
-async function requireAgencyOwner(userId: string): Promise<AgencyDocument> {
-  const user = await getActiveUser(userId);
-  if (user.roleId?.key !== "agency") {
-    throw new ForbiddenError("Agency owner access is required.");
-  }
-  const agency = await AgencyRepository.findByOwnerUserId(userId);
-  if (!agency) throw new NotFoundError("Agency profile not found.");
-  return agency;
-}
-
 async function requireTraveler(userId: string) {
   const user = await getActiveUser(userId);
   if (user.roleId?.key !== "traveller") {
@@ -197,8 +197,85 @@ export const LeadService = {
     };
   },
 
+  async createForAgency(userId: string, input: CreateAgencyLeadInput): Promise<LeadDTO> {
+    const agency = await requireAgencyMemberDocument(userId);
+    let packageName: string | undefined;
+    if (input.packageId) {
+      const pkg = await PackageRepository.findById(input.packageId);
+      if (pkg && String(pkg.agencyId) === String(agency._id)) {
+        packageName = pkg.name;
+      }
+    }
+
+    const lead = await LeadRepository.create({
+      agencyId: agency._id,
+      ...(input.packageId ? { packageId: new Types.ObjectId(input.packageId) } : {}),
+      ...(packageName ? { packageName } : {}),
+      travelerId: new Types.ObjectId(userId),
+      travelerName: input.travelerName,
+      travelerEmail: input.travelerEmail.toLowerCase(),
+      ...(input.travelerPhone ? { travelerPhone: input.travelerPhone } : {}),
+      message: input.message?.trim() || "Lead added by agency.",
+      ...(input.requestedStartDate
+        ? { requestedStartDate: new Date(`${input.requestedStartDate}T00:00:00.000Z`) }
+        : {}),
+      ...(input.travelerCount !== undefined ? { travelerCount: input.travelerCount } : {}),
+      status: "new",
+      agencyNote: "",
+      ...(input.pipelineStageId
+        ? { pipelineStageId: new Types.ObjectId(input.pipelineStageId) }
+        : {}),
+      ...(input.leadSourceId
+        ? { leadSourceId: new Types.ObjectId(input.leadSourceId) }
+        : {}),
+      ...(input.assignedStaffId
+        ? { assignedStaffId: new Types.ObjectId(input.assignedStaffId) }
+        : {}),
+      ...(input.estimatedValue !== undefined
+        ? { estimatedValue: input.estimatedValue }
+        : {}),
+      ...(input.probability !== undefined ? { probability: input.probability } : {}),
+      ...(input.expectedCloseDate
+        ? { expectedCloseDate: new Date(`${input.expectedCloseDate}T00:00:00.000Z`) }
+        : {}),
+      ...(input.nextFollowUpAt
+        ? { nextFollowUpAt: new Date(`${input.nextFollowUpAt}T00:00:00.000Z`) }
+        : {}),
+      ...(input.utmSource ? { utmSource: input.utmSource } : {}),
+      ...(input.utmMedium ? { utmMedium: input.utmMedium } : {}),
+      ...(input.utmCampaign ? { utmCampaign: input.utmCampaign } : {}),
+    });
+
+    return toLeadDTO(lead);
+  },
+
+  async bulkImportForAgency(userId: string, input: BulkImportLeadsInput) {
+    await requireAgencyOwnerDocument(userId);
+    const leadIds: string[] = [];
+    const errors: Array<{ email: string; message: string }> = [];
+
+    for (const item of input.leads) {
+      try {
+        const lead = await LeadService.createForAgency(userId, item);
+        leadIds.push(lead.id);
+      } catch (error) {
+        errors.push({
+          email: item.travelerEmail,
+          message: error instanceof Error ? error.message : "Import failed.",
+        });
+      }
+    }
+
+    return {
+      created: leadIds.length,
+      failed: errors.length,
+      leadIds,
+      errors,
+    };
+  },
+
   async list(userId: string, filters: ListLeadsQuery) {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const { items, total } = await LeadRepository.listByAgency(String(agency._id), filters);
     return {
       items: items.map(toLeadDTO),
@@ -245,21 +322,21 @@ export const LeadService = {
   },
 
   async getById(userId: string, id: string): Promise<LeadDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const lead = await LeadRepository.findByIdAndAgency(id, String(agency._id));
     if (!lead) throw new NotFoundError("Inquiry not found.");
     return toLeadDTO(lead);
   },
 
   async update(userId: string, id: string, input: UpdateLeadInput): Promise<LeadDTO> {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const lead = await LeadRepository.updateByIdAndAgency(id, String(agency._id), input);
     if (!lead) throw new NotFoundError("Inquiry not found.");
     return toLeadDTO(lead);
   },
 
   async getDashboard(userId: string) {
-    const agency = await requireAgencyOwner(userId);
+    const agency = await requireAgencyMemberDocument(userId);
     const agencyId = String(agency._id);
     const [packageCounts, leadCounts, latest] = await Promise.all([
       Promise.all([

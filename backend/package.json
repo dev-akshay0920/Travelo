@@ -12,6 +12,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "seed:travel-data": "tsx src/scripts/seed-travel-data.ts",
+    "smoke:crm": "tsx src/scripts/smoke-crm.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },

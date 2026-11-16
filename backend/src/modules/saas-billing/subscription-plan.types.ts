@@ -1,5 +1,5 @@
 import type { SubscriptionPlanDocument } from "./subscription.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateSubscriptionPlanInput {
   name: string;

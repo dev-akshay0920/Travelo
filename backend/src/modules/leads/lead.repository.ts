@@ -3,6 +3,7 @@ import type { LeadDocument, LeadStatus } from "./lead.model";
 import { Lead } from "./lead.model";
 
 export interface LeadListFilters {
+  search?: string;
   status?: LeadStatus;
   pipelineStageId?: string;
   leadSourceId?: string;
@@ -20,10 +21,19 @@ export const LeadRepository = {
   async listByAgency(
     agencyId: string,
     filters: LeadListFilters
-  ): Promise<{ items: LeadDocument[]; total: number }> {
+  ): Promise<{ items: LeadDocument[]; total: number; page: number; limit: number; totalPages: number }> {
     const query: Record<string, unknown> = {
       agencyId: new Types.ObjectId(agencyId),
     };
+    if (filters.search) {
+      const pattern = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      query.$or = [
+        { travelerName: pattern },
+        { travelerEmail: pattern },
+        { travelerPhone: pattern },
+        { message: pattern },
+      ];
+    }
     if (filters.status) query.status = filters.status;
     if (filters.pipelineStageId) query.pipelineStageId = new Types.ObjectId(filters.pipelineStageId);
     if (filters.leadSourceId) query.leadSourceId = new Types.ObjectId(filters.leadSourceId);
@@ -43,13 +53,19 @@ export const LeadRepository = {
       Lead.countDocuments(query).exec(),
     ]);
 
-    return { items, total };
+    return {
+      items,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
   },
 
   async listByTraveler(
     travelerId: string,
     filters: Pick<LeadListFilters, "page" | "limit">
-  ): Promise<{ items: LeadDocument[]; total: number }> {
+  ): Promise<{ items: LeadDocument[]; total: number; page: number; limit: number; totalPages: number }> {
     const query = { travelerId: new Types.ObjectId(travelerId) };
     const [items, total] = await Promise.all([
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
@@ -61,7 +77,13 @@ export const LeadRepository = {
         .exec(),
       Lead.countDocuments(query).exec(),
     ]);
-    return { items, total };
+    return {
+      items,
+      total,
+      page: filters.page,
+      limit: filters.limit,
+      totalPages: total ? Math.ceil(total / filters.limit) : 0,
+    };
   },
 
   async findByIdAndTraveler(id: string, travelerId: string): Promise<LeadDocument | null> {

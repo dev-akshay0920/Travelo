@@ -1,49 +1,50 @@
-import { Request, Response } from "express";
-import { Types } from "mongoose";
+import type { Request, Response } from "express";
 import { supplierService } from "./supplier.service";
+import type { SupplierListQuery, SupplierRateCardListQuery } from "./supplier.types";
 import { asyncHandler } from "../../shared/utils/async-handler";
+import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 
 export class SupplierController {
   create = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     const supplier = await supplierService.create(agencyId, req.body);
     res.status(HTTP_STATUS.CREATED).json(success({ supplier }, { message: "Supplier created successfully" }));
   });
 
   getById = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     const supplier = await supplierService.getById(req.params.id!, agencyId);
     res.status(HTTP_STATUS.OK).json(success({ supplier }));
   });
 
   update = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     const supplier = await supplierService.update(req.params.id!, agencyId, req.body);
     res.status(HTTP_STATUS.OK).json(success({ supplier }, { message: "Supplier updated successfully" }));
   });
 
   delete = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     await supplierService.delete(req.params.id!, agencyId);
     res.status(HTTP_STATUS.OK).json(success(null, { message: "Supplier deleted successfully" }));
   });
 
   list = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
-    const result = await supplierService.list(agencyId, req.query as any);
+    const agencyId = resolveAgencyId(req);
+    const result = await supplierService.list(agencyId, req.query as SupplierListQuery);
     res.status(HTTP_STATUS.OK).json(success({ suppliers: result }));
   });
 
   getByCategory = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     const suppliers = await supplierService.getByCategory(agencyId, req.params.category!);
     res.status(HTTP_STATUS.OK).json(success({ suppliers }));
   });
 
   getCategoryCounts = asyncHandler(async (req: Request, res: Response) => {
-    const agencyId = new Types.ObjectId((req as any).user.agencyId);
+    const agencyId = resolveAgencyId(req);
     const counts = await supplierService.countByCategory(agencyId);
     res.status(HTTP_STATUS.OK).json(success({ counts }));
   });
@@ -78,7 +79,7 @@ export class SupplierController {
 
   listRateCards = asyncHandler(async (req: Request, res: Response) => {
     const supplierId = req.params.supplierId!;
-    const result = await supplierService.listRateCards(supplierId, req.query as any);
+    const result = await supplierService.listRateCards(supplierId, req.query as SupplierRateCardListQuery);
     res.status(HTTP_STATUS.OK).json(success({ rateCards: result }));
   });
 }

@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import { staffRepository } from "./staff.repository";
+import type { StaffRole } from "./staff.model";
 import type { CreateStaffInput, UpdateStaffInput, StaffListQuery, StaffDTO, StaffListResponse } from "./staff.types";
 import { toStaffDTO } from "./staff.types";
 import { getPermissionsForRole } from "./role-permissions";
@@ -60,8 +61,8 @@ export class StaffService {
     };
   }
 
-  async getByRole(agencyId: Types.ObjectId, role: string): Promise<StaffDTO[]> {
-    const staff = await staffRepository.getByRole(agencyId, role as any);
+  async getByRole(agencyId: Types.ObjectId, role: StaffRole): Promise<StaffDTO[]> {
+    const staff = await staffRepository.getByRole(agencyId, role);
     return staff.map((doc) => toStaffDTO(doc));
   }
 

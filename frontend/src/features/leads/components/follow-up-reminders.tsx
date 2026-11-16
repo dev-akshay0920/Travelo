@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Clock, CheckCircle, Circle, User, Calendar, MessageSquare, Phone, Mail } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Clock, CheckCircle, User, Calendar, MessageSquare, Phone, Mail } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getDueFollowUpRemindersApi, getFollowUpRemindersApi, updateFollowUpReminderApi } from "@/features/leads/api/followups.api";
+import { getDueFollowUpRemindersApi, updateFollowUpReminderApi } from "@/features/leads/api/followups.api";
 import type { FollowUpReminder } from "@/features/leads/types/lead.types";
 
 interface FollowUpReminderListProps {
@@ -24,28 +24,29 @@ export function FollowUpReminderList({ agencyId }: FollowUpReminderListProps) {
   const [reminders, setReminders] = useState<FollowUpReminder[]>([]);
   const [isDueLoading, setIsDueLoading] = useState(true);
 
-  useEffect(() => {
-    loadDue();
-  }, []);
-
-  const loadDue = async () => {
+  const loadDue = useCallback(async () => {
     setIsDueLoading(true);
     try {
       const due = await getDueFollowUpRemindersApi();
       setReminders(due);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load due reminders");
     } finally {
       setIsDueLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadDue();
+  }, [loadDue]);
 
   const handleComplete = async (id: string) => {
     try {
       await updateFollowUpReminderApi(id, { isCompleted: true });
       toast.success("Follow-up marked as complete");
-      loadDue();
-    } catch (err) {
+      await loadDue();
+    } catch {
       toast.error("Failed to update reminder");
     }
   };

@@ -1,4 +1,22 @@
-import { Schema, model, models, Document, Types } from "mongoose";
+import type { Document, Types } from "mongoose";
+import { Schema, model, models } from "mongoose";
+
+export type InvoicePaymentMethod =
+  | "cash"
+  | "bank_transfer"
+  | "cheque"
+  | "online_link"
+  | "razorpay"
+  | "stripe";
+
+export interface InvoicePaymentEntry {
+  amount: number;
+  method: InvoicePaymentMethod;
+  transactionId?: string;
+  notes?: string;
+  paidAt: Date;
+  recordedBy?: Types.ObjectId;
+}
 
 export interface InvoiceDocument extends Document {
   agencyId: Types.ObjectId;
@@ -15,6 +33,7 @@ export interface InvoiceDocument extends Document {
   taxPercentage: number;
   dueDate?: Date;
   paidAmount: number;
+  payments: InvoicePaymentEntry[];
   pdfUrl?: string;
   pdfKey?: string;
   paymentLinkUrl?: string;
@@ -24,6 +43,22 @@ export interface InvoiceDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+const InvoicePaymentEntrySchema = new Schema<InvoicePaymentEntry>(
+  {
+    amount: { type: Number, required: true, min: 0 },
+    method: {
+      type: String,
+      enum: ["cash", "bank_transfer", "cheque", "online_link", "razorpay", "stripe"],
+      required: true,
+    },
+    transactionId: { type: String, trim: true },
+    notes: { type: String, trim: true },
+    paidAt: { type: Date, default: Date.now },
+    recordedBy: { type: Schema.Types.ObjectId, ref: "User" },
+  },
+  { _id: false }
+);
 
 const InvoiceSchema = new Schema<InvoiceDocument>(
   {
@@ -41,6 +76,7 @@ const InvoiceSchema = new Schema<InvoiceDocument>(
     taxPercentage: { type: Number, default: 0 },
     dueDate: { type: Date },
     paidAmount: { type: Number, default: 0 },
+    payments: { type: [InvoicePaymentEntrySchema], default: [] },
     pdfUrl: { type: String },
     pdfKey: { type: String },
     paymentLinkUrl: { type: String },

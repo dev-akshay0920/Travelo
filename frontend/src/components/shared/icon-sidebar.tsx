@@ -26,7 +26,6 @@ interface IconSidebarProps {
   footerItems?: SidebarItem[];
   brandHref?: string;
   brandLabel?: string;
-  sectionLabel?: string;
 }
 
 function NavigationItem({ item }: { item: SidebarItem }) {
@@ -38,7 +37,7 @@ function NavigationItem({ item }: { item: SidebarItem }) {
     </>
   );
   const className = cn(
-    "relative inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 text-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none lg:min-h-10 lg:w-full lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-left",
+    "relative inline-flex min-h-11 min-w-14 flex-1 flex-col items-center justify-center gap-1 rounded-md px-1 text-center text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none lg:min-h-10 lg:w-full lg:min-w-0 lg:flex-none lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-left",
     item.isActive &&
       "bg-accent text-accent-foreground before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary hover:bg-accent",
   );
@@ -71,7 +70,6 @@ export function IconSidebar({
   footerItems = [],
   brandHref = "/",
   brandLabel = "Home",
-  sectionLabel = "Workspace",
 }: IconSidebarProps) {
   return (
     <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-t-0">
@@ -86,14 +84,11 @@ export function IconSidebar({
           <span className="truncate text-sm font-semibold tracking-tight">{brandLabel}</span>
         </Link>
       </div>
-      <div className="flex items-center justify-around gap-1 px-2 py-2 lg:flex-1 lg:flex-col lg:justify-between lg:gap-4 lg:overflow-y-auto lg:px-3 lg:py-4">
+      <div className="flex items-center gap-1 px-2 py-2 lg:flex-1 lg:flex-col lg:justify-between lg:gap-4 lg:overflow-y-auto lg:px-3 lg:py-4">
         <nav
           aria-label="Main navigation"
-          className="flex flex-1 items-center justify-around gap-1 lg:flex-col lg:items-stretch lg:justify-start"
+          className="flex flex-1 items-center gap-1 overflow-x-auto lg:flex-col lg:items-stretch lg:justify-start lg:overflow-visible"
         >
-          <span className="hidden px-3 pb-1 text-caption font-semibold uppercase tracking-wide text-muted-foreground lg:block">
-            {sectionLabel}
-          </span>
           {items.map((item) => (
             <NavigationItem key={item.label} item={item} />
           ))}

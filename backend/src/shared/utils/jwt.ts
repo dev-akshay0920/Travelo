@@ -8,6 +8,8 @@ export interface AccessTokenPayload {
   roleKey: string;
   roleName: string;
   agencyId?: string;
+  staffRole?: string;
+  permissions?: string[];
 }
 
 export const signAccessToken = (payload: AccessTokenPayload): string => {

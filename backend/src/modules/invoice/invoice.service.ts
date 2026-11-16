@@ -1,6 +1,16 @@
 import { Types } from "mongoose";
 import { invoiceRepository } from "./invoice.repository";
-import type { CreateInvoiceInput, UpdateInvoiceInput, InvoiceListQuery, InvoiceDTO, InvoiceListResponse } from "./invoice.types";
+import { bookingPaymentRepository } from "../booking-payment/booking-payment.repository";
+import { bookingRepository } from "../booking/booking.repository";
+import type {
+  CreateInvoiceInput,
+  UpdateInvoiceInput,
+  InvoiceListQuery,
+  InvoiceDTO,
+  InvoiceListResponse,
+  RecordInvoicePaymentInput,
+} from "./invoice.types";
+import type { InvoiceDocument } from "./invoice.model";
 import { toInvoiceDTO } from "./invoice.types";
 import { AppError } from "../../shared/errors/app-error";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -21,11 +31,36 @@ export class InvoiceService {
   }
 
   async getById(id: string, agencyId: Types.ObjectId): Promise<InvoiceDTO> {
-    const invoice = await invoiceRepository.findByIdAndAgency(new Types.ObjectId(id), agencyId);
+    const invoiceId = new Types.ObjectId(id);
+    const invoice = await invoiceRepository.findByIdAndAgency(invoiceId, agencyId);
     if (!invoice) {
       throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
-    return toInvoiceDTO(invoice);
+    return this.toInvoiceWithPayments(invoice, agencyId);
+  }
+
+  private async toInvoiceWithPayments(
+    invoice: InvoiceDocument,
+    agencyId: Types.ObjectId
+  ): Promise<InvoiceDTO> {
+    const dto = toInvoiceDTO(invoice);
+    const ledgerPayments = await invoiceRepository.listLedgerPayments(invoice._id, agencyId);
+    if (ledgerPayments.length === 0) {
+      return dto;
+    }
+    const embeddedPayments = dto.payments ?? [];
+    const merged = [
+      ...ledgerPayments.map((payment) => ({
+        amount: payment.amount,
+        method: payment.method,
+        transactionId: payment.transactionId,
+        notes: payment.notes,
+        paidAt: new Date(payment.paidAt).toISOString(),
+        recordedBy: payment.recordedBy?.toString(),
+      })),
+      ...embeddedPayments,
+    ].sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
+    return { ...dto, payments: merged };
   }
 
   async update(id: string, agencyId: Types.ObjectId, input: UpdateInvoiceInput): Promise<InvoiceDTO> {
@@ -39,7 +74,8 @@ export class InvoiceService {
     if (!invoice) {
       throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
-    return toInvoiceDTO(invoice);
+    const recalculated = await invoiceRepository.recalculateTotals(new Types.ObjectId(id), agencyId);
+    return toInvoiceDTO(recalculated ?? invoice);
   }
 
   async delete(id: string, agencyId: Types.ObjectId): Promise<void> {
@@ -87,12 +123,68 @@ export class InvoiceService {
     return toInvoiceDTO(invoice);
   }
 
-  async recordPayment(id: string, agencyId: Types.ObjectId, amount: number): Promise<InvoiceDTO> {
-    const invoice = await invoiceRepository.recordPayment(new Types.ObjectId(id), agencyId, amount);
+  async recordPayment(
+    id: string,
+    agencyId: Types.ObjectId,
+    input: RecordInvoicePaymentInput,
+    userId?: Types.ObjectId
+  ): Promise<InvoiceDTO> {
+    const invoiceId = new Types.ObjectId(id);
+    const invoice = await invoiceRepository.findByIdAndAgency(invoiceId, agencyId);
     if (!invoice) {
       throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
-    return toInvoiceDTO(invoice);
+    if (invoice.status === "cancelled") {
+      throw new AppError(
+        "Payments cannot be recorded against a cancelled invoice",
+        HTTP_STATUS.CONFLICT,
+        ERROR_CODES.CONFLICT
+      );
+    }
+    if (!input.amount || input.amount <= 0) {
+      throw new AppError(
+        "Payment amount must be greater than 0",
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODES.VALIDATION_ERROR
+      );
+    }
+
+    const paidAt = input.paidAt ? new Date(input.paidAt) : new Date();
+
+    if (invoice.bookingId) {
+      await bookingPaymentRepository.create({
+        agencyId,
+        bookingId: invoice.bookingId,
+        invoiceId,
+        amount: input.amount,
+        currency: invoice.currency,
+        method: input.method,
+        transactionId: input.transactionId,
+        paidAt,
+        notes: input.notes,
+        recordedBy: userId ?? new Types.ObjectId(),
+      });
+    } else {
+      await invoiceRepository.addEmbeddedPayment(invoiceId, agencyId, {
+        amount: input.amount,
+        method: input.method,
+        transactionId: input.transactionId,
+        notes: input.notes,
+        paidAt,
+        recordedBy: userId,
+      });
+    }
+
+    const updatedInvoice = await invoiceRepository.recalculateTotals(invoiceId, agencyId);
+    if (!updatedInvoice) {
+      throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+
+    if (updatedInvoice.bookingId) {
+      await bookingRepository.recalculatePaidAmount(updatedInvoice.bookingId, agencyId);
+    }
+
+    return toInvoiceDTO(updatedInvoice);
   }
 }
 

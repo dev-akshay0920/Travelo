@@ -1,5 +1,5 @@
 import type { QuotationDocument } from "./quotation.model";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface CreateQuotationInput {
   leadId: string;

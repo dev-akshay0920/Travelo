@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { BookingModel } from "./booking.model";
 import type { BookingDocument, TravellerRoster, SupplierBooking } from "./booking.model";
 import type { BookingListQuery } from "./booking.types";
+import { BookingPaymentModel } from "../booking-payment/booking-payment.model";
 
 interface BookingLean {
   _id: Types.ObjectId;
@@ -224,16 +225,66 @@ export class BookingRepository {
     ).exec();
   }
 
+  async recalculatePaidAmount(
+    bookingId: Types.ObjectId,
+    agencyId: Types.ObjectId
+  ): Promise<BookingDocument | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const booking = await BookingModel.findOne({ _id: bookingId, agencyId }).exec();
+    if (!booking) {
+      return null;
+    }
+
+    const ledger = await BookingPaymentModel.aggregate([
+      { $match: { bookingId, agencyId } },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]).exec();
+    const paidAmount = ledger[0]?.total || 0;
+
+    if (ledger[0]?.count) {
+      booking.paidAmount = paidAmount;
+    }
+
+    if (!["cancelled", "refunded", "completed"].includes(booking.status)) {
+      if (paidAmount <= 0) {
+        if (booking.status === "deposit_paid") {
+          booking.status = "quoted";
+        }
+      } else if (booking.totalPrice > 0 && paidAmount + 0.001 >= booking.totalPrice) {
+        if (
+          booking.status === "enquiry" ||
+          booking.status === "quoted" ||
+          booking.status === "deposit_paid"
+        ) {
+          booking.status = "confirmed";
+        }
+      } else if (booking.status === "enquiry" || booking.status === "quoted") {
+        booking.status = "deposit_paid";
+      }
+    }
+
+    return booking.save();
+  }
+
   async updateSupplierBooking(
     bookingId: Types.ObjectId,
     agencyId: Types.ObjectId,
     supplierBookingId: Types.ObjectId,
     data: Partial<SupplierBooking>
   ): Promise<BookingDocument | null> {
+    const updates: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        updates[`supplierBookings.$.${key}`] = value;
+      }
+    }
+    if (Object.keys(updates).length === 0) {
+      return this.findByIdAndAgency(bookingId, agencyId);
+    }
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return BookingModel.findOneAndUpdate(
       { _id: bookingId, agencyId, "supplierBookings._id": supplierBookingId },
-      { $set: { "supplierBookings.$": { ...data, _id: supplierBookingId } } },
+      { $set: updates },
       { new: true }
     ).exec();
   }

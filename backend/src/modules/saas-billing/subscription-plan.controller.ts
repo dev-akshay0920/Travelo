@@ -1,5 +1,6 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { subscriptionPlanService } from "./subscription-plan.service";
+import type { SubscriptionPlanListQuery } from "./subscription-plan.types";
 import { asyncHandler } from "../../shared/utils/async-handler";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -31,7 +32,7 @@ export class SubscriptionPlanController {
   });
 
   list = asyncHandler(async (req: Request, res: Response) => {
-    const result = await subscriptionPlanService.list(req.query as any);
+    const result = await subscriptionPlanService.list(req.query as SubscriptionPlanListQuery);
     res.status(HTTP_STATUS.OK).json(success({ plans: result }));
   });
 
