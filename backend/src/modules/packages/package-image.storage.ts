@@ -9,6 +9,7 @@ import { env } from "../../config/env";
 import { ServiceUnavailableError, ValidationError } from "../../shared/errors/app-error";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_DOCUMENT_MIME_TYPES = [...ALLOWED_MIME_TYPES, "application/pdf"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_IMAGES = 5;
 const PRESIGNED_URL_EXPIRY = 15 * 60;
@@ -61,6 +62,14 @@ function validateFileSize(size: number): void {
   }
 }
 
+function validateDocumentMimeType(mimeType: string): void {
+  if (!ALLOWED_DOCUMENT_MIME_TYPES.includes(mimeType)) {
+    throw new ValidationError(
+      "Invalid file type. Only JPEG, PNG, WebP images and PDF documents are allowed."
+    );
+  }
+}
+
 function getExtensionFromMimeType(mimeType: string): string {
   switch (mimeType) {
     case "image/jpeg":
@@ -69,8 +78,10 @@ function getExtensionFromMimeType(mimeType: string): string {
       return "png";
     case "image/webp":
       return "webp";
+    case "application/pdf":
+      return "pdf";
     default:
-      return "jpg";
+      return "bin";
   }
 }
 
@@ -127,6 +138,38 @@ export const PackageImageStorage = {
     const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: PRESIGNED_URL_EXPIRY });
 
     return { uploadUrl, key, expiresIn: PRESIGNED_URL_EXPIRY };
+  },
+
+  async generatePresignedUploadUrlForKey(
+    key: string,
+    mimeType: string
+  ): Promise<{ uploadUrl: string; key: string; expiresIn: number }> {
+    validateDocumentMimeType(mimeType);
+
+    const settings = getS3Settings();
+    const command = new PutObjectCommand({
+      Bucket: settings.bucket,
+      Key: key,
+      ContentType: mimeType,
+    });
+
+    const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: PRESIGNED_URL_EXPIRY });
+
+    return { uploadUrl, key, expiresIn: PRESIGNED_URL_EXPIRY };
+  },
+
+  async presignDocumentUpload(
+    agencyId: string,
+    _fileName: string,
+    mimeType: string
+  ): Promise<{ uploadUrl: string; key: string; url: string; expiresIn: number }> {
+    validateDocumentMimeType(mimeType);
+
+    const settings = getS3Settings();
+    const key = `documents/${agencyId}/${uuidv4()}.${getExtensionFromMimeType(mimeType)}`;
+    const { uploadUrl } = await this.generatePresignedUploadUrlForKey(key, mimeType);
+
+    return { uploadUrl, key, url: makePublicUrl(settings.publicBaseUrl, key), expiresIn: PRESIGNED_URL_EXPIRY };
   },
 
   async uploadImage(

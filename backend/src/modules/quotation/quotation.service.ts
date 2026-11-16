@@ -1,10 +1,22 @@
 import { Types } from "mongoose";
 import { quotationRepository } from "./quotation.repository";
+import { bookingRepository } from "../booking/booking.repository";
+import { taskRepository } from "../task/task.repository";
+import { Lead } from "../leads/lead.model";
+import { Agency } from "../agencies/agency.model";
 import type { CreateQuotationInput, UpdateQuotationInput, QuotationListQuery, QuotationDTO, QuotationListResponse } from "./quotation.types";
+import type { QuotationDocument } from "./quotation.model";
+import type { BookingDocument } from "../booking/booking.model";
 import { toQuotationDTO } from "./quotation.types";
 import { AppError } from "../../shared/errors/app-error";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { ERROR_CODES } from "../../shared/constants/error-codes";
+
+export interface PublicAcceptResult {
+  quotation: QuotationDTO;
+  bookingId?: string;
+  bookingNumber?: string;
+}
 
 export class QuotationService {
   private generateQuotationNumber(): string {
@@ -121,7 +133,7 @@ export class QuotationService {
     return toQuotationDTO(quotation);
   }
 
-  async acceptQuotationPublic(token: string): Promise<QuotationDTO> {
+  async acceptQuotationPublic(token: string): Promise<PublicAcceptResult> {
     const quotation = await quotationRepository.findByPublicLink(token);
     if (!quotation) {
       throw new AppError("Quotation not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
@@ -131,11 +143,83 @@ export class QuotationService {
       throw new AppError("Quotation link has expired", HTTP_STATUS.GONE, ERROR_CODES.NOT_FOUND);
     }
 
-    const updated = await quotationRepository.markAsAccepted(quotation._id, quotation.agencyId);
-    if (!updated) {
+    if (quotation.status === "accepted" || quotation.status === "converted") {
+      return {
+        quotation: toQuotationDTO(quotation),
+        bookingId: quotation.convertedBookingId?.toString(),
+      };
+    }
+
+    const accepted = await quotationRepository.markAsAccepted(quotation._id, quotation.agencyId);
+    if (!accepted) {
       throw new AppError("Quotation cannot be accepted", HTTP_STATUS.BAD_REQUEST, ERROR_CODES.VALIDATION_ERROR);
     }
-    return toQuotationDTO(updated);
+
+    const booking = await this.createDraftBooking(accepted);
+    const converted = await quotationRepository.updateByIdAndAgency(
+      accepted._id,
+      accepted.agencyId,
+      { status: "converted", convertedBookingId: booking._id }
+    );
+
+    return {
+      quotation: toQuotationDTO(converted ?? accepted),
+      bookingId: booking._id.toString(),
+      bookingNumber: booking.bookingNumber,
+    };
+  }
+
+  private async createDraftBooking(quotation: QuotationDocument): Promise<BookingDocument> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const lead = await Lead.findOne({ _id: quotation.leadId, agencyId: quotation.agencyId }).exec();
+
+    const travellerName = lead?.travelerName ?? "Traveller";
+    const travellerEmail = lead?.travelerEmail;
+    const travellerPhone = lead?.travelerPhone;
+    const travellerCount = Math.min(Math.max(lead?.travelerCount ?? 1, 1), 20);
+
+    const startDate = lead?.requestedStartDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const booking = await bookingRepository.create({
+      agencyId: quotation.agencyId,
+      leadId: quotation.leadId,
+      quotationId: quotation._id,
+      itineraryId: quotation.itineraryId,
+      travellerId: lead?.travelerId,
+      travellers: Array.from({ length: travellerCount }, () => ({
+        name: travellerName,
+        email: travellerEmail,
+        phone: travellerPhone,
+      })),
+      startDate,
+      endDate,
+      departureDate: startDate,
+      status: "enquiry",
+      totalPrice: quotation.total,
+      currency: quotation.currency,
+    });
+
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const agency = await Agency.findById(quotation.agencyId).exec();
+    const ownerUserId = agency?.ownerUserId;
+    if (ownerUserId) {
+      await taskRepository.create({
+        agencyId: quotation.agencyId,
+        title: `Quotation ${quotation.quotationNumber} accepted - confirm booking`,
+        description: `A traveller accepted quotation ${quotation.quotationNumber}. A draft booking ${booking.bookingNumber} was created for review.`,
+        type: "booking",
+        status: "pending",
+        priority: "high",
+        dueAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        assignedTo: ownerUserId,
+        createdBy: ownerUserId,
+        leadId: quotation.leadId,
+        bookingId: booking._id,
+      });
+    }
+
+    return booking;
   }
 }
 

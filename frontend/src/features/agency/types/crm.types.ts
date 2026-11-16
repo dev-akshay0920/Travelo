@@ -98,6 +98,7 @@ export interface Quotation {
   shareLinkExpiresAt?: string;
   viewedAt?: string;
   acceptedAt?: string;
+  convertedBookingId?: string;
   notes?: string;
   termsAndConditions?: string;
   createdAt: string;

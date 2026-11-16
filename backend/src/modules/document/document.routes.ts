@@ -8,6 +8,7 @@ import {
   getDocumentSchema,
   listDocumentsSchema,
   deleteDocumentSchema,
+  uploadDocumentSchema,
 } from "./document.validation";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.get("/lead/:leadId", documentController.getByLeadId);
 router.get("/booking/:bookingId", documentController.getByBookingId);
 router.get("/invoice/:invoiceId", documentController.getByInvoiceId);
 router.get("/", validate(listDocumentsSchema), documentController.list);
+router.post("/upload", validate(uploadDocumentSchema), documentController.upload);
 router.get("/:id", validate(getDocumentSchema), documentController.getById);
 router.put("/:id", validate(updateDocumentSchema), documentController.update);
 router.delete("/:id", validate(deleteDocumentSchema), documentController.delete);

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BadgeCheck, FileText, Loader2, Printer } from "lucide-react";
@@ -17,6 +18,8 @@ export default function PublicQuotationPage() {
   const params = useParams<{ token: string }>();
   const token = String(params.token ?? "");
   const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [bookingNumber, setBookingNumber] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -44,13 +47,20 @@ export default function PublicQuotationPage() {
     setIsAccepting(true);
     try {
       const value = await acceptPublicQuotationApi(token);
-      setQuotation(value);
+      setQuotation(value.quotation);
+      if (value.bookingId) {
+        setBookingId(value.bookingId);
+        setBookingNumber(value.bookingNumber ?? null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not accept this quotation.");
     } finally {
       setIsAccepting(false);
     }
   };
+
+  const accepted =
+    quotation?.status === "accepted" || quotation?.status === "converted";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10">
@@ -128,7 +138,18 @@ export default function PublicQuotationPage() {
               </section>
             )}
 
-            {quotation.status === "accepted" || quotation.status === "converted" ? (
+            {accepted && bookingId && bookingNumber ? (
+              <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-4 text-body-sm text-emerald-700 dark:text-emerald-300">
+                <BadgeCheck className="size-5" aria-hidden="true" />
+                <span>
+                  This quotation has been accepted — booking <strong>{bookingNumber}</strong> was created.{" "}
+                  <Link href={`/agency/bookings/${bookingId}`} className="text-emerald-700 underline underline-offset-2 hover:text-emerald-800">
+                    Open booking
+                  </Link>
+                  . The agency will be in touch.
+                </span>
+              </div>
+            ) : accepted ? (
               <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-4 text-body-sm text-emerald-700 dark:text-emerald-300">
                 <BadgeCheck className="size-5" aria-hidden="true" />
                 This quotation has been accepted. The travel agency will be in touch.

@@ -19,6 +19,7 @@ export interface QuotationDocument extends Document {
   shareLinkExpiresAt?: Date;
   viewedAt?: Date;
   acceptedAt?: Date;
+  convertedBookingId?: Types.ObjectId;
   notes?: string;
   termsAndConditions?: string;
   createdAt: Date;
@@ -49,6 +50,7 @@ const QuotationSchema = new Schema<QuotationDocument>(
     shareLinkExpiresAt: { type: Date },
     viewedAt: { type: Date },
     acceptedAt: { type: Date },
+    convertedBookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
     notes: { type: String, trim: true },
     termsAndConditions: { type: String, trim: true },
   },

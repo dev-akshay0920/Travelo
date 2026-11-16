@@ -39,6 +39,13 @@ export class DocumentController {
     res.status(HTTP_STATUS.OK).json(success({ documents: result }));
   });
 
+  upload = asyncHandler(async (req: Request, res: Response) => {
+    const agencyId = resolveAgencyId(req);
+    const userId = new Types.ObjectId(req.user!.sub);
+    const upload = await documentService.uploadDocument(agencyId, userId, req.body);
+    res.status(HTTP_STATUS.OK).json(success(upload, { message: "Upload URL generated" }));
+  });
+
   getByLeadId = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
     const documents = await documentService.getByLeadId(req.params.leadId!, agencyId);

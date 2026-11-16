@@ -38,8 +38,8 @@ import { PageStack } from "@/components/shared/page-container";
 import { AgencyModulePage } from "@/features/agency/components/agency-module-page";
 import { StatCard, StatusPill } from "@/features/agency/components/crm-ui";
 import {
-  createStaffApi,
   deleteStaffApi,
+  inviteStaffApi,
   listStaffApi,
   updateStaffApi,
 } from "@/features/agency/api/crm.api";
@@ -72,6 +72,8 @@ export default function AgencyStaffPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [inviteForm, setInviteForm] = useState({ email: "", role: "agent" as StaffRole });
+  const [invitationToken, setInvitationToken] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -104,7 +106,8 @@ export default function AgencyStaffPage() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ ...EMPTY_FORM });
+    setInviteForm({ email: "", role: "agent" as StaffRole });
+    setInvitationToken(null);
     setIsDialogOpen(true);
   };
 
@@ -120,36 +123,44 @@ export default function AgencyStaffPage() {
   };
 
   const handleSave = async () => {
-    if (!editingId && !/^[0-9a-fA-F]{24}$/.test(form.userId.trim())) {
-      toast.error("Enter a valid 24-character user ID.");
-      return;
-    }
-    const permissions = form.permissions
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    setIsSaving(true);
-    try {
-      if (editingId) {
+    if (editingId) {
+      const permissions = form.permissions
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      setIsSaving(true);
+      try {
         await updateStaffApi(editingId, {
           role: form.role,
           permissions,
           isActive: form.isActive,
         });
         toast.success("Staff member updated.");
-      } else {
-        await createStaffApi({
-          userId: form.userId.trim(),
-          role: form.role,
-          permissions,
-          isActive: form.isActive,
-        });
-        toast.success("Staff member added.");
+        setIsDialogOpen(false);
+        await load();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to save staff member.");
+      } finally {
+        setIsSaving(false);
       }
-      setIsDialogOpen(false);
+      return;
+    }
+
+    if (!inviteForm.email.trim()) {
+      toast.error("Enter an email address.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const result = await inviteStaffApi({
+        email: inviteForm.email.trim(),
+        role: inviteForm.role,
+      });
+      setInvitationToken(result.invitationToken);
+      toast.success("Staff invited.");
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save staff member.");
+      toast.error(err instanceof Error ? err.message : "Failed to invite staff member.");
     } finally {
       setIsSaving(false);
     }
@@ -231,7 +242,7 @@ export default function AgencyStaffPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-body-sm text-muted-foreground">
-              Users must already have a Travora account. Add them with their user ID.
+              Invite teammates by email; they can claim the invitation when they sign in.
             </p>
             {isLoading ? (
               <LoadingState variant="inline" />
@@ -322,10 +333,12 @@ export default function AgencyStaffPage() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Edit staff member" : "Add staff member"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4">
+      <DialogHeader>
+        <DialogTitle>{editingId ? "Edit staff member" : "Invite staff member"}</DialogTitle>
+      </DialogHeader>
+      <div className="grid gap-4">
+        {editingId ? (
+          <>
             <div className="space-y-1.5">
               <Label htmlFor="staff-user">User ID</Label>
               <Input
@@ -379,7 +392,62 @@ export default function AgencyStaffPage() {
                 Comma separated keys. Leave blank for role defaults.
               </p>
             </div>
-          </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <Label htmlFor="staff-email">Email address</Label>
+              <Input
+                id="staff-email"
+                value={inviteForm.email}
+                onChange={(event) => setInviteForm((current) => ({ ...current, email: event.target.value }))}
+                placeholder="sarah@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Role</Label>
+              <Select
+                value={inviteForm.role}
+                onValueChange={(value) =>
+                  setInviteForm((current) => ({ ...current, role: value as StaffRole }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STAFF_ROLES.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {titleCase(item)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {invitationToken && (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Invitation token</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="staff-token"
+                    value={invitationToken}
+                    readOnly
+                  />
+                  <Button variant="outline" size="sm" onClick={() => {
+                    void navigator.clipboard.writeText(invitationToken);
+                    toast.success("Token copied.");
+                  }}>
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-caption text-muted-foreground">
+                  Share this token with the new team member so they can claim the invitation on sign-in.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
               Cancel

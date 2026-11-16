@@ -70,6 +70,7 @@ export interface QuotationDTO {
   shareLinkExpiresAt?: string;
   viewedAt?: string;
   acceptedAt?: string;
+  convertedBookingId?: string;
   notes?: string;
   termsAndConditions?: string;
   createdAt: string;
@@ -95,6 +96,7 @@ interface QuotationLean {
   shareLinkExpiresAt?: Date;
   viewedAt?: Date;
   acceptedAt?: Date;
+  convertedBookingId?: Types.ObjectId;
   notes?: string;
   termsAndConditions?: string;
   createdAt: Date;
@@ -121,6 +123,7 @@ export function toQuotationDTO(doc: QuotationDocument | QuotationLean): Quotatio
     shareLinkExpiresAt: doc.shareLinkExpiresAt?.toISOString(),
     viewedAt: doc.viewedAt?.toISOString(),
     acceptedAt: doc.acceptedAt?.toISOString(),
+    convertedBookingId: doc.convertedBookingId?.toString(),
     notes: doc.notes,
     termsAndConditions: doc.termsAndConditions,
     createdAt: doc.createdAt.toISOString(),

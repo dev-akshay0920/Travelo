@@ -8,6 +8,7 @@ import {
   CreditCard,
   ExternalLink,
   Loader2,
+  Mail,
   Save,
   Send,
   Trash2,
@@ -29,8 +30,9 @@ import { ErrorState } from "@/components/shared/error-state";
 import { LoadingState } from "@/components/shared/loading-state";
 import { PageStack } from "@/components/shared/page-container";
 import { AgencyModulePage } from "@/features/agency/components/agency-module-page";
-import { DetailRow, SectionCard, StatusPill } from "@/features/agency/components/crm-ui";
+import { DetailRow, EmptyBlock, SectionCard, StatusPill } from "@/features/agency/components/crm-ui";
 import {
+  createLeadActivityApi,
   deleteInvoiceApi,
   getInvoiceApi,
   recordInvoicePaymentApi,
@@ -168,6 +170,24 @@ export default function InvoiceDetailPage() {
       toast.error(err instanceof Error ? err.message : "Failed to record payment.");
     } finally {
       setIsRecording(false);
+    }
+  };
+
+  const handleSendPaymentLink = async () => {
+    if (!invoice) return;
+    try {
+      if (invoice.leadId) {
+        await createLeadActivityApi({
+          leadId: invoice.leadId,
+          type: "email",
+          subject: `Payment link for invoice ${invoice.invoiceNumber}`,
+          description: "Sent payment link stub (email / WhatsApp).",
+        });
+      }
+      toast.success("Payment link sent (stub).");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send payment link.");
     }
   };
 
@@ -535,17 +555,50 @@ export default function InvoiceDetailPage() {
               <DetailRow label="Created" value={formatDateTime(invoice.createdAt)} />
               <DetailRow label="Updated" value={formatDateTime(invoice.updatedAt)} />
               {invoice.paymentLinkUrl && (
-                <Button variant="outline" className="mt-3 w-full" asChild>
-                  <a href={invoice.paymentLinkUrl} target="_blank" rel="noreferrer">
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                    Open payment link
-                  </a>
-                </Button>
+                <div className="space-y-1 mt-3">
+                  <DetailRow
+                    label="Payment link expires"
+                    value={invoice.paymentLinkExpiresAt ? formatDateTime(invoice.paymentLinkExpiresAt) : "-"}
+                  />
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={invoice.paymentLinkUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink className="size-4" aria-hidden="true" />
+                      Open payment link
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Payments" description="Payments recorded against this invoice.">
+              {(invoice.payments ?? []).length === 0 ? (
+                <EmptyBlock title="No payments" />
+              ) : (
+                <ul className="space-y-2">
+                  {(invoice.payments ?? []).map((payment, index) => (
+                    <li key={index} className="flex items-center justify-between gap-2">
+                      <span className="text-body-sm">
+                        {formatCurrency(payment.amount, invoice.currency)} &middot; {payment.method}
+                      </span>
+                      <div className="flex items-center gap-2 text-caption text-muted-foreground">
+                        <span>{formatDateTime(payment.paidAt)}</span>
+                        {payment.transactionId && (
+                          <span>&middot; {payment.transactionId}</span>
+                        )}
+                        {payment.notes && <span>&middot; {payment.notes}</span>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </SectionCard>
 
             <SectionCard title="Actions">
               <div className="grid gap-2">
+                <Button variant="outline" className="justify-start" onClick={handleSendPaymentLink}>
+                  <Mail className="size-4" aria-hidden="true" />
+                  Send payment link
+                </Button>
                 <Button
                   variant="outline"
                   className="justify-start"

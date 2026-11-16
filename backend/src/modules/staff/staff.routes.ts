@@ -8,6 +8,7 @@ import {
   getStaffSchema,
   listStaffSchema,
   deleteStaffSchema,
+  inviteStaffSchema,
   updateStaffRoleSchema,
 } from "./staff.validation";
 
@@ -15,6 +16,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.post("/invite", validate(inviteStaffSchema), staffController.invite);
 router.post("/", validate(createStaffSchema), staffController.create);
 router.get("/role-counts", staffController.getRoleCounts);
 router.get("/role/:role", staffController.getByRole);

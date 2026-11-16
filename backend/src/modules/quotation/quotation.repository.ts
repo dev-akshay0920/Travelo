@@ -94,6 +94,9 @@ export class QuotationRepository {
       pdfKey: string;
       publicShareLink: string;
       shareLinkExpiresAt: Date;
+      viewedAt: Date;
+      acceptedAt: Date;
+      convertedBookingId: Types.ObjectId;
       notes: string;
       termsAndConditions: string;
     }>

@@ -67,8 +67,17 @@ export class QuotationController {
   });
 
   acceptPublic = asyncHandler(async (req: Request, res: Response) => {
-    const quotation = await quotationService.acceptQuotationPublic(req.params.token!);
-    res.status(HTTP_STATUS.OK).json(success({ quotation }, { message: "Quotation accepted successfully" }));
+    const result = await quotationService.acceptQuotationPublic(req.params.token!);
+    res.status(HTTP_STATUS.OK).json(
+      success(
+        {
+          quotation: result.quotation,
+          bookingId: result.bookingId,
+          bookingNumber: result.bookingNumber,
+        },
+        { message: "Quotation accepted successfully" }
+      )
+    );
   });
 }
 

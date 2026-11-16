@@ -1,6 +1,13 @@
 import { Types } from "mongoose";
 import { documentRepository } from "./document.repository";
-import type { CreateDocumentInput, UpdateDocumentInput, DocumentListQuery, DocumentDTO, DocumentListResponse } from "./document.types";
+import { PackageImageStorage } from "../packages/package-image.storage";
+import type {
+  CreateDocumentInput,
+  UpdateDocumentInput,
+  DocumentListQuery,
+  DocumentDTO,
+  DocumentListResponse,
+} from "./document.types";
 import { toDocumentDTO } from "./document.types";
 import { AppError } from "../../shared/errors/app-error";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -19,6 +26,21 @@ export class DocumentService {
 
     const document = await documentRepository.create(data);
     return toDocumentDTO(document);
+  }
+
+  async uploadDocument(
+    agencyId: Types.ObjectId,
+    _userId: Types.ObjectId,
+    input: {
+      leadId?: string;
+      bookingId?: string;
+      invoiceId?: string;
+      category: string;
+      fileName: string;
+      mimeType: string;
+    }
+  ): Promise<{ uploadUrl: string; key: string; url: string; expiresIn: number }> {
+    return PackageImageStorage.presignDocumentUpload(agencyId.toString(), input.fileName, input.mimeType);
   }
 
   async getById(id: string, agencyId: Types.ObjectId): Promise<DocumentDTO> {

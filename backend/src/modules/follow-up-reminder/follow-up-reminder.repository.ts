@@ -5,6 +5,8 @@ import { FollowUpReminder } from "./follow-up-reminder.model";
 export interface FollowUpReminderListFilters {
   isCompleted?: boolean;
   staffId?: string;
+  reminderFrom?: string;
+  reminderTo?: string;
   page: number;
   limit: number;
 }
@@ -21,6 +23,11 @@ export const FollowUpReminderRepository = {
     const query: Record<string, unknown> = { agencyId: new Types.ObjectId(agencyId) };
     if (filters.isCompleted !== undefined) query.isCompleted = filters.isCompleted;
     if (filters.staffId) query.staffId = new Types.ObjectId(filters.staffId);
+    if (filters.reminderFrom || filters.reminderTo) {
+      query.reminderAt = {};
+      if (filters.reminderFrom) (query.reminderAt as Record<string, Date>).$gte = new Date(filters.reminderFrom);
+      if (filters.reminderTo) (query.reminderAt as Record<string, Date>).$lte = new Date(filters.reminderTo);
+    }
     const [items, total] = await Promise.all([
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
       FollowUpReminder.find(query)

@@ -58,3 +58,14 @@ export const deleteDocumentSchema = z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/),
   }),
 });
+
+export const uploadDocumentSchema = z.object({
+  body: z.object({
+    leadId: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    invoiceId: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    category: z.enum(["passport", "contract", "voucher", "itinerary", "quote", "invoice", "other"]),
+    fileName: z.string().min(1).max(255),
+    mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+  }),
+});

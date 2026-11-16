@@ -27,6 +27,7 @@ import type {
   CreateSupplierInput,
   CreateSupplierRateCardInput,
   CreateTaskInput,
+  DocumentCategory,
   DocumentFile,
   Invoice,
   InvoiceStatus,
@@ -220,6 +221,8 @@ export async function listFollowUpsApi(params: {
   limit?: number;
   isCompleted?: boolean;
   staffId?: string;
+  reminderFrom?: string;
+  reminderTo?: string;
 }): Promise<FollowUpReminderListResponse> {
   const response = await apiClient.get<Envelope<FollowUpReminderListResponse>>(
     "/followups",
@@ -433,6 +436,13 @@ export async function deleteQuotationApi(id: string): Promise<void> {
   await apiClient.delete(`/quotations/${encodeURIComponent(id)}`);
 }
 
+export async function listQuotationsByLeadApi(leadId: string): Promise<Quotation[]> {
+  const response = await apiClient.get<Envelope<{ quotations: Quotation[] }>>(
+    `/quotations/lead/${encodeURIComponent(leadId)}`,
+  );
+  return response.data.quotations;
+}
+
 export async function getPublicQuotationApi(token: string): Promise<Quotation> {
   const response = await apiClient.get<Envelope<{ quotation: Quotation }>>(
     `/quotations/public/${encodeURIComponent(token)}`,
@@ -440,11 +450,21 @@ export async function getPublicQuotationApi(token: string): Promise<Quotation> {
   return response.data.quotation;
 }
 
-export async function acceptPublicQuotationApi(token: string): Promise<Quotation> {
-  const response = await apiClient.post<Envelope<{ quotation: Quotation }>>(
+export interface PublicAcceptResult {
+  quotation: Quotation;
+  bookingId?: string;
+  bookingNumber?: string;
+}
+
+export async function acceptPublicQuotationApi(token: string): Promise<PublicAcceptResult> {
+  const response = await apiClient.post<Envelope<{ quotation: Quotation; bookingId?: string; bookingNumber?: string }>>(
     `/quotations/public/${encodeURIComponent(token)}/accept`,
   );
-  return response.data.quotation;
+  return {
+    quotation: response.data.quotation,
+    bookingId: response.data.bookingId,
+    bookingNumber: response.data.bookingNumber,
+  };
 }
 
 export interface BookingListParams {
@@ -480,6 +500,20 @@ export async function getBookingApi(id: string): Promise<Booking> {
     `/bookings/${encodeURIComponent(id)}`,
   );
   return response.data.booking;
+}
+
+export async function listBookingsByLeadApi(leadId: string): Promise<Booking[]> {
+  const response = await apiClient.get<Envelope<{ bookings: Booking[] }>>(
+    `/bookings/lead/${encodeURIComponent(leadId)}`,
+  );
+  return response.data.bookings;
+}
+
+export async function listBookingsByQuotationApi(quotationId: string): Promise<Booking[]> {
+  const response = await apiClient.get<Envelope<{ bookings: Booking[] }>>(
+    `/bookings/quotation/${encodeURIComponent(quotationId)}`,
+  );
+  return response.data.bookings;
 }
 
 export async function createBookingApi(input: CreateBookingInput): Promise<Booking> {
@@ -584,6 +618,20 @@ export async function getInvoiceApi(id: string): Promise<Invoice> {
   return response.data.invoice;
 }
 
+export async function listInvoicesByLeadApi(leadId: string): Promise<Invoice[]> {
+  const response = await apiClient.get<Envelope<{ invoices: Invoice[] }>>(
+    `/invoices/lead/${encodeURIComponent(leadId)}`,
+  );
+  return response.data.invoices;
+}
+
+export async function listInvoicesByBookingApi(bookingId: string): Promise<Invoice[]> {
+  const response = await apiClient.get<Envelope<{ invoices: Invoice[] }>>(
+    `/invoices/booking/${encodeURIComponent(bookingId)}`,
+  );
+  return response.data.invoices;
+}
+
 export async function createInvoiceApi(input: CreateInvoiceInput): Promise<Invoice> {
   const response = await apiClient.post<Envelope<{ invoice: Invoice }>>("/invoices", {
     body: input,
@@ -661,6 +709,13 @@ export async function createBookingPaymentApi(input: {
 
 export async function deleteBookingPaymentApi(id: string): Promise<void> {
   await apiClient.delete(`/booking-payments/${encodeURIComponent(id)}`);
+}
+
+export async function getTotalPaidForBookingApi(bookingId: string): Promise<number> {
+  const response = await apiClient.get<Envelope<{ total: number }>>(
+    `/booking-payments/booking/${encodeURIComponent(bookingId)}/total`,
+  );
+  return response.data.total;
 }
 
 export interface SupplierListParams {
@@ -790,6 +845,21 @@ export async function createDocumentApi(
   return response.data.document;
 }
 
+export async function uploadDocumentApi(input: {
+  leadId?: string;
+  bookingId?: string;
+  invoiceId?: string;
+  category: DocumentCategory;
+  fileName: string;
+  mimeType: string;
+}): Promise<{ uploadUrl: string; key: string; url: string; expiresIn: number }> {
+  const response = await apiClient.post<Envelope<{ uploadUrl: string; key: string; url: string; expiresIn: number }>>(
+    "/documents/upload",
+    { body: input },
+  );
+  return response.data;
+}
+
 export async function updateDocumentApi(
   id: string,
   input: Partial<CreateDocumentInput>,
@@ -803,6 +873,27 @@ export async function updateDocumentApi(
 
 export async function deleteDocumentApi(id: string): Promise<void> {
   await apiClient.delete(`/documents/${encodeURIComponent(id)}`);
+}
+
+export async function listDocumentsByLeadApi(leadId: string): Promise<DocumentFile[]> {
+  const response = await apiClient.get<Envelope<{ documents: DocumentFile[] }>>(
+    `/documents/lead/${encodeURIComponent(leadId)}`,
+  );
+  return response.data.documents;
+}
+
+export async function listDocumentsByBookingApi(bookingId: string): Promise<DocumentFile[]> {
+  const response = await apiClient.get<Envelope<{ documents: DocumentFile[] }>>(
+    `/documents/booking/${encodeURIComponent(bookingId)}`,
+  );
+  return response.data.documents;
+}
+
+export async function listDocumentsByInvoiceApi(invoiceId: string): Promise<DocumentFile[]> {
+  const response = await apiClient.get<Envelope<{ documents: DocumentFile[] }>>(
+    `/documents/invoice/${encodeURIComponent(invoiceId)}`,
+  );
+  return response.data.documents;
 }
 
 export interface TaskListParams {
@@ -883,6 +974,25 @@ export async function deleteTaskApi(id: string): Promise<void> {
   await apiClient.delete(`/tasks/${encodeURIComponent(id)}`);
 }
 
+export async function listTasksByLeadApi(leadId: string): Promise<TaskItem[]> {
+  const response = await apiClient.get<Envelope<{ tasks: TaskItem[] }>>(
+    `/tasks/lead/${encodeURIComponent(leadId)}`,
+  );
+  return response.data.tasks;
+}
+
+export async function listTasksByBookingApi(bookingId: string): Promise<TaskItem[]> {
+  const response = await apiClient.get<Envelope<{ tasks: TaskItem[] }>>(
+    `/tasks/booking/${encodeURIComponent(bookingId)}`,
+  );
+  return response.data.tasks;
+}
+
+export async function listUpcomingTasksApi(): Promise<TaskItem[]> {
+  const response = await apiClient.get<Envelope<{ tasks: TaskItem[] }>>("/tasks/upcoming");
+  return response.data.tasks;
+}
+
 export async function listStaffApi(params: {
   page?: number;
   limit?: number;
@@ -910,6 +1020,17 @@ export async function createStaffApi(input: {
   return response.data.staff;
 }
 
+export async function inviteStaffApi(input: {
+  email: string;
+  role: StaffRole;
+}): Promise<{ staff: StaffMember; invitationToken: string }> {
+  const response = await apiClient.post<Envelope<{ staff: StaffMember; invitationToken: string }>>(
+    "/staff/invite",
+    { body: input },
+  );
+  return response.data;
+}
+
 export async function updateStaffApi(
   id: string,
   input: { role?: StaffRole; permissions?: string[]; isActive?: boolean },
@@ -923,6 +1044,13 @@ export async function updateStaffApi(
 
 export async function deleteStaffApi(id: string): Promise<void> {
   await apiClient.delete(`/staff/${encodeURIComponent(id)}`);
+}
+
+export async function listStaffRoleCountsApi(): Promise<Record<string, number>> {
+  const response = await apiClient.get<Envelope<{ counts: Record<string, number> }>>(
+    "/staff/role-counts",
+  );
+  return response.data.counts;
 }
 
 export async function listSubscriptionPlansApi(): Promise<Paged<SubscriptionPlan>> {

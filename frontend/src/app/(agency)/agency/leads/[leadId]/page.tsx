@@ -44,19 +44,31 @@ import {
   createFollowUpApi,
   createLeadActivityApi,
   getLeadApi,
+  listBookingsByLeadApi,
+  listDocumentsByLeadApi,
   listFollowUpsApi,
+  listInvoicesByLeadApi,
   listItinerariesApi,
   listLeadActivitiesApi,
   listLeadSourcesApi,
   listPipelinesApi,
-  listQuotationsApi,
+  listQuotationsByLeadApi,
   listStaffApi,
+  listTasksByLeadApi,
   updateFollowUpApi,
   updateLeadCrmApi,
   type LeadUpdateInput,
 } from "@/features/agency/api/crm.api";
 import { formatCurrency, formatDate, formatDateTime, toDateInputValue } from "@/features/agency/lib/format";
-import type { Itinerary, Quotation, StaffMember } from "@/features/agency/types/crm.types";
+import type {
+  Itinerary,
+  Quotation,
+  StaffMember,
+  TaskItem,
+  Booking,
+  Invoice,
+  DocumentFile,
+} from "@/features/agency/types/crm.types";
 import type {
   FollowUpChannel,
   FollowUpReminder,
@@ -96,6 +108,10 @@ export default function AgencyLeadDetailPage() {
   const [followUps, setFollowUps] = useState<FollowUpReminder[]>([]);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -120,25 +136,45 @@ export default function AgencyLeadDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [leadValue, pipelineValue, sourceValue, staffValue, activityValue, followValue, quoteValue, itineraryValue] =
-        await Promise.all([
-          getLeadApi(leadId),
-          listPipelinesApi().catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listLeadSourcesApi().catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listStaffApi({ page: 1, limit: 100 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listLeadActivitiesApi(leadId).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listFollowUpsApi({ page: 1, limit: 50 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listQuotationsApi({ leadId, page: 1, limit: 10 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-          listItinerariesApi({ leadId, page: 1, limit: 10 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
-        ]);
+      const [
+        leadValue,
+        pipelineValue,
+        sourceValue,
+        staffValue,
+        activityValue,
+        followValue,
+        quoteValue,
+        itineraryValue,
+        bookingValue,
+        invoiceValue,
+        taskValue,
+        documentValue,
+      ] = await Promise.all([
+        getLeadApi(leadId),
+        listPipelinesApi().catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listLeadSourcesApi().catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listStaffApi({ page: 1, limit: 100 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listLeadActivitiesApi(leadId).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listFollowUpsApi({ page: 1, limit: 50 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listQuotationsByLeadApi(leadId).catch(() => [] as Quotation[]),
+        listItinerariesApi({ leadId, page: 1, limit: 10 }).catch(() => ({ items: [], total: 0, page: 1, limit: 0, totalPages: 0 })),
+        listBookingsByLeadApi(leadId).catch(() => [] as Booking[]),
+        listInvoicesByLeadApi(leadId).catch(() => [] as Invoice[]),
+        listTasksByLeadApi(leadId).catch(() => [] as TaskItem[]),
+        listDocumentsByLeadApi(leadId).catch(() => [] as DocumentFile[]),
+      ]);
       setLead(leadValue);
       setPipelines(pipelineValue.items);
       setSources(sourceValue.items);
       setStaff(staffValue.items);
       setActivities(activityValue.items);
       setFollowUps(followValue.items.filter((item) => item.leadId === leadId));
-      setQuotations(quoteValue.items);
+      setQuotations(quoteValue);
       setItineraries(itineraryValue.items);
+      setBookings(bookingValue);
+      setInvoices(invoiceValue);
+      setTasks(taskValue);
+      setDocuments(documentValue);
       setEdit({
         status: leadValue.status,
         pipelineStageId: leadValue.pipelineStageId ?? "",
@@ -620,6 +656,90 @@ export default function AgencyLeadDetailPage() {
                   </Link>
                 </Button>
               </div>
+            </SectionCard>
+            <SectionCard title="Bookings" description="Bookings created from this lead.">
+              {bookings.length === 0 ? (
+                <EmptyBlock title="No bookings" />
+              ) : (
+                <ul className="space-y-2">
+                  {bookings.map((booking) => (
+                    <li key={booking.id} className="flex items-center justify-between gap-2">
+                      <Link
+                        href={`/agency/bookings/${booking.id}`}
+                        className="text-body-sm font-medium hover:underline"
+                      >
+                        {booking.bookingNumber}
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        <span className="text-caption">
+                          {formatCurrency(booking.totalPrice, booking.currency)}
+                        </span>
+                        <StatusPill status={booking.status} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+            <SectionCard title="Invoices" description="Raised against this lead.">
+              {invoices.length === 0 ? (
+                <EmptyBlock title="No invoices" />
+              ) : (
+                <ul className="space-y-2">
+                  {invoices.map((invoice) => (
+                    <li key={invoice.id} className="flex items-center justify-between gap-2">
+                      <Link
+                        href={`/agency/invoices/${invoice.id}`}
+                        className="text-body-sm font-medium hover:underline"
+                      >
+                        {invoice.invoiceNumber}
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        <span className="text-caption">{formatCurrency(invoice.total, invoice.currency)}</span>
+                        <StatusPill status={invoice.status} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+            <SectionCard title="Tasks" description="Follow-up tasks for this lead.">
+              {tasks.length === 0 ? (
+                <EmptyBlock title="No tasks" />
+              ) : (
+                <ul className="space-y-2">
+                  {tasks.map((task) => (
+                    <li key={task.id} className="flex items-center justify-between gap-2">
+                      <Link
+                        href={`/agency/tasks/${task.id}`}
+                        className="text-body-sm font-medium hover:underline"
+                      >
+                        {task.title}
+                      </Link>
+                      <StatusPill status={task.status} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+            <SectionCard title="Documents" description="Documents linked to this lead.">
+              {documents.length === 0 ? (
+                <EmptyBlock title="No documents" />
+              ) : (
+                <ul className="space-y-2">
+                  {documents.map((document) => (
+                    <li key={document.id} className="flex items-center justify-between gap-2">
+                      <Link
+                        href={`/agency/documents/${document.id}`}
+                        className="text-body-sm font-medium hover:underline"
+                      >
+                        {document.fileName}
+                      </Link>
+                      <span className="text-caption">{document.category}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </SectionCard>
           </div>
         </div>

@@ -9,6 +9,14 @@ export const createStaffSchema = z.object({
   }),
 });
 
+export const inviteStaffSchema = z.object({
+  body: z.object({
+    email: z.string().email().max(255),
+    role: z.enum(["owner", "admin", "manager", "agent", "accountant", "viewer"]).default("agent"),
+    permissions: z.array(z.string()).optional(),
+  }),
+});
+
 export const updateStaffSchema = z.object({
   params: z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/),

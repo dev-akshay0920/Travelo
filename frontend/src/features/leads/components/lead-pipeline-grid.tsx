@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus, Edit, Trash2, Kanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,11 +32,11 @@ export function LeadPipelineGrid({ agencyId }: LeadPipelineGridProps): ReactNode
   const [total, setTotal] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  const loadPipelines = async () => {
+  const loadPipelines = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await getLeadPipelinesApi({ page, limit: 20 });
-      setPipelines(result.items);
+      setPipelines((current) => (page === 1 ? result.items : [...current, ...result.items]));
       setTotal(result.total);
       setHasMore(result.page < result.totalPages);
     } catch (err) {
@@ -44,7 +44,12 @@ export function LeadPipelineGrid({ agencyId }: LeadPipelineGridProps): ReactNode
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadPipelines();
+  }, [loadPipelines]);
 
   const openCreateDialog = () => {
     setEditingPipeline(null);

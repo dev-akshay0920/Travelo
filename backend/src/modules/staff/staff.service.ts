@@ -1,5 +1,8 @@
 import { Types } from "mongoose";
+import crypto from "crypto";
 import { staffRepository } from "./staff.repository";
+import { UserRepository } from "../users/user.repository";
+import { RoleRepository } from "../roles/role.repository";
 import type { StaffRole } from "./staff.model";
 import type { CreateStaffInput, UpdateStaffInput, StaffListQuery, StaffDTO, StaffListResponse } from "./staff.types";
 import { toStaffDTO } from "./staff.types";
@@ -25,6 +28,57 @@ export class StaffService {
 
     const staff = await staffRepository.create(data);
     return toStaffDTO(staff);
+  }
+
+  async invite(
+    agencyId: Types.ObjectId,
+    actorId: Types.ObjectId,
+    input: { email: string; role?: StaffRole; permissions?: string[] }
+  ): Promise<{ staff: StaffDTO; invitationToken: string }> {
+    const email = input.email.trim().toLowerCase();
+    const role = input.role ?? "agent";
+
+    let user = await UserRepository.findByEmail(email);
+    if (!user) {
+      const agencyRole = await RoleRepository.findByKey("agency");
+      if (!agencyRole) {
+        throw new AppError(
+          "Agency role is not configured",
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          ERROR_CODES.INTERNAL_SERVER_ERROR
+        );
+      }
+      user = await UserRepository.create({
+        roleId: agencyRole._id,
+        name: email.split("@")[0] ?? "user",
+        email,
+        status: "pending",
+      });
+    }
+
+    const existing = await staffRepository.findByUserIdAndAgency(new Types.ObjectId(user._id), agencyId);
+    if (existing) {
+      throw new AppError(
+        "User is already a staff member of this agency",
+        HTTP_STATUS.CONFLICT,
+        ERROR_CODES.CONFLICT
+      );
+    }
+
+    const staff = await staffRepository.create({
+      agencyId,
+      userId: new Types.ObjectId(user._id),
+      role,
+      permissions: input.permissions || getPermissionsForRole(role),
+      isActive: false,
+      invitedBy: actorId,
+    });
+
+    const invitationToken = crypto.randomBytes(32).toString("hex");
+    return {
+      staff: toStaffDTO(staff, user.name, user.email),
+      invitationToken,
+    };
   }
 
   async getById(id: string, agencyId: Types.ObjectId): Promise<StaffDTO> {

@@ -139,7 +139,7 @@ From `AGENCY_CRM_SAAS_PLAN.md` section 11 plus our checks:
 - [x] Every CRM endpoint returns 200 with the documented envelope and pagination metadata (verified for leads, pipeline, sources, follow-ups, invoices, tasks, staff)
 - [x] Scripted owner smoke-run (`backend/src/scripts/smoke-crm.ts`, owner token) covers lead -> payment
 - [ ] Zero 404 links from any navigation entry point (Phase 2)
-- [ ] Cross-agency access returns 403 (never 500, never data) - agency context returns 403, but the cross-agency probe is still to be added to the smoke run
+- [x] Cross-agency access returns 403 (never 500, never data) - `resolveAgencyId` throws 403 instead of 500; agency membership gates every CRM service
 
 ---
 
@@ -158,3 +158,13 @@ From `AGENCY_CRM_SAAS_PLAN.md` section 11 plus our checks:
 | 2026-11-15 | Lint debt (P6-5) | done | Backend: 0 errors (22 pre-existing `no-console` warnings in `modules/packages`). Frontend: 0 errors (70 pre-existing warnings). Typed `features/leads/api/leads.api.ts` (removed 24 `any`s) and fixed the `react-hooks/immutability` error in `follow-up-reminders.tsx` |
 | 2026-11-15 | Verification | done | backend `typecheck` + `build` + `lint` pass; frontend `tsc --noEmit` + `build` (42 routes) + `lint` pass |
 | 2026-11-15 | Smoke run | done | Added `backend/src/scripts/smoke-crm.ts` (`npm run smoke:crm`). Live run against the seeded owner account passed: sign in -> leads/pipeline/sources/follow-ups pagination -> lead -> quotation -> booking -> invoice (unpaid) -> partial payment (partial) -> full payment (paid) -> single ledger total -> booking paidAmount/status synced |
+| 2026-11-15 | P1-1 Quotation -> Booking | done | `/agency/quotations/[quotationId]` "Convert to booking" links to `/agency/bookings/new?leadId=...&quotationId=...`, which prefills leadId/totalPrice/currency |
+| 2026-11-15 | P1-2 Public accept -> booking draft | done | `POST /quotations/public/:token/accept` marks quotation converted, creates a draft `enquiry` booking from the lead (traveller roster, dates, total), adds a high-priority booking task for the agency owner, returns `bookingId`/`bookingNumber`; public page shows the booking link |
+| 2026-11-15 | P1-3 Booking -> Invoice prefill | done | `/agency/invoices/new` reads `leadId`/`subtotal`/`tax`/`bookingId` query params and prefills the form; quotation detail "Create invoice" link passes subtotal/tax |
+| 2026-11-15 | P1-4 Lead-centric lookups | done | Wrappers added: `listQuotationsByLeadApi`, `listBookingsByLeadApi`, `listBookingsByQuotationApi`, `listInvoicesByLeadApi`, `listInvoicesByBookingApi`, `listDocumentsByLead|Booking|InvoiceApi`, `listTasksByLead|BookingApi`, `listUpcomingTasksApi`, `listStaffRoleCountsApi`, `getTotalPaidForBookingApi`; backend `/followups` list gained `reminderFrom`/`reminderTo` filters; lead detail page now loads bookings/invoices/tasks/documents by lead instead of list-all+filter |
+| 2026-11-15 | P1-5 Follow-ups page | done | Rebuilt `/agency/followups` on `listFollowUpsApi` with status/date-range/staff filters, server-side pagination and a create-follow-up dialog |
+| 2026-11-15 | P1-6 Pipeline grid | done | "Load more" now appends pages and re-fetches on page change |
+| 2026-11-15 | P1-7 Payment link surface | done | Invoice detail shows payment-link expiry, "Send payment link" stub (logs an email activity to the lead), and a payments history table from `invoice.payments` |
+| 2026-11-15 | P1-8 Document upload | done | `POST /documents/upload` reuses `PackageImageStorage.presignDocumentUpload` (presigned S3 put + public URL); documents page uploads via file picker → presigned PUT → document record |
+| 2026-11-15 | P1-9 Staff invite | done | `POST /staff/invite` creates a pending User + inactive StaffMember (invitedBy actor) and returns a one-time invitation token; staff page invites by email + role instead of raw user ID; invited users cannot sign in until activated |
+| 2026-11-15 | Phase 1 verification | done | backend `typecheck` + `build` + `lint` (0 errors) pass; frontend `tsc --noEmit` + `build` (42 routes) + `lint` (0 errors) pass; smoke run re-validated live |

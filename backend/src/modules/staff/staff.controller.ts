@@ -11,9 +11,25 @@ import { HTTP_STATUS } from "../../shared/constants/http-status";
 export class StaffController {
   create = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
-    const userId = new Types.ObjectId(req.user!.sub);
-    const staff = await staffService.create(agencyId, userId, req.body);
+    const actorId = new Types.ObjectId(req.user!.sub);
+    const { userId, role, permissions } = req.body;
+    const staff = await staffService.create(agencyId, actorId, { userId, role, permissions });
     res.status(HTTP_STATUS.CREATED).json(success({ staff }, { message: "Staff member added successfully" }));
+  });
+
+  invite = asyncHandler(async (req: Request, res: Response) => {
+    const agencyId = resolveAgencyId(req);
+    const actorId = new Types.ObjectId(req.user!.sub);
+    const { email, role, permissions } = req.body;
+    const result = await staffService.invite(agencyId, actorId, { email, role, permissions });
+    res
+      .status(HTTP_STATUS.CREATED)
+      .json(
+        success(
+          { staff: result.staff, invitationToken: result.invitationToken },
+          { message: "Staff invited successfully" }
+        )
+      );
   });
 
   getById = asyncHandler(async (req: Request, res: Response) => {

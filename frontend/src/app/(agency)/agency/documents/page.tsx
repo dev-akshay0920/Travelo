@@ -42,6 +42,7 @@ import {
   deleteDocumentApi,
   listDocumentsApi,
   updateDocumentApi,
+  uploadDocumentApi,
 } from "@/features/agency/api/crm.api";
 import { formatBytes, formatDate } from "@/features/agency/lib/format";
 import {
@@ -84,8 +85,16 @@ export default function AgencyDocumentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [presigned, setPresigned] = useState<{
+    uploadUrl: string;
+    key: string;
+    url: string;
+    expiresIn: number;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -118,6 +127,8 @@ export default function AgencyDocumentsPage() {
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...EMPTY_FORM });
+    setSelectedFile(null);
+    setPresigned(null);
     setIsDialogOpen(true);
   };
 
@@ -139,46 +150,92 @@ export default function AgencyDocumentsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.fileName.trim() || !form.url.trim()) {
-      toast.error("File name and URL are required.");
-      return;
-    }
-    const key = form.key.trim() || keyFromUrl(form.url.trim());
-    if (!key) {
-      toast.error("Storage key is required.");
-      return;
-    }
-    if (!form.mimeType.trim() || !(Number(form.size) > 0)) {
-      toast.error("MIME type and file size are required.");
-      return;
-    }
-    const payload = {
-      category: form.category,
-      fileName: form.fileName.trim(),
-      url: form.url.trim(),
-      key,
-      mimeType: form.mimeType.trim(),
-      size: Number(form.size),
-      description: form.description.trim() || undefined,
-      leadId: form.leadId.trim() || undefined,
-      bookingId: form.bookingId.trim() || undefined,
-      invoiceId: form.invoiceId.trim() || undefined,
-    };
-    setIsSaving(true);
-    try {
-      if (editingId) {
+    if (editingId) {
+      if (!form.fileName.trim() || !form.url.trim()) {
+        toast.error("File name and URL are required.");
+        return;
+      }
+      const key = form.key.trim() || keyFromUrl(form.url.trim());
+      if (!key) {
+        toast.error("Storage key is required.");
+        return;
+      }
+      if (!form.mimeType.trim() || !(Number(form.size) > 0)) {
+        toast.error("MIME type and file size are required.");
+        return;
+      }
+      const payload = {
+        category: form.category,
+        fileName: form.fileName.trim(),
+        url: form.url.trim(),
+        key,
+        mimeType: form.mimeType.trim(),
+        size: Number(form.size),
+        description: form.description.trim() || undefined,
+        leadId: form.leadId.trim() || undefined,
+        bookingId: form.bookingId.trim() || undefined,
+        invoiceId: form.invoiceId.trim() || undefined,
+      };
+      setIsSaving(true);
+      try {
         await updateDocumentApi(editingId, payload);
         toast.success("Document updated.");
-      } else {
-        await createDocumentApi(payload);
-        toast.success("Document registered.");
+        setIsDialogOpen(false);
+        await load();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to save document.");
+      } finally {
+        setIsSaving(false);
       }
+      return;
+    }
+
+    if (!selectedFile) {
+      toast.error("Choose a file to upload.");
+      return;
+    }
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowedMimeTypes.includes(selectedFile.type)) {
+      toast.error("Unsupported file type. Use JPEG, PNG, WebP or PDF.");
+      return;
+    }
+    setIsSaving(true);
+    setIsUploading(true);
+    try {
+      const { uploadUrl, key, url, expiresIn } = await uploadDocumentApi({
+        category: form.category,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+        leadId: form.leadId.trim() || undefined,
+        bookingId: form.bookingId.trim() || undefined,
+        invoiceId: form.invoiceId.trim() || undefined,
+      });
+      setPresigned({ uploadUrl, key, url, expiresIn });
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: selectedFile,
+        headers: { "Content-Type": selectedFile.type },
+      });
+      await createDocumentApi({
+        category: form.category,
+        fileName: selectedFile.name,
+        url,
+        key,
+        mimeType: selectedFile.type,
+        size: selectedFile.size,
+        description: form.description.trim() || undefined,
+        leadId: form.leadId.trim() || undefined,
+        bookingId: form.bookingId.trim() || undefined,
+        invoiceId: form.invoiceId.trim() || undefined,
+      });
+      toast.success("Document uploaded.");
       setIsDialogOpen(false);
       await load();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save document.");
+      toast.error(err instanceof Error ? err.message : "Failed to upload document.");
     } finally {
       setIsSaving(false);
+      setIsUploading(false);
     }
   };
 
@@ -357,7 +414,7 @@ export default function AgencyDocumentsPage() {
             <DialogTitle>{editingId ? "Edit document" : "Register document"}</DialogTitle>
           </DialogHeader>
           <p className="text-body-sm text-muted-foreground">
-            File uploads are not enabled yet. Paste a URL to a hosted file and include its metadata.
+            Select a file to upload it directly to storage. When editing, you may paste a hosted URL instead.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -386,43 +443,76 @@ export default function AgencyDocumentsPage() {
                 onChange={(event) => updateForm("fileName", event.target.value)}
               />
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="doc-url">File URL</Label>
-              <Input
-                id="doc-url"
-                value={form.url}
-                onChange={(event) => updateForm("url", event.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="doc-key">Storage key</Label>
-              <Input
-                id="doc-key"
-                value={form.key}
-                onChange={(event) => updateForm("key", event.target.value)}
-                placeholder="Auto-derived from URL"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="doc-mime">MIME type</Label>
-              <Input
-                id="doc-mime"
-                value={form.mimeType}
-                onChange={(event) => updateForm("mimeType", event.target.value)}
-                placeholder="application/pdf"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="doc-size">Size (bytes)</Label>
-              <Input
-                id="doc-size"
-                type="number"
-                min={1}
-                value={form.size}
-                onChange={(event) => updateForm("size", event.target.value)}
-              />
-            </div>
+            {editingId ? (
+              <>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="doc-url">File URL</Label>
+                  <Input
+                    id="doc-url"
+                    value={form.url}
+                    onChange={(event) => updateForm("url", event.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="doc-key">Storage key</Label>
+                  <Input
+                    id="doc-key"
+                    value={form.key}
+                    onChange={(event) => updateForm("key", event.target.value)}
+                    placeholder="Auto-derived from URL"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="doc-mime">MIME type</Label>
+                  <Input
+                    id="doc-mime"
+                    value={form.mimeType}
+                    onChange={(event) => updateForm("mimeType", event.target.value)}
+                    placeholder="application/pdf"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="doc-size">Size (bytes)</Label>
+                  <Input
+                    id="doc-size"
+                    type="number"
+                    min={1}
+                    value={form.size}
+                    onChange={(event) => updateForm("size", event.target.value)}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="doc-file">File</Label>
+                  <input
+                    id="doc-file"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setSelectedFile(file);
+                      if (file) {
+                        setForm((current) => ({ ...current, fileName: file.name }));
+                      }
+                    }}
+                  />
+                  {selectedFile && (
+                    <p className="text-caption text-muted-foreground">
+                      {selectedFile.name} ({formatBytes(selectedFile.size)}) · {selectedFile.type}
+                    </p>
+                  )}
+                  {presigned && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Presigned upload URL ready (expires in {Math.round(presigned.expiresIn / 60)} minutes)
+                    </div>
+                  )}
+                  {isUploading && <p className="text-caption text-muted-foreground">Uploading to storage…</p>}
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="doc-description">Description</Label>
               <Input
