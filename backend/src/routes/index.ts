@@ -15,6 +15,7 @@ import { leadSourceRouter } from "../modules/lead-source/lead-source.routes";
 import { leadActivityRouter } from "../modules/lead-activity/lead-activity.routes";
 import { followUpReminderRouter } from "../modules/follow-up-reminder/follow-up-reminder.routes";
 import { userRouter } from "../modules/users/user.routes";
+import adminRouter from "../modules/admin/admin.routes";
 import itineraryRouter from "../modules/itinerary/itinerary.routes";
 import quotationRouter from "../modules/quotation/quotation.routes";
 import bookingRouter from "../modules/booking/booking.routes";
@@ -72,5 +73,6 @@ router.use("/subscription-plans", subscriptionPlanRouter);
 router.use("/agency-subscriptions", agencySubscriptionRouter);
 router.use("/platform-invoices", platformInvoiceRouter);
 router.use("/users", userRouter);
+router.use("/admin", adminRouter);
 
 export const apiV1Router: Router = router;

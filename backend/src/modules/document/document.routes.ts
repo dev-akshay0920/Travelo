@@ -2,6 +2,7 @@ import { Router } from "express";
 import { documentController } from "./document.controller";
 import { validate } from "../../middleware/validation.middleware";
 import { authMiddleware } from "../../middleware/auth.middleware";
+import { permissionMiddleware } from "../../middleware/permission.middleware";
 import {
   createDocumentSchema,
   updateDocumentSchema,
@@ -15,14 +16,14 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post("/", validate(createDocumentSchema), documentController.create);
-router.get("/lead/:leadId", documentController.getByLeadId);
-router.get("/booking/:bookingId", documentController.getByBookingId);
-router.get("/invoice/:invoiceId", documentController.getByInvoiceId);
-router.get("/", validate(listDocumentsSchema), documentController.list);
-router.post("/upload", validate(uploadDocumentSchema), documentController.upload);
-router.get("/:id", validate(getDocumentSchema), documentController.getById);
-router.put("/:id", validate(updateDocumentSchema), documentController.update);
-router.delete("/:id", validate(deleteDocumentSchema), documentController.delete);
+router.post("/", permissionMiddleware("documents.write"), validate(createDocumentSchema), documentController.create);
+router.get("/lead/:leadId", permissionMiddleware("documents.read"), documentController.getByLeadId);
+router.get("/booking/:bookingId", permissionMiddleware("documents.read"), documentController.getByBookingId);
+router.get("/invoice/:invoiceId", permissionMiddleware("documents.read"), documentController.getByInvoiceId);
+router.get("/", permissionMiddleware("documents.read"), validate(listDocumentsSchema), documentController.list);
+router.post("/upload", permissionMiddleware("documents.write"), validate(uploadDocumentSchema), documentController.upload);
+router.get("/:id", permissionMiddleware("documents.read"), validate(getDocumentSchema), documentController.getById);
+router.put("/:id", permissionMiddleware("documents.write"), validate(updateDocumentSchema), documentController.update);
+router.delete("/:id", permissionMiddleware("documents.delete"), validate(deleteDocumentSchema), documentController.delete);
 
 export default router;

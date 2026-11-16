@@ -59,7 +59,6 @@ export function HeroSearch({ stats }: HeroSearchProps) {
     if (selectedTheme !== "all") params.set("theme", selectedTheme);
     params.set("page", "1");
     params.set("status", "active");
-    params.set("status", "sold_out");
     params.set("sortBy", "recommended");
     params.set("limit", "24");
 

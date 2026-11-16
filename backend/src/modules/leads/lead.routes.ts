@@ -1,6 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { authMiddleware } from "../../middleware/auth.middleware";
+import { permissionMiddleware } from "../../middleware/permission.middleware";
 import {
   bulkImportLeads,
   createAgencyLead,
@@ -46,13 +47,13 @@ const createLeadAccountRateLimit = rateLimit({
 
 router.use(authMiddleware);
 router.post("/", createLeadIpRateLimit, createLeadAccountRateLimit, createLead);
-router.post("/agency", createAgencyLead);
+router.post("/agency", permissionMiddleware("leads.write"), createAgencyLead);
 router.post("/bulk-import", bulkImportLeads);
-router.get("/dashboard", getAgencyDashboard);
+router.get("/dashboard", permissionMiddleware("leads.read"), getAgencyDashboard);
 router.get("/mine", listMyLeads);
 router.get("/mine/:id", getMyLead);
-router.get("/", listLeads);
-router.get("/:id", getLead);
-router.patch("/:id", updateLead);
+router.get("/", permissionMiddleware("leads.read"), listLeads);
+router.get("/:id", permissionMiddleware("leads.read"), getLead);
+router.patch("/:id", permissionMiddleware("leads.write"), updateLead);
 
 export const leadRouter = router;

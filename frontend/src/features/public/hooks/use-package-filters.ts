@@ -39,6 +39,7 @@ export function usePackageFilters() {
     durationMin: parseNumber(searchParams.get("durationMin")),
     durationMax: parseNumber(searchParams.get("durationMax")),
     geographicScope: (searchParams.get("geographicScope") as GeographicScope) || undefined,
+    agencySlug: searchParams.get("agencySlug") || undefined,
     status: parseArray(searchParams, "status") as PackageStatus[],
     sortBy: (searchParams.get("sortBy") as SortOption) || "recommended",
     page: parseNumber(searchParams.get("page")) || 1,
@@ -102,7 +103,8 @@ export function usePackageFilters() {
       (filters.infants ?? 0) > 0 ||
       filters.durationMin !== undefined ||
       filters.durationMax !== undefined ||
-      filters.geographicScope
+      filters.geographicScope ||
+      filters.agencySlug
     );
   }, [filters]);
 

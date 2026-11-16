@@ -14,40 +14,31 @@ import type {
 } from "@/features/packages/types/package.types";
 
 export async function getPackagesApi(filters?: PackageListFilters & { agencyId?: string }): Promise<PackageListResponse> {
-  console.log("[getPackagesApi] called with filters:", filters);
   const query = filters ? { ...filters, agencyId: filters.agencyId } : undefined;
-  console.log("[getPackagesApi] query:", query);
   const response = await apiClient.get<{ success: true; data: PackageListResponse }>("/packages", {
     query,
   });
-  console.log("[getPackagesApi] response:", response);
   return response.data;
 }
 
 export async function getUpcomingPackagesApi(agencyId?: string): Promise<{ items: TravelPackage[] }> {
-  console.log("[getUpcomingPackagesApi] called with agencyId:", agencyId);
   const response = await apiClient.get<{ success: true; data: { items: TravelPackage[] } }>("/packages/upcoming", {
     query: agencyId ? { agencyId } : undefined,
   });
-  console.log("[getUpcomingPackagesApi] response:", response);
   return response.data;
 }
 
 export async function getCurrentPackagesApi(agencyId?: string): Promise<{ items: TravelPackage[] }> {
-  console.log("[getCurrentPackagesApi] called with agencyId:", agencyId);
   const response = await apiClient.get<{ success: true; data: { items: TravelPackage[] } }>("/packages/current", {
     query: agencyId ? { agencyId } : undefined,
   });
-  console.log("[getCurrentPackagesApi] response:", response);
   return response.data;
 }
 
 export async function getHistoryPackagesApi(agencyId?: string): Promise<{ items: TravelPackage[] }> {
-  console.log("[getHistoryPackagesApi] called with agencyId:", agencyId);
   const response = await apiClient.get<{ success: true; data: { items: TravelPackage[] } }>("/packages/history", {
     query: agencyId ? { agencyId } : undefined,
   });
-  console.log("[getHistoryPackagesApi] response:", response);
   return response.data;
 }
 
@@ -57,12 +48,10 @@ export async function getPackageByIdApi(id: string): Promise<{ package: TravelPa
 }
 
 export async function createPackageApi(data: CreatePackageInput, agencyId?: string): Promise<{ package: TravelPackage }> {
-  console.log("[createPackageApi] called with agencyId:", agencyId);
   const response = await apiClient.post<{ success: true; data: { package: TravelPackage } }>("/packages", {
     query: agencyId ? { agencyId } : undefined,
     body: data,
   });
-  console.log("[createPackageApi] response:", response);
   return response.data;
 }
 

@@ -95,4 +95,60 @@ export const UserRepository = {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return User.find({ _id: { $in: validIds } }).exec();
   },
+
+  async listAll(
+    query: { page?: number; limit?: number; search?: string; status?: string }
+  ): Promise<{
+    items: UserDocument[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 20, search, status } = query;
+
+    const filter: Record<string, unknown> = {};
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      User.find(filter)
+        .populate("roleId", "key name")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      User.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
+
+  async updateStatus(id: string, status: string): Promise<UserDocument | null> {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const updated = await User.findByIdAndUpdate(
+      id,
+      { $set: { status } },
+      { new: true }
+    );
+    if (!updated) {
+      return null;
+    }
+    return updated as Promise<UserDocument | null>;
+  }
 };

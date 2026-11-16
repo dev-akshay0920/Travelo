@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useCallback, useState } from "react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { PageStack } from "@/components/shared/page-container";
@@ -13,6 +14,8 @@ export interface AgencyModulePageProps {
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
+  settingsSubTab?: "profile" | "templates";
+  onSettingsSubTabChange?: (subTab: "profile" | "templates") => void;
 }
 
 export function AgencyModulePage({
@@ -21,9 +24,25 @@ export function AgencyModulePage({
   description,
   actions,
   children,
+  settingsSubTab,
+  onSettingsSubTabChange,
 }: AgencyModulePageProps) {
+  const [subTab, setSubTab] = useState<"profile" | "templates">("profile");
+  const activeSubTab = settingsSubTab ?? subTab;
+  const handleSettingsSubTabChange = useCallback(
+    (next: "profile" | "templates") => {
+      setSubTab(next);
+      onSettingsSubTabChange?.(next);
+    },
+    [onSettingsSubTabChange],
+  );
+
   return (
-    <AgencyShell activeTab={tab}>
+    <AgencyShell
+      activeTab={tab}
+      activeSettingsSubTab={activeSubTab}
+      onSettingsSubTabChange={handleSettingsSubTabChange}
+    >
       <PageStack>
         <PageHeader title={title} description={description} actions={actions} />
         {children}

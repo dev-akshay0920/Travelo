@@ -81,7 +81,7 @@ export default function AgencyFollowUpsPage() {
       });
       setReminders(value.items);
       setTotal(value.total);
-    } catch (err) {
+    } catch {
       setReminders([]);
       setTotal(0);
     } finally {

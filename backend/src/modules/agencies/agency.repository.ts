@@ -142,4 +142,43 @@ export const AgencyRepository = {
     }
     return updated as Promise<AgencyDocument | null>;
   },
+
+  async listAll(
+    query: { page?: number; limit?: number; search?: string; status?: AgencyStatus }
+  ): Promise<{
+    items: AgencyDocument[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const { page = 1, limit = 20, search, status } = query;
+
+    const filter: Record<string, unknown> = {};
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { slug: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      Agency.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      Agency.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 };
