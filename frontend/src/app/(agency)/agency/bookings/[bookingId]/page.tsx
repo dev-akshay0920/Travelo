@@ -40,6 +40,9 @@ import { PageStack } from "@/components/shared/page-container";
 import { AgencyModulePage } from "@/features/agency/components/agency-module-page";
 import { DetailRow, EmptyBlock, SectionCard, StatusPill } from "@/features/agency/components/crm-ui";
 import {
+  Chat,
+} from "@/features/chat/components/chat";
+import {
   addSupplierBookingApi,
   createBookingPaymentApi,
   deleteBookingApi,
@@ -616,6 +619,9 @@ export default function BookingDetailPage() {
                   </Button>
                 </div>
               </div>
+            </SectionCard>
+            <SectionCard title="Chat" description="Message the traveller about this booking.">
+              <Chat leadId={booking.leadId ?? ""} />
             </SectionCard>
           </div>
 

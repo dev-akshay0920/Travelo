@@ -43,17 +43,19 @@ export interface UnreadCountResponse {
 }
 
 export const chatApi = {
-  async startConversation(agencyId: string, leadId?: string): Promise<{ conversation: ConversationDTO }> {
+  async startConversation(leadId: string): Promise<{ conversation: ConversationDTO }> {
     const data = await apiClient.post<{ data: { conversation: ConversationDTO } }>(
       "/chat/conversations",
-      { body: { agencyId, leadId } }
+      { body: { leadId } }
     );
     return data.data;
   },
 
-  async list(page = 1, limit = 20): Promise<ConversationsResponse> {
+  async list(page = 1, limit = 20, leadId?: string): Promise<ConversationsResponse> {
+    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (leadId) qs.set("leadId", leadId);
     const data = await apiClient.get<{ data: ConversationsResponse }>(
-      `/chat/conversations?page=${page}&limit=${limit}`
+      `/chat/conversations?${qs.toString()}`
     );
     return data.data;
   },

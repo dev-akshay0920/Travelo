@@ -3,8 +3,9 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { ChatService } from "./chat.service";
-import { AgencyRepository } from "../agencies/agency.repository";
-import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from "../../shared/errors/app-error";
+import { LeadRepository } from "../leads/lead.repository";
+import { NotFoundError, UnauthorizedError, ValidationError } from "../../shared/errors/app-error";
+import { resolveAgencyId } from "../../shared/utils/agency-context";
 
 async function getParticipant(req: Request): Promise<{ id: string; userId: string; role: "traveller" | "agency" }> {
   if (!req.user) {
@@ -13,14 +14,8 @@ async function getParticipant(req: Request): Promise<{ id: string; userId: strin
   if (req.user.roleKey === "traveller") {
     return { id: req.user.sub, userId: req.user.sub, role: "traveller" };
   }
-  if (req.user.roleKey === "agency") {
-    const agency = await AgencyRepository.findByOwnerUserId(req.user.sub);
-    if (!agency) {
-      throw new NotFoundError("Agency profile not found.");
-    }
-    return { id: String(agency._id), userId: req.user.sub, role: "agency" };
-  }
-  throw new ForbiddenError("Chat access is not available for this account.");
+  const agencyId = resolveAgencyId(req);
+  return { id: String(agencyId), userId: req.user.sub, role: "agency" };
 }
 
 function getPagination(query: Request["query"], defaultLimit: number): { page: number; limit: number } {
@@ -34,26 +29,51 @@ function getPagination(query: Request["query"], defaultLimit: number): { page: n
 
 export const startConversation = asyncHandler(async (req: Request, res: Response) => {
   const participant = await getParticipant(req);
-  if (participant.role !== "traveller") {
-    throw new ForbiddenError("Only travelers can start conversations.");
-  }
-
-  const { agencyId, leadId } = req.body ?? {};
-  if (!agencyId || typeof agencyId !== "string") {
-    res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: { code: "BAD_REQUEST", message: "Agency ID is required." },
-    });
-    return;
-  }
+  const { leadId } = req.body ?? {};
   if (leadId !== undefined && typeof leadId !== "string") {
     throw new ValidationError("Invalid lead ID.");
   }
 
+  let travellerId: string;
+  let agencyId: string;
+
+  if (participant.role === "traveller") {
+    const { agencyId: bodyAgencyId } = req.body ?? {};
+    if (!bodyAgencyId || typeof bodyAgencyId !== "string") {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Agency ID is required." },
+      });
+      return;
+    }
+    travellerId = participant.userId;
+    agencyId = bodyAgencyId;
+    if (leadId) {
+      const lead = await LeadRepository.findByIdAndTraveler(leadId, travellerId);
+      if (!lead || String(lead.agencyId) !== agencyId) {
+        throw new NotFoundError("Lead not found.");
+      }
+    }
+  } else {
+    if (!leadId) {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Lead ID is required." },
+      });
+      return;
+    }
+    agencyId = participant.id;
+    const lead = await LeadRepository.findByIdAndAgency(leadId, agencyId);
+    if (!lead || !lead.travelerId) {
+      throw new NotFoundError("Lead not found.");
+    }
+    travellerId = String(lead.travelerId);
+  }
+
   const conversation = await ChatService.startConversation({
-    travellerId: participant.userId,
+    travellerId,
     agencyId,
-    leadId,
+    leadId: leadId || undefined,
   });
 
   res.status(HTTP_STATUS.OK).json(success({ conversation }));
@@ -87,7 +107,7 @@ export const listConversations = asyncHandler(async (req: Request, res: Response
   const participant = await getParticipant(req);
 
   const result = await ChatService.listConversations(
-    getPagination(req.query, 20),
+    { ...getPagination(req.query, 20), leadId: req.query.leadId as string | undefined },
     participant.id,
     participant.role
   );

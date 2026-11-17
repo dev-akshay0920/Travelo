@@ -18,6 +18,7 @@ export interface MessageCreateInput {
 export interface ConversationFilters {
   travellerId?: string;
   agencyId?: string;
+  leadId?: string;
   status?: ConversationStatus;
   page?: number;
   limit?: number;
@@ -88,6 +89,9 @@ export const ChatRepository = {
     }
     if (filters.agencyId && Types.ObjectId.isValid(filters.agencyId)) {
       query.agencyId = filters.agencyId;
+    }
+    if (filters.leadId && Types.ObjectId.isValid(filters.leadId)) {
+      query.leadId = filters.leadId;
     }
     if (filters.status) {
       query.status = filters.status;

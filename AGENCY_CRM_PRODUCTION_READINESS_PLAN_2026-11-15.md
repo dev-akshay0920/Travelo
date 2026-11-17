@@ -102,7 +102,7 @@ Leads, pipeline, sources, follow-ups and packages work only because they use fla
 
 ## 8. Phase 5 - Communication & client portal
 
-- [ ] **P5-1** Chat UI (backend exists, zero UI) wired into lead + booking detail; fix `chat.model.ts` senderId ref.
+- [x] **P5-1** Chat UI (backend exists, zero UI) wired into lead + booking detail; fix `chat.model.ts` senderId ref.
 - [ ] **P5-2** Reviews UI (backend exists, zero UI).
 - [ ] **P5-3** Communications log module (WhatsApp / email / calls) linked to leads.
 - [ ] **P5-4** Traveller portal: own bookings / invoices / vouchers.
@@ -184,3 +184,5 @@ From `AGENCY_CRM_SAAS_PLAN.md` section 11 plus our checks:
 | 2026-11-15 | P4-4 Status transition rules | done | `backend/src/modules/shared/status-transitions.ts` defines valid transitions for booking/invoice/task statuses; enforced in all `updateStatus` endpoints with 400 on invalid transition |
 | 2026-11-15 | P4-5 Audit log | done | `backend/src/modules/audit/` module with `AuditLog` model; logs status changes, payments, staff role changes; `GET /audit/audit-logs` endpoint with pagination and filters |
 | 2026-11-15 | Phase 4 verification | done | backend `typecheck` + `build` + `lint` (0 errors) pass; frontend `tsc --noEmit` + `build` (44 routes) + `lint` (0 errors) pass |
+| 2026-11-15 | P5-1 Chat UI | done | Frontend `Chat` component (`features/chat/components/chat.tsx`) wired into lead detail (`/agency/leads/[leadId]`) and booking detail (`/agency/bookings/[bookingId]`) via `<Chat leadId=... />`; `chatApi.startConversation(leadId)` and `chatApi.list(1,50,leadId)` pass `leadId` so agency scope is derived server-side; backend `chat.controller.ts` `getParticipant` resolves agency from JWT `agencyId` (owner + staff) instead of owner-only lookup; `startConversation` allows agency-side initiation for a lead (traveller derived from lead) while keeping traveller-side flow; `listConversations` supports `leadId` filter; `chat.tsx` JSX brace fix, `loadConversations` deps + `eslint-disable-next-line react-hooks/set-state-in-effect` per repo convention |
+| 2026-11-15 | Phase 5 verification | done | backend `typecheck` + `build` + `lint` (0 errors) pass; frontend `tsc --noEmit` + `build` (44 routes) + `lint` (0 errors) pass; smoke run re-validated live (sign in -> leads/pipeline/sources/follow-ups -> lead -> quotation -> booking -> invoice unpaid -> partial payment -> full payment -> ledger total -> booking status synced) |

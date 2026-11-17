@@ -41,6 +41,9 @@ import { PageStack } from "@/components/shared/page-container";
 import { AgencyModulePage } from "@/features/agency/components/agency-module-page";
 import { DetailRow, EmptyBlock, SectionCard, StatusPill } from "@/features/agency/components/crm-ui";
 import {
+  Chat,
+} from "@/features/chat/components/chat";
+import {
   createFollowUpApi,
   createLeadActivityApi,
   getLeadApi,
@@ -389,6 +392,10 @@ export default function AgencyLeadDetailPage() {
                   ))}
                 </ol>
               )}
+            </SectionCard>
+
+            <SectionCard title="Chat" description="Message the traveller directly.">
+              <Chat leadId={lead.id} />
             </SectionCard>
 
             <SectionCard
