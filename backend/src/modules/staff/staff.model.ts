@@ -11,6 +11,7 @@ export interface StaffDocument extends Document {
   isActive: boolean;
   invitedBy?: Types.ObjectId;
   joinedAt?: Date;
+  commissionRate?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ const StaffSchema = new Schema<StaffDocument>(
     isActive: { type: Boolean, default: true },
     invitedBy: { type: Schema.Types.ObjectId, ref: "User" },
     joinedAt: { type: Date },
+    commissionRate: { type: Number, default: 0, min: 0, max: 100 },
   },
   { timestamps: true }
 );

@@ -7,6 +7,7 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { auditService } from "../../modules/audit/audit.service";
 
 export class StaffController {
   create = asyncHandler(async (req: Request, res: Response) => {
@@ -20,8 +21,8 @@ export class StaffController {
   invite = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
     const actorId = new Types.ObjectId(req.user!.sub);
-    const { email, role, permissions } = req.body;
-    const result = await staffService.invite(agencyId, actorId, { email, role, permissions });
+    const { email, role, permissions, commissionRate } = req.body;
+    const result = await staffService.invite(agencyId, actorId, { email, role, permissions, commissionRate });
     res
       .status(HTTP_STATUS.CREATED)
       .json(
@@ -40,7 +41,17 @@ export class StaffController {
 
   update = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
+    const existing = await staffService.getById(req.params.id!, agencyId);
     const staff = await staffService.update(req.params.id!, agencyId, req.body);
+    if (req.body.role && existing.role !== req.body.role) {
+      await auditService.logStaffRoleChange(
+        agencyId,
+        new Types.ObjectId(req.user!.sub),
+        new Types.ObjectId(req.params.id!),
+        { role: existing.role },
+        { role: req.body.role }
+      );
+    }
     res.status(HTTP_STATUS.OK).json(success({ staff }, { message: "Staff member updated successfully" }));
   });
 

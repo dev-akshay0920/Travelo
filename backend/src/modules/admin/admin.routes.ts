@@ -10,6 +10,8 @@ import {
   listUsersSchema,
   getUserSchema,
   updateUserStatusSchema,
+  createPayoutSchema,
+  listPayoutsSchema,
 } from "./admin.validation";
 
 const router = Router();
@@ -31,5 +33,7 @@ router.patch(
   validate(updateUserStatusSchema),
   adminController.updateUserStatus
 );
+router.post("/payouts", validate(createPayoutSchema), adminController.createPayout);
+router.get("/payouts", validate(listPayoutsSchema), adminController.listPayouts);
 
 export default router;

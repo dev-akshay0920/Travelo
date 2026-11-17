@@ -21,6 +21,7 @@ import {
   UserRound,
   Users,
   UsersRound,
+  Wallet,
 } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
@@ -45,6 +46,9 @@ export type AgencyTab =
   | "staff"
   | "reports"
   | "billing"
+  | "commission"
+  | "departures"
+  | "ledger"
   | "settings";
 type SettingsSubTab = "templates" | "profile";
 
@@ -65,11 +69,14 @@ const tabItems = [
   { label: "Quotations", key: "quotations" as const, icon: FileText, href: "/agency/quotations" },
   { label: "Bookings", key: "bookings" as const, icon: CalendarCheck2, href: "/agency/bookings" },
   { label: "Invoices", key: "invoices" as const, icon: ReceiptText, href: "/agency/invoices" },
+  { label: "Ledger", key: "ledger" as const, icon: CreditCard, href: "/agency/payment-ledger" },
   { label: "Suppliers", key: "suppliers" as const, icon: Building2, href: "/agency/suppliers" },
   { label: "Documents", key: "documents" as const, icon: FolderOpen, href: "/agency/documents" },
   { label: "Tasks", key: "tasks" as const, icon: CheckSquare, href: "/agency/tasks" },
   { label: "Staff", key: "staff" as const, icon: UsersRound, href: "/agency/staff" },
   { label: "Reports", key: "reports" as const, icon: BarChart3, href: "/agency/reports" },
+  { label: "Commission", key: "commission" as const, icon: Wallet, href: "/agency/commission" },
+  { label: "Departures", key: "departures" as const, icon: CalendarCheck2, href: "/agency/departures" },
   { label: "Billing", key: "billing" as const, icon: CreditCard, href: "/agency/billing" },
   { label: "Packages", key: "packages" as const, icon: Package, href: "/agency/packages" },
   { label: "Profile", key: "settings" as const, icon: UserRound, href: "/agency/settings/profile" },

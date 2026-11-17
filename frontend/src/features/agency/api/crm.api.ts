@@ -502,6 +502,13 @@ export async function getBookingApi(id: string): Promise<Booking> {
   return response.data.booking;
 }
 
+export async function generateVoucherApi(id: string): Promise<Booking> {
+  const response = await apiClient.post<Envelope<{ booking: Booking }>>(
+    `/bookings/${encodeURIComponent(id)}/voucher`,
+  );
+  return response.data.booking;
+}
+
 export async function listBookingsByLeadApi(leadId: string): Promise<Booking[]> {
   const response = await apiClient.get<Envelope<{ bookings: Booking[] }>>(
     `/bookings/lead/${encodeURIComponent(leadId)}`,
@@ -677,6 +684,17 @@ export async function recordInvoicePaymentApi(
   return response.data.invoice;
 }
 
+export async function generatePaymentLinkApi(
+  id: string,
+  input: { expiresInDays?: number }
+): Promise<Invoice> {
+  const response = await apiClient.post<Envelope<{ invoice: Invoice }>>(
+    `/invoices/${encodeURIComponent(id)}/payment-link`,
+    { body: input },
+  );
+  return response.data.invoice;
+}
+
 export async function deleteInvoiceApi(id: string): Promise<void> {
   await apiClient.delete(`/invoices/${encodeURIComponent(id)}`);
 }
@@ -688,6 +706,119 @@ export async function listBookingPaymentsApi(
     `/booking-payments/booking/${encodeURIComponent(bookingId)}`,
   );
   return response.data.payments;
+}
+
+export async function listAllBookingPaymentsApi(params: {
+  page?: number;
+  limit?: number;
+  bookingId?: string;
+  invoiceId?: string;
+  method?: "cash" | "bank_transfer" | "cheque" | "online_link" | "razorpay" | "stripe";
+  paidFrom?: string;
+  paidTo?: string;
+}): Promise<{
+  items: BookingPayment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> {
+  const response = await apiClient.get<Envelope<{
+    payments: BookingPayment[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>>("/booking-payments", { query: q(params) });
+  return {
+    items: response.data.payments,
+    total: response.data.total,
+    page: response.data.page,
+    limit: response.data.limit,
+    totalPages: response.data.totalPages,
+  };
+}
+
+export async function listOutstandingReportApi(params: {
+  page?: number;
+  limit?: number;
+}): Promise<{
+  items: {
+    id: string;
+    invoiceNumber: string;
+    leadId?: string;
+    travellerName?: string;
+    travellerEmail?: string;
+    bookingId?: string;
+    bookingNumber?: string;
+    total: number;
+    paidAmount: number;
+    outstanding: number;
+    currency: string;
+    dueDate?: string;
+    daysOverdue: number;
+    status: "unpaid" | "partial";
+  }[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> {
+  const response = await apiClient.get<Envelope<{
+    items: {
+      id: string;
+      invoiceNumber: string;
+      leadId?: string;
+      travellerName?: string;
+      travellerEmail?: string;
+      bookingId?: string;
+      bookingNumber?: string;
+      total: number;
+      paidAmount: number;
+      outstanding: number;
+      currency: string;
+      dueDate?: string;
+      daysOverdue: number;
+      status: "unpaid" | "partial";
+    }[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>>("/reports/outstanding", { query: q(params) });
+  return response.data;
+}
+
+export async function getCommissionReportApi(params: {
+  paidFrom?: string;
+  paidTo?: string;
+}): Promise<{
+  items: {
+    staffId: string;
+    staffName: string;
+    staffEmail: string;
+    commissionRate: number;
+    totalPaid: number;
+    paymentCount: number;
+    commission: number;
+  }[];
+  totalCommission: number;
+  staffCount: number;
+}> {
+  const response = await apiClient.get<Envelope<{
+    items: {
+      staffId: string;
+      staffName: string;
+      staffEmail: string;
+      commissionRate: number;
+      totalPaid: number;
+      paymentCount: number;
+      commission: number;
+    }[];
+    totalCommission: number;
+    staffCount: number;
+  }>>("/reports/commission", { query: q(params) });
+  return response.data;
 }
 
 export async function createBookingPaymentApi(input: {
@@ -705,6 +836,74 @@ export async function createBookingPaymentApi(input: {
     { body: input },
   );
   return response.data.payment;
+}
+
+export async function listPayoutsApi(params: {
+  page?: number;
+  limit?: number;
+  staffId?: string;
+  status?: "pending" | "paid" | "cancelled";
+}): Promise<{
+  items: {
+    id: string;
+    staffId: string;
+    amount: number;
+    currency: string;
+    status: "pending" | "paid" | "cancelled";
+    paidAt?: string;
+    notes?: string;
+    createdAt: string;
+  }[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> {
+  const response = await apiClient.get<Envelope<{
+    items: {
+      id: string;
+      staffId: string;
+      amount: number;
+      currency: string;
+      status: "pending" | "paid" | "cancelled";
+      paidAt?: string;
+      notes?: string;
+      createdAt: string;
+    }[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>>("/admin/payouts", { query: q(params) });
+  return response.data;
+}
+
+export async function createPayoutApi(input: {
+  staffId: string;
+  amount: number;
+  currency?: string;
+  notes?: string;
+}): Promise<{
+  id: string;
+  staffId: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "paid" | "cancelled";
+  paidAt?: string;
+  notes?: string;
+  createdAt: string;
+}> {
+  const response = await apiClient.post<Envelope<{
+    id: string;
+    staffId: string;
+    amount: number;
+    currency: string;
+    status: "pending" | "paid" | "cancelled";
+    paidAt?: string;
+    notes?: string;
+    createdAt: string;
+  }>>("/admin/payouts", { body: input });
+  return response.data;
 }
 
 export async function deleteBookingPaymentApi(id: string): Promise<void> {
@@ -1118,4 +1317,11 @@ export async function listPlatformInvoicesApi(): Promise<Paged<PlatformInvoice>>
     { query: { page: 1, limit: 50 } },
   );
   return response.data.invoices;
+}
+
+export async function getPublicVoucherApi(id: string): Promise<Booking> {
+  const response = await apiClient.get<Envelope<{ booking: Booking }>>(
+    `/public/voucher/${encodeURIComponent(id)}`,
+  );
+  return response.data.booking;
 }

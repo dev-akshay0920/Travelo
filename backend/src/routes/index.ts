@@ -20,6 +20,7 @@ import itineraryRouter from "../modules/itinerary/itinerary.routes";
 import quotationRouter from "../modules/quotation/quotation.routes";
 import bookingRouter from "../modules/booking/booking.routes";
 import invoiceRouter from "../modules/invoice/invoice.routes";
+import reportRoutes from "../modules/reports/report.routes";
 import supplierRouter from "../modules/supplier/supplier.routes";
 import documentRouter from "../modules/document/document.routes";
 import bookingPaymentRouter from "../modules/booking-payment/booking-payment.routes";
@@ -28,6 +29,7 @@ import staffRouter from "../modules/staff/staff.routes";
 import subscriptionPlanRouter from "../modules/saas-billing/subscription-plan.routes";
 import agencySubscriptionRouter from "../modules/saas-billing/agency-subscription.routes";
 import platformInvoiceRouter from "../modules/saas-billing/platform-invoice.routes";
+import auditRoutes from "../modules/audit/audit.routes";
 
 const router = Router();
 
@@ -64,6 +66,7 @@ router.use("/itineraries", itineraryRouter);
 router.use("/quotations", quotationRouter);
 router.use("/bookings", bookingRouter);
 router.use("/invoices", invoiceRouter);
+router.use("/reports", reportRoutes);
 router.use("/suppliers", supplierRouter);
 router.use("/documents", documentRouter);
 router.use("/booking-payments", bookingPaymentRouter);
@@ -74,5 +77,6 @@ router.use("/agency-subscriptions", agencySubscriptionRouter);
 router.use("/platform-invoices", platformInvoiceRouter);
 router.use("/users", userRouter);
 router.use("/admin", adminRouter);
+router.use("/audit", auditRoutes);
 
 export const apiV1Router: Router = router;

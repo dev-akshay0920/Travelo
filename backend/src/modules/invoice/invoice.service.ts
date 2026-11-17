@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { env } from "../../config/env";
 import { invoiceRepository } from "./invoice.repository";
 import { bookingPaymentRepository } from "../booking-payment/booking-payment.repository";
 import { bookingRepository } from "../booking/booking.repository";
@@ -185,6 +186,37 @@ export class InvoiceService {
     }
 
     return toInvoiceDTO(updatedInvoice);
+  }
+
+  async generatePaymentLink(
+    id: string,
+    agencyId: Types.ObjectId,
+    expiresInDays: number = 30
+  ): Promise<InvoiceDTO> {
+    const invoiceId = new Types.ObjectId(id);
+    const invoice = await invoiceRepository.findByIdAndAgency(invoiceId, agencyId);
+    if (!invoice) {
+      throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+    if (invoice.status === "paid" || invoice.status === "cancelled") {
+      throw new AppError(
+        `Cannot generate a payment link for a ${invoice.status} invoice`,
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_CODES.VALIDATION_ERROR
+      );
+    }
+
+    const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+    const paymentLinkUrl = `${env.CLIENT_URL}/payment/${invoice.id}`;
+
+    const updated = await invoiceRepository.updateByIdAndAgency(invoiceId, agencyId, {
+      paymentLinkUrl,
+      paymentLinkExpiresAt: expiresAt,
+    });
+    if (!updated) {
+      throw new AppError("Invoice not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+    return toInvoiceDTO(updated);
   }
 }
 

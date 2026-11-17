@@ -6,6 +6,8 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { validateTaskStatusTransition } from "../../shared/status-transitions";
+import { auditService } from "../../modules/audit/audit.service";
 
 export class TaskController {
   create = asyncHandler(async (req: Request, res: Response) => {
@@ -84,8 +86,23 @@ export class TaskController {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Status is required" } });
       return;
     }
-    const task = await taskService.updateStatus(req.params.id!, agencyId, status);
-    res.status(HTTP_STATUS.OK).json(success({ task }, { message: "Task status updated successfully" }));
+    const task = await taskService.getById(req.params.id!, agencyId);
+    if (!task) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: { code: "NOT_FOUND", message: "Task not found." } });
+      return;
+    }
+    validateTaskStatusTransition(task.status, status);
+    const updated = await taskService.updateStatus(req.params.id!, agencyId, status);
+    await auditService.logStatusChange(
+      agencyId,
+      new Types.ObjectId(req.user!.sub),
+      "task_status_changed",
+      "task",
+      new Types.ObjectId(req.params.id!),
+      { status: task.status },
+      { status }
+    );
+    res.status(HTTP_STATUS.OK).json(success({ task: updated }, { message: "Task status updated successfully" }));
   });
 
   markReminderSent = asyncHandler(async (req: Request, res: Response) => {

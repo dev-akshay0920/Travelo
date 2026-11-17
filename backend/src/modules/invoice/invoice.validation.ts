@@ -90,3 +90,12 @@ export const recordPaymentSchema = z.object({
     notes: z.string().max(5000).optional(),
   }),
 });
+
+export const generatePaymentLinkSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  }),
+  body: z.object({
+    expiresInDays: z.coerce.number().int().min(1).max(365).default(30),
+  }).optional(),
+});

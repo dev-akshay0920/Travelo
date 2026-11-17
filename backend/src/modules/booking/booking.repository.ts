@@ -225,6 +225,11 @@ export class BookingRepository {
     ).exec();
   }
 
+  async findById(id: Types.ObjectId): Promise<BookingDocument | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return BookingModel.findById(id).exec();
+  }
+
   async recalculatePaidAmount(
     bookingId: Types.ObjectId,
     agencyId: Types.ObjectId
@@ -264,6 +269,20 @@ export class BookingRepository {
     }
 
     return booking.save();
+  }
+
+  async updateVoucher(
+    bookingId: Types.ObjectId,
+    agencyId: Types.ObjectId,
+    voucherUrl: string,
+    voucherKey: string
+  ): Promise<BookingDocument | null> {
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return BookingModel.findOneAndUpdate(
+      { _id: bookingId, agencyId },
+      { $set: { voucherUrl, voucherKey } },
+      { new: true }
+    ).exec();
   }
 
   async updateSupplierBooking(

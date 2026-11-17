@@ -25,6 +25,7 @@ export class StaffRepository {
     permissions?: string[];
     isActive?: boolean;
     invitedBy?: Types.ObjectId;
+    commissionRate?: number;
   }): Promise<StaffDocument> {
     const staff = new StaffModel({
       ...data,
@@ -35,6 +36,7 @@ export class StaffRepository {
       isActive: data.isActive ?? true,
       invitedBy: data.invitedBy,
       joinedAt: new Date(),
+      commissionRate: data.commissionRate,
     });
     return staff.save();
   }

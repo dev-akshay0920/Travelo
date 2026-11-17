@@ -11,6 +11,7 @@ import {
   deleteInvoiceSchema,
   updateInvoiceStatusSchema,
   recordPaymentSchema,
+  generatePaymentLinkSchema,
 } from "./invoice.validation";
 
 const router = Router();
@@ -27,6 +28,7 @@ router.get("/:id", permissionMiddleware("invoices.read"), validate(getInvoiceSch
 router.put("/:id", permissionMiddleware("invoices.write"), validate(updateInvoiceSchema), invoiceController.update);
 router.patch("/:id/status", permissionMiddleware("invoices.write"), validate(updateInvoiceStatusSchema), invoiceController.updateStatus);
 router.post("/:id/payment", permissionMiddleware("payments.write"), validate(recordPaymentSchema), invoiceController.recordPayment);
+router.post("/:id/payment-link", permissionMiddleware("invoices.write"), validate(generatePaymentLinkSchema), invoiceController.generatePaymentLink);
 router.delete("/:id", permissionMiddleware("invoices.delete"), validate(deleteInvoiceSchema), invoiceController.delete);
 
 export default router;

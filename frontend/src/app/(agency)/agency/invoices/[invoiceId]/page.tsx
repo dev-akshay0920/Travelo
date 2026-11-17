@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Link as ChainIcon,
   CreditCard,
   ExternalLink,
   Loader2,
@@ -34,6 +35,7 @@ import { DetailRow, EmptyBlock, SectionCard, StatusPill } from "@/features/agenc
 import {
   createLeadActivityApi,
   deleteInvoiceApi,
+  generatePaymentLinkApi,
   getInvoiceApi,
   recordInvoicePaymentApi,
   updateInvoiceApi,
@@ -64,6 +66,8 @@ export default function InvoiceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [form, setForm] = useState({
     type: "proforma" as InvoiceType,
     status: "unpaid" as InvoiceStatus,
@@ -188,6 +192,21 @@ export default function InvoiceDetailPage() {
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send payment link.");
+    }
+  };
+
+  const handleGeneratePaymentLink = async () => {
+    if (!invoice) return;
+    setIsGeneratingLink(true);
+    try {
+      const updated = await generatePaymentLinkApi(invoiceId, { expiresInDays: 30 });
+      setGeneratedLink(updated.paymentLinkUrl ?? null);
+      toast.success("Payment link generated.");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to generate payment link.");
+    } finally {
+      setIsGeneratingLink(false);
     }
   };
 
@@ -554,19 +573,41 @@ export default function InvoiceDetailPage() {
               <DetailRow label="Due date" value={formatDate(invoice.dueDate)} />
               <DetailRow label="Created" value={formatDateTime(invoice.createdAt)} />
               <DetailRow label="Updated" value={formatDateTime(invoice.updatedAt)} />
-              {invoice.paymentLinkUrl && (
+              {invoice.paymentLinkUrl || generatedLink ? (
                 <div className="space-y-1 mt-3">
                   <DetailRow
                     label="Payment link expires"
-                    value={invoice.paymentLinkExpiresAt ? formatDateTime(invoice.paymentLinkExpiresAt) : "-"}
+                    value={
+                      (invoice.paymentLinkExpiresAt
+                        ? formatDateTime(invoice.paymentLinkExpiresAt)
+                        : "-") || "-"
+                    }
                   />
                   <Button variant="outline" className="w-full" asChild>
-                    <a href={invoice.paymentLinkUrl} target="_blank" rel="noreferrer">
+                    <a
+                      href={(invoice.paymentLinkUrl || generatedLink) ?? ""}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <ExternalLink className="size-4" aria-hidden="true" />
                       Open payment link
                     </a>
                   </Button>
                 </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleGeneratePaymentLink}
+                  disabled={isGeneratingLink}
+                >
+                  {isGeneratingLink ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <ChainIcon className="size-4" aria-hidden="true" />
+                  )}
+                  Generate payment link
+                </Button>
               )}
             </SectionCard>
 

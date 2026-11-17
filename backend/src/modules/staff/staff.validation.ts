@@ -6,6 +6,7 @@ export const createStaffSchema = z.object({
     role: z.enum(["owner", "admin", "manager", "agent", "accountant", "viewer"]),
     permissions: z.array(z.string()).optional(),
     isActive: z.boolean().default(true),
+    commissionRate: z.coerce.number().min(0).max(100).default(0).optional(),
   }),
 });
 
@@ -14,6 +15,7 @@ export const inviteStaffSchema = z.object({
     email: z.string().email().max(255),
     role: z.enum(["owner", "admin", "manager", "agent", "accountant", "viewer"]).default("agent"),
     permissions: z.array(z.string()).optional(),
+    commissionRate: z.coerce.number().min(0).max(100).default(0).optional(),
   }),
 });
 
@@ -25,6 +27,7 @@ export const updateStaffSchema = z.object({
     role: z.enum(["owner", "admin", "manager", "agent", "accountant", "viewer"]).optional(),
     permissions: z.array(z.string()).optional(),
     isActive: z.boolean().optional(),
+    commissionRate: z.coerce.number().min(0).max(100).optional(),
   }),
 });
 

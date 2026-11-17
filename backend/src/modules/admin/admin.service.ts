@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import { AgencyRepository } from "../agencies/agency.repository";
 import { UserRepository } from "../users/user.repository";
+import { payoutRepository } from "./payout.repository";
 import type {
   AgencyListItem,
   AgencyListQuery,
@@ -9,6 +10,7 @@ import type {
   UserListQuery,
   UpdateUserStatusInput,
 } from "./admin.types";
+import type { PayoutListQuery } from "./payout.repository";
 
 function toAgencyListItem(agency: {
   _id: Types.ObjectId;
@@ -126,5 +128,58 @@ export const adminService = {
       return null;
     }
     return toUserListItem(updated);
+  },
+
+  async createPayout(
+    agencyId: Types.ObjectId,
+    input: {
+      staffId: string;
+      amount: number;
+      currency?: string;
+      notes?: string;
+    }
+  ) {
+    const payout = await payoutRepository.create({
+      agencyId,
+      staffId: new Types.ObjectId(input.staffId),
+      amount: input.amount,
+      currency: input.currency,
+      notes: input.notes,
+    });
+    return {
+      id: String(payout._id),
+      staffId: String(payout.staffId),
+      amount: payout.amount,
+      currency: payout.currency,
+      status: payout.status,
+      paidAt: payout.paidAt?.toISOString(),
+      notes: payout.notes,
+      createdAt: payout.createdAt.toISOString(),
+    };
+  },
+
+  async listPayouts(
+    agencyId: Types.ObjectId,
+    query: PayoutListQuery
+  ) {
+    const result = await payoutRepository.list(agencyId, query);
+    return {
+      items: result.items.map((p) => ({
+        id: String(p._id),
+        staffId: String(p.staffId),
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        paidAt: p.paidAt?.toISOString(),
+        notes: p.notes,
+        createdAt: p.createdAt.toISOString(),
+      })),
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    };
   },
 };

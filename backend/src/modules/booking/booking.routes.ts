@@ -10,11 +10,15 @@ import {
   listBookingsSchema,
   deleteBookingSchema,
   updateBookingStatusSchema,
+  generateVoucherSchema,
+  getPublicVoucherSchema,
   addSupplierBookingSchema,
   updateSupplierBookingSchema,
 } from "./booking.validation";
 
 const router = Router();
+
+router.get("/public/voucher/:bookingId", validate(getPublicVoucherSchema), bookingController.getPublicVoucher);
 
 router.use(authMiddleware);
 
@@ -27,6 +31,7 @@ router.get("/", permissionMiddleware("bookings.read"), validate(listBookingsSche
 router.get("/:id", permissionMiddleware("bookings.read"), validate(getBookingSchema), bookingController.getById);
 router.put("/:id", permissionMiddleware("bookings.write"), validate(updateBookingSchema), bookingController.update);
 router.patch("/:id/status", permissionMiddleware("bookings.write"), validate(updateBookingStatusSchema), bookingController.updateStatus);
+router.post("/:id/voucher", permissionMiddleware("bookings.write"), validate(generateVoucherSchema), bookingController.generateVoucher);
 router.post(
   "/:id/supplier-bookings",
   permissionMiddleware("bookings.write"),

@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { env } from "../../config/env";
 import { bookingRepository } from "./booking.repository";
 import type { CreateBookingInput, UpdateBookingInput, BookingListQuery, BookingDTO, BookingListResponse, SupplierBookingDTO } from "./booking.types";
 import type { SupplierBooking } from "./booking.model";
@@ -168,6 +169,31 @@ async list(agencyId: Types.ObjectId, query: BookingListQuery): Promise<BookingLi
     );
     if (!booking) {
       throw new AppError("Booking or supplier booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+    return toBookingDTO(booking);
+  }
+
+  async generateVoucher(id: string, agencyId: Types.ObjectId): Promise<BookingDTO> {
+    const bookingId = new Types.ObjectId(id);
+    const booking = await bookingRepository.findByIdAndAgency(bookingId, agencyId);
+    if (!booking) {
+      throw new AppError("Booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+
+    const voucherKey = `voucher/${bookingId}`;
+    const voucherUrl = `${env.CLIENT_URL}/voucher/${bookingId}`;
+
+    const updated = await bookingRepository.updateVoucher(bookingId, agencyId, voucherUrl, voucherKey);
+    if (!updated) {
+      throw new AppError("Booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
+    }
+    return toBookingDTO(updated);
+  }
+
+  async getPublicVoucher(id: string): Promise<BookingDTO> {
+    const booking = await bookingRepository.findById(new Types.ObjectId(id));
+    if (!booking) {
+      throw new AppError("Booking not found", HTTP_STATUS.NOT_FOUND, ERROR_CODES.NOT_FOUND);
     }
     return toBookingDTO(booking);
   }

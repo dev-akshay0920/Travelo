@@ -37,6 +37,24 @@ export const listUsersSchema = z.object({
   }),
 });
 
+export const createPayoutSchema = z.object({
+  body: z.object({
+    staffId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+    amount: z.number().min(0.01),
+    currency: z.string().length(3).default("INR"),
+    notes: z.string().max(1000).optional(),
+  }),
+});
+
+export const listPayoutsSchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    staffId: z.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
+    status: z.enum(["pending", "paid", "cancelled"]).optional(),
+  }),
+});
+
 export const getUserSchema = z.object({
   params: z.object({
     id: objectIdSchema,

@@ -105,6 +105,18 @@ export const updateBookingStatusSchema = z.object({
   }),
 });
 
+export const generateVoucherSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  }),
+});
+
+export const getPublicVoucherSchema = z.object({
+  params: z.object({
+    bookingId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+  }),
+});
+
 export const addSupplierBookingSchema = z.object({
   params: z.object({
     id: z.string().regex(/^[0-9a-fA-F]{24}$/),

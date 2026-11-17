@@ -33,7 +33,7 @@ export class StaffService {
   async invite(
     agencyId: Types.ObjectId,
     actorId: Types.ObjectId,
-    input: { email: string; role?: StaffRole; permissions?: string[] }
+    input: { email: string; role?: StaffRole; permissions?: string[]; commissionRate?: number }
   ): Promise<{ staff: StaffDTO; invitationToken: string }> {
     const email = input.email.trim().toLowerCase();
     const role = input.role ?? "agent";
@@ -72,6 +72,7 @@ export class StaffService {
       permissions: input.permissions || getPermissionsForRole(role),
       isActive: false,
       invitedBy: actorId,
+      commissionRate: input.commissionRate ?? 0,
     });
 
     const invitationToken = crypto.randomBytes(32).toString("hex");

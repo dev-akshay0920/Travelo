@@ -8,6 +8,7 @@ export interface CreateStaffInput {
   role: StaffRole;
   permissions?: string[];
   isActive?: boolean;
+  commissionRate?: number;
 }
 
 export interface UpdateStaffInput {
@@ -45,6 +46,7 @@ export interface StaffDTO {
   isActive: boolean;
   invitedBy?: string;
   joinedAt?: string;
+  commissionRate?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +60,7 @@ interface StaffLean {
   isActive: boolean;
   invitedBy?: Types.ObjectId;
   joinedAt?: Date;
+  commissionRate?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -74,6 +77,7 @@ export function toStaffDTO(doc: StaffDocument | StaffLean, userName?: string, us
     isActive: doc.isActive,
     invitedBy: doc.invitedBy?.toString(),
     joinedAt: doc.joinedAt?.toISOString(),
+    commissionRate: doc.commissionRate,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
