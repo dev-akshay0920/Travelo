@@ -18,6 +18,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.get("/me", invoiceController.listMyInvoices);
 router.post("/", permissionMiddleware("invoices.write"), validate(createInvoiceSchema), invoiceController.create);
 router.get("/overdue", permissionMiddleware("invoices.read"), invoiceController.getOverdueInvoices);
 router.get("/status-counts", permissionMiddleware("invoices.read"), invoiceController.getStatusCounts);

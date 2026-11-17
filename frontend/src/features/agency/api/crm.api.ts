@@ -742,6 +742,9 @@ export async function listAllBookingPaymentsApi(params: {
 export async function listOutstandingReportApi(params: {
   page?: number;
   limit?: number;
+  from?: string;
+  to?: string;
+  export?: boolean;
 }): Promise<{
   items: {
     id: string;
@@ -763,6 +766,12 @@ export async function listOutstandingReportApi(params: {
   page: number;
   limit: number;
   totalPages: number;
+  summary: {
+    totalInvoiced: number;
+    totalPaid: number;
+    totalOutstanding: number;
+    invoiceCount: number;
+  };
 }> {
   const response = await apiClient.get<Envelope<{
     items: {
@@ -785,6 +794,12 @@ export async function listOutstandingReportApi(params: {
     page: number;
     limit: number;
     totalPages: number;
+    summary: {
+      totalInvoiced: number;
+      totalPaid: number;
+      totalOutstanding: number;
+      invoiceCount: number;
+    };
   }>>("/reports/outstanding", { query: q(params) });
   return response.data;
 }
@@ -804,6 +819,10 @@ export async function getCommissionReportApi(params: {
   }[];
   totalCommission: number;
   staffCount: number;
+  summary: {
+    totalPaid: number;
+    paymentCount: number;
+  };
 }> {
   const response = await apiClient.get<Envelope<{
     items: {
@@ -817,6 +836,10 @@ export async function getCommissionReportApi(params: {
     }[];
     totalCommission: number;
     staffCount: number;
+    summary: {
+      totalPaid: number;
+      paymentCount: number;
+    };
   }>>("/reports/commission", { query: q(params) });
   return response.data;
 }

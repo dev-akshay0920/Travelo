@@ -10,6 +10,7 @@ import {
   createLeadSchema,
   listLeadsQuerySchema,
   listMyLeadsQuerySchema,
+  mergeLeadsSchema,
   updateLeadSchema,
 } from "./lead.validation";
 
@@ -70,6 +71,22 @@ export const updateLead = asyncHandler(async (req: Request, res: Response) => {
   const input = updateLeadSchema.parse(req.body);
   const lead = await LeadService.update(authenticatedUserId(req), getLeadId(req), input);
   res.status(HTTP_STATUS.OK).json(success({ lead }));
+});
+
+export const softDeleteLead = asyncHandler(async (req: Request, res: Response) => {
+  await LeadService.softDeleteLead(authenticatedUserId(req), getLeadId(req));
+  res.status(HTTP_STATUS.OK).json(success(null, { message: "Lead deleted successfully." }));
+});
+
+export const restoreLead = asyncHandler(async (req: Request, res: Response) => {
+  await LeadService.restoreLead(authenticatedUserId(req), getLeadId(req));
+  res.status(HTTP_STATUS.OK).json(success(null, { message: "Lead restored successfully." }));
+});
+
+export const mergeLeads = asyncHandler(async (req: Request, res: Response) => {
+  const input = mergeLeadsSchema.parse(req.body);
+  const lead = await LeadService.mergeLeads(authenticatedUserId(req), getLeadId(req), input.mergeIntoLeadId);
+  res.status(HTTP_STATUS.OK).json(success({ lead }, { message: "Leads merged successfully." }));
 });
 
 export const getAgencyDashboard = asyncHandler(async (req: Request, res: Response) => {

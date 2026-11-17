@@ -33,6 +33,8 @@ const EnvSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
   GOOGLE_CALLBACK_URL: z.string().url().default("http://localhost:5000/api/v1/auth/google/callback"),
+  META_WEBHOOK_VERIFY_TOKEN: z.string().min(1, "META_WEBHOOK_VERIFY_TOKEN is required").default("travora-meta-webhook-verify-token-change-in-production"),
+  GOOGLE_WEBHOOK_SECRET: z.string().min(1, "GOOGLE_WEBHOOK_SECRET is required").default("travora-google-webhook-secret-change-in-production"),
   FILEBASE_ENDPOINT: optionalUrl,
   FILEBASE_REGION: z.preprocess(
     (value: unknown) => value === "" ? undefined : value,

@@ -11,6 +11,7 @@ export interface LeadListFilters {
   packageId?: string;
   page: number;
   limit: number;
+  includeDeleted?: boolean;
 }
 
 export const LeadRepository = {
@@ -25,6 +26,9 @@ export const LeadRepository = {
     const query: Record<string, unknown> = {
       agencyId: new Types.ObjectId(agencyId),
     };
+    if (!filters.includeDeleted) {
+      query.deletedAt = { $exists: false };
+    }
     if (filters.search) {
       const pattern = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       query.$or = [
@@ -44,7 +48,7 @@ export const LeadRepository = {
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
       Lead.find(query)
         .select(
-          "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+          "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt deletedAt"
         )
         .sort({ createdAt: -1, _id: -1 })
         .skip((filters.page - 1) * filters.limit)
@@ -62,11 +66,60 @@ export const LeadRepository = {
     };
   },
 
+  async findDuplicateByAgency(
+    agencyId: string,
+    travelerEmail: string,
+    travelerPhone?: string
+  ): Promise<LeadDocument | null> {
+    if (!Types.ObjectId.isValid(agencyId)) return null;
+    const normalizedEmail = travelerEmail.trim().toLowerCase();
+    const query: Record<string, unknown> = {
+      agencyId: new Types.ObjectId(agencyId),
+      travelerEmail: normalizedEmail,
+      deletedAt: { $exists: false },
+    };
+    if (travelerPhone && travelerPhone.trim()) {
+      query.$or = [
+        { travelerEmail: normalizedEmail },
+        { travelerPhone: travelerPhone.trim() },
+      ];
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    return Lead.findOne(query)
+      .select(
+        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt deletedAt"
+      )
+      .sort({ createdAt: -1 })
+      .exec();
+  },
+
+  async softDeleteByIdAndAgency(id: string, agencyId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(id)) return false;
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const result = await Lead.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), agencyId: new Types.ObjectId(agencyId), deletedAt: { $exists: false } },
+      { $set: { deletedAt: new Date() } },
+      { new: true }
+    ).exec();
+    return result !== null;
+  },
+
+  async restoreByIdAndAgency(id: string, agencyId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(id)) return false;
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const result = await Lead.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), agencyId: new Types.ObjectId(agencyId), deletedAt: { $exists: true } },
+      { $unset: { deletedAt: "" } },
+      { new: true }
+    ).exec();
+    return result !== null;
+  },
+
   async listByTraveler(
     travelerId: string,
     filters: Pick<LeadListFilters, "page" | "limit">
   ): Promise<{ items: LeadDocument[]; total: number; page: number; limit: number; totalPages: number }> {
-    const query = { travelerId: new Types.ObjectId(travelerId) };
+    const query = { travelerId: new Types.ObjectId(travelerId), deletedAt: { $exists: false } };
     const [items, total] = await Promise.all([
       // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
       Lead.find(query)
@@ -85,13 +138,13 @@ export const LeadRepository = {
       totalPages: total ? Math.ceil(total / filters.limit) : 0,
     };
   },
-
   async findByIdAndTraveler(id: string, travelerId: string): Promise<LeadDocument | null> {
     if (!Types.ObjectId.isValid(id)) return null;
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return Lead.findOne({
       _id: new Types.ObjectId(id),
       travelerId: new Types.ObjectId(travelerId),
+      deletedAt: { $exists: false },
     })
       .select("agencyId packageId packageName message requestedStartDate travelerCount status createdAt updatedAt")
       .exec();
@@ -103,9 +156,10 @@ export const LeadRepository = {
     return Lead.findOne({
       _id: new Types.ObjectId(id),
       agencyId: new Types.ObjectId(agencyId),
+      deletedAt: { $exists: false },
     })
       .select(
-        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt deletedAt"
       )
       .exec();
   },
@@ -135,7 +189,8 @@ export const LeadRepository = {
     if (update.agencyNote !== undefined) $set.agencyNote = update.agencyNote;
     if (update.pipelineStageId !== undefined)
       $set.pipelineStageId = new Types.ObjectId(update.pipelineStageId);
-    if (update.leadSourceId !== undefined) $set.leadSourceId = new Types.ObjectId(update.leadSourceId);
+    if (update.leadSourceId !== undefined)
+      $set.leadSourceId = new Types.ObjectId(update.leadSourceId);
     if (update.assignedStaffId !== undefined)
       $set.assignedStaffId = new Types.ObjectId(update.assignedStaffId);
     if (update.estimatedValue !== undefined) $set.estimatedValue = update.estimatedValue;
@@ -152,19 +207,19 @@ export const LeadRepository = {
 
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return Lead.findOneAndUpdate(
-      { _id: new Types.ObjectId(id), agencyId: new Types.ObjectId(agencyId) },
+      { _id: new Types.ObjectId(id), agencyId: new Types.ObjectId(agencyId), deletedAt: { $exists: false } },
       { $set },
       { new: true, runValidators: true }
     )
       .select(
-        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt"
+        "agencyId packageId packageName travelerId travelerName travelerEmail travelerPhone message requestedStartDate travelerCount status agencyNote pipelineStageId leadSourceId assignedStaffId estimatedValue probability expectedCloseDate lastFollowUpAt nextFollowUpAt utmSource utmMedium utmCampaign leadFormSubmissionId createdAt updatedAt deletedAt"
       )
       .exec();
   },
 
   async countByStatus(agencyId: string): Promise<Array<{ _id: LeadStatus; count: number }>> {
     return Lead.aggregate<{ _id: LeadStatus; count: number }>([
-      { $match: { agencyId: new Types.ObjectId(agencyId) } },
+      { $match: { agencyId: new Types.ObjectId(agencyId), deletedAt: { $exists: false } } },
       { $group: { _id: "$status", count: { $sum: 1 } } },
     ]).exec();
   },

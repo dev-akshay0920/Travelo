@@ -172,6 +172,57 @@ export class BookingRepository {
     };
   }
 
+  async listByTraveller(travellerId: Types.ObjectId, query: BookingListQuery): Promise<{
+    items: BookingLean[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      status,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = query;
+
+    const filter: Record<string, unknown> = { travellerId };
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { bookingNumber: { $regex: search, $options: "i" } },
+        { "travellers.name": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const sort: Record<string, 1 | -1> = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+    const [items, total] = await Promise.all([
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      BookingModel.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean().exec(),
+      BookingModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items: items as BookingLean[],
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getBookingIdsByTraveller(travellerId: Types.ObjectId): Promise<Types.ObjectId[]> {
+    if (!Types.ObjectId.isValid(travellerId)) {
+      return [];
+    }
+    // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+    const docs = await BookingModel.find({ travellerId }, { _id: 1 }).sort({ createdAt: -1 }).lean().exec();
+    return docs.map((doc: { _id: Types.ObjectId }) => doc._id);
+  }
+
   async getByLeadId(leadId: Types.ObjectId, agencyId: Types.ObjectId): Promise<BookingLean[]> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return BookingModel.find({ leadId, agencyId }).sort({ createdAt: -1 }).lean().exec();

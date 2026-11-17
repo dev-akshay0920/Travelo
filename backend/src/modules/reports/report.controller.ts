@@ -10,13 +10,36 @@ import type { CommissionReportQuery } from "./report.types";
 export class ReportController {
   outstanding = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
-    const result = await reportService.outstanding(agencyId, req.query as OutstandingReportQuery);
+    const raw = req.query as unknown as Record<string, string | string[] | undefined>;
+    const shouldExport = raw.export === "true";
+    const query: OutstandingReportQuery = {
+      page: raw.page ? Number(raw.page as string) : undefined,
+      limit: raw.limit ? Number(raw.limit as string) : undefined,
+      from: raw.from as string | undefined,
+      to: raw.to as string | undefined,
+    };
+
+    if (shouldExport) {
+      const { filename, data } = await reportService.exportOutstandingCsv(agencyId, {
+        from: query.from,
+        to: query.to,
+      });
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.status(HTTP_STATUS.OK).send(data);
+      return;
+    }
+
+    const result = await reportService.outstanding(agencyId, query);
     res.status(HTTP_STATUS.OK).json(success(result));
   });
 
   commission = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
-    const result = await reportService.commission(agencyId, req.query as CommissionReportQuery);
+    const result = await reportService.commission(
+      agencyId,
+      req.query as CommissionReportQuery
+    );
     res.status(HTTP_STATUS.OK).json(success(result));
   });
 }

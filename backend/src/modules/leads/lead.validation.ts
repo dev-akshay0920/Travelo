@@ -69,6 +69,13 @@ export const listLeadsQuerySchema = z
     packageId: objectIdSchema.optional(),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20),
+    includeDeleted: z.coerce.boolean().optional(),
+  })
+  .strict();
+
+export const mergeLeadsSchema = z
+  .object({
+    mergeIntoLeadId: objectIdSchema,
   })
   .strict();
 
@@ -106,3 +113,4 @@ export type BulkImportLeadsInput = z.infer<typeof bulkImportLeadsSchema>;
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
 export type ListMyLeadsQuery = z.infer<typeof listMyLeadsQuerySchema>;
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
+export type MergeLeadsInput = z.infer<typeof mergeLeadsSchema>;

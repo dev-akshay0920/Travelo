@@ -157,6 +157,42 @@ export class InvoiceRepository {
     };
   }
 
+  async listByBookingIds(bookingIds: Types.ObjectId[], query: InvoiceListQuery): Promise<{
+    items: InvoiceLean[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    if (!bookingIds || bookingIds.length === 0) {
+      return { items: [], total: 0, page: 1, limit: 20, totalPages: 0 };
+    }
+    const { page = 1, limit = 20, search, type, status, sortBy = "createdAt", sortOrder = "desc" } = query;
+
+    const filter: Record<string, unknown> = { bookingId: { $in: bookingIds } };
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [{ invoiceNumber: { $regex: search, $options: "i" } }];
+    }
+
+    const sort: Record<string, 1 | -1> = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+    const [items, total] = await Promise.all([
+      // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
+      InvoiceModel.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean().exec(),
+      InvoiceModel.countDocuments(filter).exec(),
+    ]);
+
+    return {
+      items: items as InvoiceLean[],
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async getByBookingId(bookingId: Types.ObjectId, agencyId: Types.ObjectId): Promise<InvoiceLean[]> {
     // @ts-expect-error Mongoose 8 overload resolution conflict with strict TypeScript
     return InvoiceModel.find({ bookingId, agencyId }).sort({ createdAt: -1 }).lean().exec();

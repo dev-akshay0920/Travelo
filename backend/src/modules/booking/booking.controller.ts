@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { bookingService } from "./booking.service";
 import { bookingRepository } from "./booking.repository";
 import type { BookingListQuery } from "./booking.types";
+import { toBookingDTO } from "./booking.types";
 import { asyncHandler } from "../../shared/utils/async-handler";
 import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
@@ -39,6 +40,43 @@ export class BookingController {
     const agencyId = resolveAgencyId(req);
     const result = await bookingService.list(agencyId, req.query as BookingListQuery);
     res.status(HTTP_STATUS.OK).json(success({ bookings: result }));
+  });
+
+  listMyBookings = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user || req.user.roleKey !== "traveller") {
+      res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Traveller access required." },
+      });
+      return;
+    }
+    const travellerId = new Types.ObjectId(req.user.sub);
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Page and limit must be positive integers, with limit at most 100." },
+      });
+      return;
+    }
+    const result = await bookingRepository.listByTraveller(travellerId, {
+      page,
+      limit,
+      status: req.query.status as unknown as BookingListQuery["status"],
+      search: req.query.search as string | undefined,
+    });
+    res.status(HTTP_STATUS.OK).json(
+      success({
+        bookings: {
+          items: result.items.map(toBookingDTO),
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages,
+        },
+      })
+    );
   });
 
   getByLeadId = asyncHandler(async (req: Request, res: Response) => {

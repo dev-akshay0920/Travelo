@@ -18,6 +18,7 @@ import { PublicLayout } from "@/features/public/components/public-layout";
 import { fetchPublicPackageDetails } from "@/features/public/api/public-packages.api";
 import type { TravelPackage } from "@/features/public/types/public-filters.types";
 import { formatDisplayDate } from "@/lib/date-format";
+import { ReviewsSection } from "@/features/reviews/components/reviews-section";
 
 function formatPrice(price: number, currency: string, priceType: string) {
   const formatted = currency === "INR"
@@ -211,6 +212,12 @@ export default function PublicPackageDetailsPage() {
                     </CardContent>
                   </Card>
                 ) : null}
+
+                <ReviewsSection
+                  packageId={pkg.id}
+                  agencyId={pkg.agencyId}
+                  packageName={pkg.name}
+                />
               </div>
 
               <aside className="space-y-4">

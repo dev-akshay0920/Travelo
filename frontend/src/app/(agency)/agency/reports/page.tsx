@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, IndianRupee, TrendingUp, Users, Wallet } from "lucide-react";
+import { BarChart3, Download, IndianRupee, TrendingUp, Users, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/shared/error-state";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LoadingState } from "@/components/shared/loading-state";
 import { PageStack } from "@/components/shared/page-container";
 import { AgencyModulePage } from "@/features/agency/components/agency-module-page";
@@ -13,8 +15,7 @@ import { StatCard } from "@/features/agency/components/crm-ui";
 import {
   getBookingStatusCountsApi,
   getInvoiceStatusCountsApi,
-  listBookingsApi,
-  listInvoicesApi,
+  listOutstandingReportApi,
 } from "@/features/agency/api/crm.api";
 import { getAgencyDashboardApi } from "@/features/leads/api/leads.api";
 import { formatCurrency, formatNumber } from "@/features/agency/lib/format";
@@ -69,44 +70,90 @@ export default function AgencyReportsPage() {
   const [dashboard, setDashboard] = useState<LeadDashboard | null>(null);
   const [bookingCounts, setBookingCounts] = useState<Record<string, number>>({});
   const [invoiceCounts, setInvoiceCounts] = useState<Record<string, number>>({});
-  const [bookingRevenue, setBookingRevenue] = useState(0);
-  const [invoiced, setInvoiced] = useState(0);
-  const [collected, setCollected] = useState(0);
+  const [outstandingReport, setOutstandingReport] = useState<{
+    items: Array<{ total: number; paidAmount: number; outstanding: number; currency: string }>;
+    total: number;
+    summary: {
+      totalInvoiced: number;
+      totalPaid: number;
+      totalOutstanding: number;
+      invoiceCount: number;
+    };
+    page: number;
+    limit: number;
+    totalPages: number;
+  } | null>(null);
   const [currency, setCurrency] = useState("INR");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [dashboardData, bookings, invoices, nextBookingCounts, nextInvoiceCounts] =
-        await Promise.all([
-          getAgencyDashboardApi(),
-          listBookingsApi({ page: 1, limit: 100 }),
-          listInvoicesApi({ page: 1, limit: 100 }),
-          getBookingStatusCountsApi().catch(() => ({}) as Record<string, number>),
-          getInvoiceStatusCountsApi().catch(() => ({}) as Record<string, number>),
-        ]);
+      const [
+        dashboardData,
+        nextBookingCounts,
+        nextInvoiceCounts,
+        report,
+      ] = await Promise.all([
+        getAgencyDashboardApi(),
+        getBookingStatusCountsApi().catch(() => ({}) as Record<string, number>),
+        getInvoiceStatusCountsApi().catch(() => ({}) as Record<string, number>),
+        listOutstandingReportApi({
+          page: 1,
+          limit: 100,
+          from: dateFrom || undefined,
+          to: dateTo || undefined,
+        }),
+      ]);
       setDashboard(dashboardData);
       setBookingCounts(nextBookingCounts);
       setInvoiceCounts(nextInvoiceCounts);
-      setBookingRevenue(bookings.items.reduce((sum, item) => sum + item.totalPrice, 0));
-      setInvoiced(invoices.items.reduce((sum, item) => sum + item.total, 0));
-      setCollected(invoices.items.reduce((sum, item) => sum + item.paidAmount, 0));
-      const first = bookings.items[0] ?? invoices.items[0];
+      setOutstandingReport(report);
+      const first = report.items[0];
       if (first?.currency) setCurrency(first.currency);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load reports.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const response = await fetch(
+        `/api/v1/reports/outstanding?export=true&page=1&limit=1000${
+          dateFrom ? `&from=${encodeURIComponent(dateFrom)}` : ""
+        }${dateTo ? `&to=${encodeURIComponent(dateTo)}` : ""
+        }`,
+        { headers: { Accept: "text/csv" } }
+      );
+      if (!response.ok) throw new Error("CSV export failed.");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `outstanding-invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "CSV export failed.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -143,7 +190,11 @@ export default function AgencyReportsPage() {
     (sum, status) => sum + (invoiceCounts[status] ?? 0),
     0,
   );
-  const outstanding = Math.max(invoiced - collected, 0);
+  const summary = outstandingReport?.summary;
+  const invoiced = summary?.totalInvoiced ?? 0;
+  const collected = summary?.totalPaid ?? 0;
+  const outstanding = summary?.totalOutstanding ?? Math.max(invoiced - collected, 0);
+  const invoiceCount = summary?.invoiceCount ?? outstandingReport?.total ?? 0;
 
   return (
     <AgencyModulePage
@@ -151,10 +202,51 @@ export default function AgencyReportsPage() {
       title="Reports"
       description="Pipeline, bookings and revenue at a glance."
       actions={
-        <Button variant="outline" onClick={load}>
-          <BarChart3 className="size-4" aria-hidden="true" />
-          Refresh
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="report-from" className="text-caption text-muted-foreground sr-only">
+              From
+            </Label>
+            <Input
+              id="report-from"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="text-xs px-2 py-1.5"
+              placeholder="From"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="report-to" className="text-caption text-muted-foreground sr-only">
+              To
+            </Label>
+            <Input
+              id="report-to"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="text-xs px-2 py-1.5"
+              placeholder="To"
+            />
+          </div>
+          <Button variant="outline" onClick={load} disabled={isLoading}>
+            <BarChart3 className="size-4" aria-hidden="true" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isLoading || exporting}
+            size="sm"
+          >
+            {exporting ? (
+              <Download className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Download className="size-4" aria-hidden="true" />
+            )}
+            Export CSV
+          </Button>
+        </div>
       }
     >
       <PageStack>
@@ -169,8 +261,8 @@ export default function AgencyReportsPage() {
           />
           <StatCard
             label="Booking value"
-            value={formatCurrency(bookingRevenue, currency)}
-            hint={`${formatNumber(totalBookings)} bookings`}
+            value={formatCurrency(invoiced, currency)}
+            hint={`${formatNumber(invoiceCount)} invoices`}
             icon={IndianRupee}
           />
           <StatCard
@@ -215,10 +307,6 @@ export default function AgencyReportsPage() {
               <CardTitle>Revenue snapshot</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex items-center justify-between border-b border-border/60 pb-2 text-body-sm">
-                <span className="text-muted-foreground">Booked value</span>
-                <span className="font-medium">{formatCurrency(bookingRevenue, currency)}</span>
-              </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2 text-body-sm">
                 <span className="text-muted-foreground">Invoiced</span>
                 <span className="font-medium">{formatCurrency(invoiced, currency)}</span>

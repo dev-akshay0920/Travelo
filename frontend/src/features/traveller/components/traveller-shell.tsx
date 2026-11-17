@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import { Compass, Heart, MessageSquareText, Plane, User } from "lucide-react";
+import { CalendarDays, Compass, FileText, Heart, MessageSquareText, Plane, User } from "lucide-react";
 
 import { AppShellHeader } from "@/components/shared/app-shell-header";
 import { IconSidebar } from "@/components/shared/icon-sidebar";
@@ -17,6 +17,8 @@ const sidebarNavItems = [
   { label: "Explore", href: "/traveller/explore", icon: Compass },
   { label: "Watchlist", href: "/traveller/watchlist", icon: Heart },
   { label: "My inquiries", href: "/traveller/inquiries", icon: MessageSquareText },
+  { label: "My bookings", href: "/traveller/bookings", icon: CalendarDays },
+  { label: "My invoices", href: "/traveller/invoices", icon: FileText },
   { label: "Profile", href: "/traveller/profile", icon: User },
 ];
 

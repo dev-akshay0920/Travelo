@@ -2,6 +2,8 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import { permissionMiddleware } from "../../middleware/permission.middleware";
+import { validate } from "../../middleware/validation.middleware";
+import { mergeLeadsSchema } from "./lead.validation";
 import {
   bulkImportLeads,
   createAgencyLead,
@@ -11,6 +13,9 @@ import {
   getLead,
   listMyLeads,
   listLeads,
+  mergeLeads,
+  restoreLead,
+  softDeleteLead,
   updateLead,
 } from "./lead.controller";
 
@@ -55,5 +60,8 @@ router.get("/mine/:id", getMyLead);
 router.get("/", permissionMiddleware("leads.read"), listLeads);
 router.get("/:id", permissionMiddleware("leads.read"), getLead);
 router.patch("/:id", permissionMiddleware("leads.write"), updateLead);
+router.patch("/:id/soft-delete", permissionMiddleware("leads.write"), softDeleteLead);
+router.patch("/:id/restore", permissionMiddleware("leads.write"), restoreLead);
+router.post("/:id/merge", permissionMiddleware("leads.write"), validate(mergeLeadsSchema), mergeLeads);
 
 export const leadRouter = router;

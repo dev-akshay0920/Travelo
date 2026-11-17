@@ -28,8 +28,9 @@ export interface LeadDocument extends Document {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
-  leadFormSubmissionId?: string;
-  createdAt: Date;
+    leadFormSubmissionId?: string;
+    deletedAt?: Date;
+    createdAt: Date;
   updatedAt: Date;
 }
 
@@ -148,6 +149,10 @@ const LeadSchema = new Schema<LeadDocument>(
       trim: true,
       maxlength: 100,
     },
+    deletedAt: {
+      type: Date,
+      index: true,
+    },
   },
   { timestamps: true }
 );
@@ -159,5 +164,6 @@ LeadSchema.index({ travelerId: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, pipelineStageId: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, assignedStaffId: 1, createdAt: -1 });
 LeadSchema.index({ agencyId: 1, nextFollowUpAt: 1 });
+LeadSchema.index({ agencyId: 1, deletedAt: 1 });
 
 export const Lead = models.Lead || model<LeadDocument>("Lead", LeadSchema);

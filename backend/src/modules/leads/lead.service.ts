@@ -207,6 +207,16 @@ export const LeadService = {
       }
     }
 
+    // Duplicate detection: same email (or phone) within agency, non-deleted.
+    const existingDuplicate = await LeadRepository.findDuplicateByAgency(
+      String(agency._id),
+      input.travelerEmail,
+      input.travelerPhone
+    );
+    if (existingDuplicate) {
+      return toLeadDTO(existingDuplicate);
+    }
+
     const lead = await LeadRepository.create({
       agencyId: agency._id,
       ...(input.packageId ? { packageId: new Types.ObjectId(input.packageId) } : {}),
@@ -247,6 +257,81 @@ export const LeadService = {
     });
 
     return toLeadDTO(lead);
+  },
+
+  async softDeleteLead(userId: string, id: string): Promise<void> {
+    const agency = await requireAgencyMemberDocument(userId);
+    const deleted = await LeadRepository.softDeleteByIdAndAgency(id, String(agency._id));
+    if (!deleted) throw new NotFoundError("Lead not found or already deleted.");
+  },
+
+  async restoreLead(userId: string, id: string): Promise<void> {
+    const agency = await requireAgencyMemberDocument(userId);
+    const restored = await LeadRepository.restoreByIdAndAgency(id, String(agency._id));
+    if (!restored) throw new NotFoundError("Lead not found or not deleted.");
+  },
+
+  async mergeLeads(userId: string, primaryId: string, mergeIntoId: string): Promise<LeadDTO> {
+    const agency = await requireAgencyMemberDocument(userId);
+    const agencyId = String(agency._id);
+
+    const primary = await LeadRepository.findByIdAndAgency(primaryId, agencyId);
+    if (!primary) throw new NotFoundError("Primary lead not found.");
+    const toMerge = await LeadRepository.findByIdAndAgency(mergeIntoId, agencyId);
+    if (!toMerge) throw new NotFoundError("Lead to merge not found.");
+    if (primaryId === mergeIntoId) throw new ValidationError("Cannot merge a lead into itself.");
+
+    // Prefer non-empty values from the lead being merged into the primary.
+    const updateFields: Record<string, unknown> = {};
+    const fillIfEmpty = (key: string, value: unknown) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        !(primary as unknown as Record<string, unknown>)[key]
+      ) {
+        updateFields[key] = value;
+      }
+    };
+    fillIfEmpty("travelerPhone", toMerge.travelerPhone);
+    fillIfEmpty("packageName", toMerge.packageName);
+    fillIfEmpty("requestedStartDate", toMerge.requestedStartDate);
+    fillIfEmpty("travelerCount", toMerge.travelerCount);
+    fillIfEmpty("agencyNote", toMerge.agencyNote);
+    fillIfEmpty("pipelineStageId", toMerge.pipelineStageId);
+    fillIfEmpty("leadSourceId", toMerge.leadSourceId);
+    fillIfEmpty("assignedStaffId", toMerge.assignedStaffId);
+    fillIfEmpty("estimatedValue", toMerge.estimatedValue);
+    fillIfEmpty("probability", toMerge.probability);
+    fillIfEmpty("expectedCloseDate", toMerge.expectedCloseDate);
+    fillIfEmpty("utmSource", toMerge.utmSource);
+    fillIfEmpty("utmMedium", toMerge.utmMedium);
+    fillIfEmpty("utmCampaign", toMerge.utmCampaign);
+
+    const updated = await LeadRepository.updateByIdAndAgency(
+      primaryId,
+      agencyId,
+      updateFields as {
+        status?: LeadStatus;
+        agencyNote?: string;
+        pipelineStageId?: string;
+        leadSourceId?: string;
+        assignedStaffId?: string;
+        estimatedValue?: number;
+        probability?: number;
+        expectedCloseDate?: string;
+        lastFollowUpAt?: string;
+        nextFollowUpAt?: string;
+        utmSource?: string;
+        utmMedium?: string;
+        utmCampaign?: string;
+      }
+    );
+    if (!updated) throw new NotFoundError("Primary lead not found.");
+
+    await LeadRepository.softDeleteByIdAndAgency(mergeIntoId, agencyId);
+
+    return toLeadDTO(updated);
   },
 
   async bulkImportForAgency(userId: string, input: BulkImportLeadsInput) {

@@ -8,12 +8,38 @@ import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
 import { auditService } from "../../modules/audit/audit.service";
+import { ForbiddenError } from "../../shared/errors/app-error";
+import { agencySubscriptionService } from "../saas-billing/agency-subscription.service";
+import { subscriptionPlanRepository } from "../saas-billing/subscription-plan.repository";
 
 export class StaffController {
   create = asyncHandler(async (req: Request, res: Response) => {
     const agencyId = resolveAgencyId(req);
     const actorId = new Types.ObjectId(req.user!.sub);
     const { userId, role, permissions } = req.body;
+
+    // Plan limit enforcement: staff count vs active subscription plan maxStaff.
+    const subscription = await agencySubscriptionService.getByAgencyId(agencyId);
+    if (subscription && (subscription.status === "active" || subscription.status === "trial")) {
+      const now = new Date();
+      const trialExpired =
+        subscription.trialEndsAt && new Date(subscription.trialEndsAt) < now;
+      const periodExpired = new Date(subscription.currentPeriodEnd) < now;
+      if (!trialExpired && !periodExpired) {
+        const plan = await subscriptionPlanRepository.findById(
+          new Types.ObjectId(subscription.planId)
+        );
+        if (plan) {
+          const current = await staffService.list(agencyId, { page: 1, limit: 1 });
+          if (current.total >= plan.limits.maxStaff) {
+            throw new ForbiddenError(
+              `Staff limit reached (${plan.limits.maxStaff}). Upgrade your plan to add more staff.`
+            );
+          }
+        }
+      }
+    }
+
     const staff = await staffService.create(agencyId, actorId, { userId, role, permissions });
     res.status(HTTP_STATUS.CREATED).json(success({ staff }, { message: "Staff member added successfully" }));
   });

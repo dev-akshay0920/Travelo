@@ -22,6 +22,7 @@ router.get("/public/voucher/:bookingId", validate(getPublicVoucherSchema), booki
 
 router.use(authMiddleware);
 
+router.get("/me", bookingController.listMyBookings);
 router.post("/", permissionMiddleware("bookings.write"), validate(createBookingSchema), bookingController.create);
 router.get("/upcoming-departures", permissionMiddleware("bookings.read"), bookingController.getUpcomingDepartures);
 router.get("/status-counts", permissionMiddleware("bookings.read"), bookingController.getStatusCounts);

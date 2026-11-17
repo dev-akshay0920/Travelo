@@ -1,6 +1,8 @@
 export interface OutstandingReportQuery {
   page?: number;
   limit?: number;
+  from?: string;
+  to?: string;
 }
 
 export interface OutstandingInvoice {
@@ -26,6 +28,12 @@ export interface OutstandingReportResponse {
   page: number;
   limit: number;
   totalPages: number;
+  summary: {
+    totalInvoiced: number;
+    totalPaid: number;
+    totalOutstanding: number;
+    invoiceCount: number;
+  };
 }
 
 export interface CommissionStaff {
@@ -47,4 +55,14 @@ export interface CommissionReportResponse {
   items: CommissionStaff[];
   totalCommission: number;
   staffCount: number;
+  summary: {
+    totalPaid: number;
+    paymentCount: number;
+  };
+}
+
+export interface CsvExportResponse {
+  filename: string;
+  contentType: string;
+  data: string;
 }

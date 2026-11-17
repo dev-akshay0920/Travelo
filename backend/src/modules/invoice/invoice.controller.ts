@@ -2,7 +2,9 @@ import type { Request, Response } from "express";
 import { Types } from "mongoose";
 import { invoiceService } from "./invoice.service";
 import { invoiceRepository } from "./invoice.repository";
+import { bookingRepository } from "../booking/booking.repository";
 import type { InvoiceListQuery } from "./invoice.types";
+import { toInvoiceDTO } from "./invoice.types";
 import { asyncHandler } from "../../shared/utils/async-handler";
 import { resolveAgencyId } from "../../shared/utils/agency-context";
 import { success } from "../../shared/responses/api-response";
@@ -39,6 +41,45 @@ export class InvoiceController {
     const agencyId = resolveAgencyId(req);
     const result = await invoiceService.list(agencyId, req.query as InvoiceListQuery);
     res.status(HTTP_STATUS.OK).json(success({ invoices: result }));
+  });
+
+  listMyInvoices = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user || req.user.roleKey !== "traveller") {
+      res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Traveller access required." },
+      });
+      return;
+    }
+    const travellerId = new Types.ObjectId(req.user.sub);
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: { code: "BAD_REQUEST", message: "Page and limit must be positive integers, with limit at most 100." },
+      });
+      return;
+    }
+    const bookingIds = await bookingRepository.getBookingIdsByTraveller(travellerId);
+    const result = await invoiceRepository.listByBookingIds(bookingIds, {
+      page,
+      limit,
+      status: req.query.status as unknown as InvoiceListQuery["status"],
+      type: req.query.type as unknown as InvoiceListQuery["type"],
+      search: req.query.search as string | undefined,
+    });
+    res.status(HTTP_STATUS.OK).json(
+      success({
+        invoices: {
+          items: result.items.map(toInvoiceDTO),
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages,
+        },
+      })
+    );
   });
 
   getByBookingId = asyncHandler(async (req: Request, res: Response) => {

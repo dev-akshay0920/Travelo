@@ -4,6 +4,7 @@ import { success } from "../shared/responses/api-response";
 
 import { agencyRouter } from "../modules/agencies/agency.routes";
 import { authRouter } from "../modules/auth/auth.routes";
+import { leadWebhookRouter } from "../modules/lead-webhook/lead-webhook.routes";
 import { packageRouter } from "../modules/packages/package.routes";
 import { publicRouter } from "./public.routes";
 import { watchlistRouter } from "../modules/watchlist/watchlist.routes";
@@ -50,6 +51,7 @@ router.get(
   })
 );
 
+router.use("/webhooks/leads", leadWebhookRouter);
 router.use("/auth", authRouter);
 router.use("/agencies", agencyRouter);
 router.use("/packages", packageRouter);
