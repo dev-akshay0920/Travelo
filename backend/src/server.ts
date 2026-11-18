@@ -5,6 +5,7 @@ import { connectDatabase, disconnectDatabase } from "./config/database";
 import { RoleService } from "./modules/roles/role.service";
 import { seedPolicyTemplates } from "./modules/packages/policy-template.seed";
 import { FileStorageService } from "./shared/storage/file-storage.service";
+import { logger } from "./lib/logger";
 
 const start = async (): Promise<void> => {
   try {
@@ -12,7 +13,7 @@ const start = async (): Promise<void> => {
     await RoleService.seedDefaults();
     await seedPolicyTemplates();
   } catch (error) {
-    console.error("Exiting due to startup failure", error);
+    logger.error({ err: error }, "Exiting due to startup failure");
     process.exit(1);
   }
 
@@ -20,7 +21,7 @@ const start = async (): Promise<void> => {
   const server = http.createServer(app);
 
   server.listen(env.PORT, () => {
-    console.error(`Travora backend started on port ${env.PORT} (${env.NODE_ENV})`);
+    logger.info(`Travora backend started on port ${env.PORT} (${env.NODE_ENV})`);
   });
 
   const shutdown = async (_signal: string): Promise<void> => {
@@ -28,7 +29,7 @@ const start = async (): Promise<void> => {
       new Promise((resolve) => {
         server.close((err) => {
           if (err) {
-            console.error("Error closing HTTP server", err);
+            logger.error({ err }, "Error closing HTTP server");
             resolve();
             return;
           }
@@ -52,10 +53,10 @@ const start = async (): Promise<void> => {
   });
 
   process.on("unhandledRejection", (reason) => {
-    console.error("Unhandled promise rejection", reason);
+    logger.error({ reason }, "Unhandled promise rejection");
   });
   process.on("uncaughtException", (err) => {
-    console.error("Uncaught exception", err);
+    logger.error({ err }, "Uncaught exception");
     void shutdown("uncaughtException");
   });
 };

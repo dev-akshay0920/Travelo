@@ -3,6 +3,7 @@ import type { PackageDocument, PackageStatus, PackageVisibility } from "./packag
 import { Package } from "./package.model";
 import type { PackageListFilters, PackageListResponse, TravelPackage } from "./package.types";
 import { PackageImageStorage } from "./package-image.storage";
+import { logger } from "../../lib/logger";
 
 export interface PackageCreateInput {
   agencyId: Types.ObjectId;
@@ -234,15 +235,15 @@ export const PackageRepository = {
     agencyId: string,
     filters: PackageListFilters
   ): Promise<PackageListResponse> {
-    console.log("[findByAgencyIdWithFilters] agencyId:", agencyId, "filters:", filters);
+    logger.debug({ agencyId, filters }, "[findByAgencyIdWithFilters]");
     if (!Types.ObjectId.isValid(agencyId)) {
-      console.log("[findByAgencyIdWithFilters] Invalid agencyId");
+      logger.debug("[findByAgencyIdWithFilters] Invalid agencyId");
       return { items: [], total: 0, page: 1, limit: filters.limit || 10, totalPages: 0 };
     }
 
     const query = buildQuery(filters);
     query.agencyId = agencyId;
-    console.log("[findByAgencyIdWithFilters] MongoDB query:", JSON.stringify(query));
+    logger.debug({ query: JSON.stringify(query) }, "[findByAgencyIdWithFilters] MongoDB query");
 
     const page = filters.page && filters.page > 0 ? filters.page : 1;
     const limit = filters.limit && filters.limit > 0 ? filters.limit : 10;
@@ -254,7 +255,7 @@ export const PackageRepository = {
       Package.countDocuments(query).exec(),
     ]);
 
-    console.log("[findByAgencyIdWithFilters] Found items:", items.length, "total:", total);
+    logger.debug({ items: items.length, total }, "[findByAgencyIdWithFilters] Found items");
 
     const totalPages = total > 0 ? Math.ceil(total / limit) : 0;
 
@@ -273,9 +274,9 @@ export const PackageRepository = {
   },
 
   async findUpcoming(agencyId: string): Promise<PackageDocument[]> {
-    console.log("[findUpcoming] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[findUpcoming]");
     if (!Types.ObjectId.isValid(agencyId)) {
-      console.log("[findUpcoming] Invalid agencyId");
+      logger.debug("[findUpcoming] Invalid agencyId");
       return [];
     }
     const now = new Date();
@@ -285,14 +286,14 @@ export const PackageRepository = {
       status: { $in: ["draft", "active"] },
       startDate: { $gt: now },
     }).sort({ startDate: 1 }).exec();
-    console.log("[findUpcoming] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[findUpcoming] found");
     return docs;
   },
 
   async findCurrent(agencyId: string): Promise<PackageDocument[]> {
-    console.log("[findCurrent] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[findCurrent]");
     if (!Types.ObjectId.isValid(agencyId)) {
-      console.log("[findCurrent] Invalid agencyId");
+      logger.debug("[findCurrent] Invalid agencyId");
       return [];
     }
     const now = new Date();
@@ -303,14 +304,14 @@ export const PackageRepository = {
       startDate: { $lte: now },
       endDate: { $gte: now },
     }).sort({ endDate: 1 }).exec();
-    console.log("[findCurrent] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[findCurrent] found");
     return docs;
   },
 
   async findHistory(agencyId: string): Promise<PackageDocument[]> {
-    console.log("[findHistory] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[findHistory]");
     if (!Types.ObjectId.isValid(agencyId)) {
-      console.log("[findHistory] Invalid agencyId");
+      logger.debug("[findHistory] Invalid agencyId");
       return [];
     }
     const now = new Date();
@@ -322,7 +323,7 @@ export const PackageRepository = {
         { status: { $in: ["completed", "cancelled", "sold_out"] } },
       ],
     }).sort({ endDate: -1 }).exec();
-    console.log("[findHistory] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[findHistory] found");
     return docs;
   },
 

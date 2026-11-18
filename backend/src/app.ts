@@ -4,6 +4,7 @@ import cors from "cors";
 import { randomUUID } from "node:crypto";
 import { env } from "./config/env";
 import { requestIdMiddleware } from "./shared/types/request-id";
+import { requestLoggerMiddleware } from "./middleware/request-logger.middleware";
 import { generalRateLimiter } from "./middleware/rate-limit.middleware";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { notFoundMiddleware } from "./middleware/not-found.middleware";
@@ -25,6 +26,8 @@ export const createApp = (): Application => {
     _res.setHeader("x-request-id", reqId);
     next();
   });
+
+  app.use(requestLoggerMiddleware);
 
   app.use(
     cors({

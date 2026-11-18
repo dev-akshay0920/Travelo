@@ -6,6 +6,7 @@ import type {
   TravelPackage,
 } from "./package.types";
 import type { PackageStatus } from "./package.model";
+import { logger } from "../../lib/logger";
 import type { PackageUpdateInput } from "./package.repository";
 import { PackageRepository, toTravelPackage } from "./package.repository";
 import { NotFoundError, ValidationError, ConflictError } from "../../shared/errors/app-error";
@@ -247,9 +248,9 @@ export const PackageService = {
   },
 
   async getPackagesByAgency(agencyId: string, filters: PackageListFilters): Promise<PackageListResponse> {
-    console.log("[getPackagesByAgency] agencyId:", agencyId, "filters:", filters);
+    logger.debug({ agencyId, filters }, "[getPackagesByAgency]");
     if (!Types.ObjectId.isValid(agencyId)) {
-      console.log("[getPackagesByAgency] Invalid agencyId");
+      logger.debug("[getPackagesByAgency] Invalid agencyId");
       return { items: [], total: 0, page: 1, limit: filters.limit || 10, totalPages: 0 };
     }
 
@@ -257,23 +258,23 @@ export const PackageService = {
   },
 
   async getUpcomingPackages(agencyId: string): Promise<TravelPackage[]> {
-    console.log("[getUpcomingPackages] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[getUpcomingPackages]");
     const docs = await PackageRepository.findUpcoming(agencyId);
-    console.log("[getUpcomingPackages] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[getUpcomingPackages] found");
     return docs.map(toTravelPackage);
   },
 
   async getCurrentPackages(agencyId: string): Promise<TravelPackage[]> {
-    console.log("[getCurrentPackages] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[getCurrentPackages]");
     const docs = await PackageRepository.findCurrent(agencyId);
-    console.log("[getCurrentPackages] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[getCurrentPackages] found");
     return docs.map(toTravelPackage);
   },
 
   async getHistoryPackages(agencyId: string): Promise<TravelPackage[]> {
-    console.log("[getHistoryPackages] agencyId:", agencyId);
+    logger.debug({ agencyId }, "[getHistoryPackages]");
     const docs = await PackageRepository.findHistory(agencyId);
-    console.log("[getHistoryPackages] found:", docs.length);
+    logger.debug({ docs: docs.length }, "[getHistoryPackages] found");
     return docs.map(toTravelPackage);
   },
 

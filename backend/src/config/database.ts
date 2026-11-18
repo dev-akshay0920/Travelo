@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "./env";
+import { logger } from "../lib/logger";
 
 let connectingPromise: Promise<typeof mongoose> | null = null;
 
@@ -20,7 +21,7 @@ export const connectDatabase = async (): Promise<void> => {
     await connectingPromise;
   } catch (error) {
     connectingPromise = null;
-    console.error("Failed to connect to MongoDB", error);
+    logger.error({ err: error }, "Failed to connect to MongoDB");
     throw error;
   }
 };
